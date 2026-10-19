@@ -1,0 +1,155 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://scripts/apercu_charte.gd" id="1_ap"]
+
+[sub_resource type="StyleBoxFlat" id="Fond"]
+bg_color = Color(0.0863, 0.0902, 0.1098, 1)
+
+[node name="ApercuCharte" type="Panel"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("Fond")
+script = ExtResource("1_ap")
+
+[node name="Marges" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_override_constants/margin_left = 120
+theme_override_constants/margin_top = 80
+theme_override_constants/margin_right = 120
+theme_override_constants/margin_bottom = 60
+
+[node name="Colonnes" type="HBoxContainer" parent="Marges"]
+layout_mode = 2
+theme_override_constants/separation = 120
+
+[node name="Menu" type="VBoxContainer" parent="Marges/Colonnes"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 12
+
+[node name="Kanji" type="Label" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+theme_type_variation = &"Kanji"
+text = "影 忍"
+
+[node name="Logo" type="Label" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+theme_type_variation = &"TitreLogo"
+text = "KAGE"
+
+[node name="SousTitre" type="Label" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+theme_type_variation = &"SousTitre"
+text = "THE SHADOW · LE CHÂTEAU"
+
+[node name="Espace" type="Control" parent="Marges/Colonnes/Menu"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+
+[node name="NouvellePartie" type="Button" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"BoutonMenu"
+text = "NOUVELLE PARTIE"
+
+[node name="Continuer" type="Button" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"BoutonMenu"
+text = "CONTINUER"
+
+[node name="Options" type="Button" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"BoutonMenu"
+text = "OPTIONS"
+
+[node name="Quitter" type="Button" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"BoutonMenu"
+text = "QUITTER"
+
+[node name="Pied" type="HBoxContainer" parent="Marges/Colonnes/Menu"]
+layout_mode = 2
+size_flags_vertical = 10
+theme_override_constants/separation = 12
+
+[node name="T1" type="PanelContainer" parent="Marges/Colonnes/Menu/Pied"]
+layout_mode = 2
+theme_type_variation = &"ToucheCadre"
+
+[node name="L" type="Label" parent="Marges/Colonnes/Menu/Pied/T1"]
+layout_mode = 2
+theme_type_variation = &"Touche"
+text = "↑ ↓"
+
+[node name="A1" type="Label" parent="Marges/Colonnes/Menu/Pied"]
+layout_mode = 2
+theme_type_variation = &"Aide"
+text = "CHOISIR"
+
+[node name="T2" type="PanelContainer" parent="Marges/Colonnes/Menu/Pied"]
+layout_mode = 2
+theme_type_variation = &"ToucheCadre"
+
+[node name="L" type="Label" parent="Marges/Colonnes/Menu/Pied/T2"]
+layout_mode = 2
+theme_type_variation = &"Touche"
+text = "ENTRÉE"
+
+[node name="A2" type="Label" parent="Marges/Colonnes/Menu/Pied"]
+layout_mode = 2
+theme_type_variation = &"Aide"
+text = "VALIDER"
+
+[node name="Droite" type="VBoxContainer" parent="Marges/Colonnes"]
+layout_mode = 2
+size_flags_horizontal = 3
+alignment = 1
+theme_override_constants/separation = 40
+
+[node name="Hud" type="Label" parent="Marges/Colonnes/Droite"]
+layout_mode = 2
+theme_type_variation = &"TitreHud"
+text = "CACHÉ"
+
+[node name="Tutoriel" type="PanelContainer" parent="Marges/Colonnes/Droite"]
+layout_mode = 2
+theme_type_variation = &"Parchemin"
+
+[node name="V" type="VBoxContainer" parent="Marges/Colonnes/Droite/Tutoriel"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Etiquette" type="Label" parent="Marges/Colonnes/Droite/Tutoriel/V"]
+layout_mode = 2
+theme_type_variation = &"Etiquette"
+text = "TUTORIEL"
+
+[node name="Titre" type="Label" parent="Marges/Colonnes/Droite/Tutoriel/V"]
+layout_mode = 2
+theme_type_variation = &"TitreParchemin"
+text = "SE CACHER"
+
+[node name="Texte" type="Label" parent="Marges/Colonnes/Droite/Tutoriel/V"]
+custom_minimum_size = Vector2(560, 0)
+layout_mode = 2
+theme_type_variation = &"TexteParchemin"
+text = "Reste dans l'ombre : tant que la lune ne t'éclaire pas, les gardes ne te voient pas."
+autowrap_mode = 3
+
+[node name="Consigne" type="Label" parent="Marges/Colonnes/Droite"]
+layout_mode = 2
+theme_type_variation = &"Consigne"
+text = "TRANCHER LA LANTERNE"
+
+[node name="Version" type="Label" parent="Marges/Colonnes/Droite"]
+layout_mode = 2
+theme_type_variation = &"Version"
+text = "v0.1 · prototype"

@@ -41,7 +41,7 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 - Rendu « Compatibility », le seul qui marche dans le navigateur.
 - Export **Web** prêt dans `export_presets.cfg`, sortie dans `build/web/`.
 - Caméra haute et dézoomée, orientée plein nord, qui suit le ninja (`scripts/follow_camera.gd`).
-- Couleurs de la charte dans `scripts/palette.gd`.
+- Couleurs de la charte dans `scripts/palette.gd`, thème Godot (polices et styles) dans `assets/ui/kage_theme.tres`. Détails dans [docs/design.md](docs/design.md).
 
 ## Design
 

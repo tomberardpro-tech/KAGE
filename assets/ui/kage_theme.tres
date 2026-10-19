@@ -1,0 +1,138 @@
+[gd_resource type="Theme" load_steps=12 format=3]
+
+[ext_resource type="FontFile" path="res://assets/fonts/IBMPlexSansJP-Medium.ttf" id="1_qu2y8"]
+[ext_resource type="FontFile" path="res://assets/fonts/Anton-Regular.ttf" id="2_uak0s"]
+[ext_resource type="FontFile" path="res://assets/fonts/IBMPlexSansJP-SemiBold.ttf" id="3_r0lte"]
+[ext_resource type="FontFile" path="res://assets/fonts/NotoSerifJP-Black-subset.ttf" id="4_h5uih"]
+[ext_resource type="FontFile" path="res://assets/fonts/IBMPlexSansJP-Regular.ttf" id="5_06frf"]
+[ext_resource type="FontFile" path="res://assets/fonts/IBMPlexSansJP-Bold.ttf" id="6_060bq"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_35i6o"]
+content_margin_left = 28.0
+content_margin_right = 28.0
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hpm2f"]
+content_margin_left = 28.0
+content_margin_top = 6.0
+content_margin_right = 28.0
+content_margin_bottom = 6.0
+bg_color = Color(0.917647, 0.890196, 0.839216, 1)
+border_width_left = 8
+border_width_right = 8
+border_color = Color(0.85098, 0.603922, 0.305882, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.054902, 0.0588235, 0.0705882, 0.45)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_rt7fi"]
+content_margin_left = 32.0
+content_margin_top = 24.0
+content_margin_right = 32.0
+content_margin_bottom = 24.0
+bg_color = Color(0.917647, 0.890196, 0.839216, 1)
+border_width_left = 8
+border_width_right = 8
+border_color = Color(0.85098, 0.603922, 0.305882, 1)
+corner_radius_top_left = 3
+corner_radius_top_right = 3
+corner_radius_bottom_right = 3
+corner_radius_bottom_left = 3
+shadow_color = Color(0.054902, 0.0588235, 0.0705882, 0.45)
+shadow_size = 6
+shadow_offset = Vector2(0, 4)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_k16jc"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.917647, 0.890196, 0.839216, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ehq8f"]
+bg_color = Color(0.054902, 0.0588235, 0.0705882, 0.82)
+
+[resource]
+default_font = ExtResource("5_06frf")
+default_font_size = 22
+Aide/base_type = &"Label"
+Aide/colors/font_color = Color(0.556863, 0.560784, 0.588235, 1)
+Aide/font_sizes/font_size = 18
+Aide/fonts/font = ExtResource("1_qu2y8")
+BoutonMenu/base_type = &"Button"
+BoutonMenu/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+BoutonMenu/colors/font_disabled_color = Color(0.556863, 0.560784, 0.588235, 1)
+BoutonMenu/colors/font_focus_color = Color(0.0862745, 0.0901961, 0.109804, 1)
+BoutonMenu/colors/font_hover_color = Color(0.0862745, 0.0901961, 0.109804, 1)
+BoutonMenu/colors/font_pressed_color = Color(0.760784, 0.231373, 0.133333, 1)
+BoutonMenu/constants/h_separation = 16
+BoutonMenu/font_sizes/font_size = 50
+BoutonMenu/fonts/font = ExtResource("2_uak0s")
+BoutonMenu/styles/disabled = SubResource("StyleBoxEmpty_35i6o")
+BoutonMenu/styles/focus = SubResource("StyleBoxFlat_hpm2f")
+BoutonMenu/styles/hover = SubResource("StyleBoxFlat_hpm2f")
+BoutonMenu/styles/normal = SubResource("StyleBoxEmpty_35i6o")
+BoutonMenu/styles/pressed = SubResource("StyleBoxFlat_hpm2f")
+Consigne/base_type = &"Label"
+Consigne/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+Consigne/font_sizes/font_size = 30
+Consigne/fonts/font = ExtResource("3_r0lte")
+Etiquette/base_type = &"Label"
+Etiquette/colors/font_color = Color(0.760784, 0.231373, 0.133333, 1)
+Etiquette/font_sizes/font_size = 20
+Etiquette/fonts/font = ExtResource("3_r0lte")
+Kanji/base_type = &"Label"
+Kanji/colors/font_color = Color(0.760784, 0.231373, 0.133333, 1)
+Kanji/font_sizes/font_size = 48
+Kanji/fonts/font = ExtResource("4_h5uih")
+KanjiFond/base_type = &"Label"
+KanjiFond/colors/font_color = Color(0.917647, 0.890196, 0.839216, 0.06)
+KanjiFond/font_sizes/font_size = 600
+KanjiFond/fonts/font = ExtResource("4_h5uih")
+Label/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+Parchemin/base_type = &"PanelContainer"
+Parchemin/styles/panel = SubResource("StyleBoxFlat_rt7fi")
+RichTextLabel/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+SousTitre/base_type = &"Label"
+SousTitre/colors/font_color = Color(0.556863, 0.560784, 0.588235, 1)
+SousTitre/font_sizes/font_size = 22
+SousTitre/fonts/font = ExtResource("1_qu2y8")
+TexteParchemin/base_type = &"Label"
+TexteParchemin/colors/font_color = Color(0.0862745, 0.0901961, 0.109804, 1)
+TexteParchemin/font_sizes/font_size = 22
+TexteParchemin/fonts/font = ExtResource("5_06frf")
+TitreEcran/base_type = &"Label"
+TitreEcran/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+TitreEcran/font_sizes/font_size = 140
+TitreEcran/fonts/font = ExtResource("2_uak0s")
+TitreHud/base_type = &"Label"
+TitreHud/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+TitreHud/font_sizes/font_size = 51
+TitreHud/fonts/font = ExtResource("2_uak0s")
+TitreLogo/base_type = &"Label"
+TitreLogo/colors/font_color = Color(0.917647, 0.890196, 0.839216, 1)
+TitreLogo/font_sizes/font_size = 210
+TitreLogo/fonts/font = ExtResource("2_uak0s")
+TitreParchemin/base_type = &"Label"
+TitreParchemin/colors/font_color = Color(0.0862745, 0.0901961, 0.109804, 1)
+TitreParchemin/font_sizes/font_size = 32
+TitreParchemin/fonts/font = ExtResource("2_uak0s")
+Touche/base_type = &"Label"
+Touche/colors/font_color = Color(0.0862745, 0.0901961, 0.109804, 1)
+Touche/font_sizes/font_size = 18
+Touche/fonts/font = ExtResource("6_060bq")
+ToucheCadre/base_type = &"PanelContainer"
+ToucheCadre/styles/panel = SubResource("StyleBoxFlat_k16jc")
+Version/base_type = &"Label"
+Version/colors/font_color = Color(0.556863, 0.560784, 0.588235, 1)
+Version/font_sizes/font_size = 16
+Version/fonts/font = ExtResource("5_06frf")
+Voile/base_type = &"PanelContainer"
+Voile/styles/panel = SubResource("StyleBoxFlat_ehq8f")
