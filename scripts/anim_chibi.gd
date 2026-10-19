@@ -13,6 +13,11 @@ var _repos := {}  # rotation de départ de chaque pivot
 var _squelette: Skeleton3D
 var _os := {}  # nom -> [indice, rotation de repos, axe X du modèle vu par l'os]
 var _angles := {}  # angle actuel de chaque os, en radians
+var _entier := false  # modèle d'un seul tenant sans os : on anime le corps entier
+var _ecrase := 0.0  # > 0 : écrasé (atterrissage), < 0 : étiré (saut)
+var _ecrase_vit := 0.0
+var _au_sol := true
+var _vy_avant := 0.0
 
 @onready var _jambes := [get_node_or_null("JambeG"), get_node_or_null("JambeD")]
 @onready var _bras := [get_node_or_null("BrasG"), get_node_or_null("BrasD")]
@@ -38,6 +43,7 @@ func _ready() -> void:
 				var axe := _squelette.get_bone_global_rest(i).basis.inverse() * Vector3.RIGHT
 				_os[nom] = [i, _squelette.get_bone_pose_rotation(i), axe.normalized()]
 				_angles[nom] = 0.0
+	_entier = _squelette == null and _jambes[0] == null and _tronc == null
 
 
 func _process(delta: float) -> void:
@@ -51,6 +57,9 @@ func _process(delta: float) -> void:
 	var s := sin(_phase) * marche
 	var dash: bool = _corps.get("en_dash") == true
 	var lissage := 1.0 - exp(-14.0 * delta)
+	if _entier:
+		_animer_entier(delta, marche, dash, lissage)
+		return
 
 	for i in 2:
 		var signe := 1.0 if i == 0 else -1.0
@@ -96,3 +105,28 @@ func _animer_os(s: float, dash: bool, marche: float, lissage: float) -> void:
 		var o: Array = _os[nom]
 		_angles[nom] = lerpf(_angles[nom], deg_to_rad(cibles[nom]), lissage)
 		_squelette.set_bone_pose_rotation(o[0], o[1] * Quaternion(o[2], _angles[nom]))
+
+
+## Modèle sans os ni pivots : tout le corps se dandine en courant, s'étire en sautant
+## et s'écrase à l'atterrissage, avec un ressort pour que ce soit fluide.
+func _animer_entier(delta: float, marche: float, dash: bool, lissage: float) -> void:
+	var au_sol := _corps.is_on_floor()
+	var vy := _corps.velocity.y
+	if au_sol and not _au_sol:
+		_ecrase_vit += clampf(-_vy_avant * 0.6, 1.0, 4.0)  # atterrissage
+	elif not au_sol and _au_sol and vy > 1.0:
+		_ecrase_vit -= 2.2  # décollage
+	_au_sol = au_sol
+	_vy_avant = vy
+	var cible := 0.0 if au_sol else -clampf(absf(vy) * 0.018, 0.0, 0.1)
+	_ecrase_vit += (cible - _ecrase) * 260.0 * delta
+	_ecrase_vit *= exp(-13.0 * delta)
+	_ecrase = clampf(_ecrase + _ecrase_vit * delta, -0.25, 0.3)
+	scale = Vector3(1.0 + _ecrase * 0.5, 1.0 - _ecrase, 1.0 + _ecrase * 0.5)
+
+	var pas := absf(sin(_phase)) * marche if au_sol else 0.0
+	position.y = lerpf(position.y, pas * 0.07, lissage)
+	var penche := 30.0 if dash else 9.0 * marche + (0.0 if au_sol else 6.0)
+	rotation.x = lerpf(rotation.x, deg_to_rad(penche), lissage)
+	var dandine := sin(_phase) * 6.0 * marche if au_sol and not dash else 0.0
+	rotation.z = lerpf(rotation.z, deg_to_rad(dandine), lissage)
