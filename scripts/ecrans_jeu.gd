@@ -224,7 +224,7 @@ func _construire_defaite() -> Control:
 	v.add_child(rouleau)
 	var titre := _label("DÉCOUVERT", &"TitreEcran", 110, Palette.LAQUE)
 	rouleau.add_child(_marge(titre, 0, 70))
-	v.add_child(_consigne("Un garde t'a vu en pleine lumière."))
+	v.add_child(_consigne("Un garde t'a rattrapé."))
 	v.add_child(_pied([["R", "RECOMMENCER À L'AUTEL"], ["ÉCHAP", "MENU"]], true))
 	return page
 

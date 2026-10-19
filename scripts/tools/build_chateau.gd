@@ -136,6 +136,9 @@ func _gardes() -> void:
 
 
 func _objectifs() -> void:
+	# Plancher rossignol dans le donjon, fils à clochettes sur les passages discrets des cours.
+	rossignols([[516, 356, 768, 388]])
+	clochettes([[190, 1250, 560, 1250], [1300, 1180, 1610, 1180], [580, 1000, 580, 1300]])
 	autels([["Depart", 900, 2290], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280]])
 	parchemin(900, 530)
 	sortie(1650, 510, Vector3(2.0, 2.0, 4.8))

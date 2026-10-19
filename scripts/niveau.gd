@@ -24,6 +24,7 @@ var fois_repere := 0
 var gardes_tues := 0
 var decouvert := false  ## entre le moment où un garde nous voit et la reprise
 
+var _conseils_donnes: Array[String] = []
 var _point_reprise: Vector3
 var _fini := false
 var _horloge_lune := 0.0
@@ -38,6 +39,7 @@ func _ready() -> void:
 	_point_reprise = ninja.global_position
 	for garde in get_tree().get_nodes_in_group("gardes"):
 		garde.joueur_repere.connect(_sur_repere)
+		garde.chasse_commencee.connect(_sur_chasse)
 	for autel in find_children("*", "Autel"):
 		autel.active.connect(_sur_autel)
 	$Parchemin.touche.connect(_sur_parchemin)
@@ -95,10 +97,38 @@ func _sur_sortie() -> void:
 	_ecrans.victoire(temps, fois_repere == 0, gardes_tues == 0)
 
 
+## Un garde nous a vus : il nous prend en chasse. Le bonus Fantôme est perdu.
+func _sur_chasse(garde: Garde) -> void:
+	var deja := get_tree().get_nodes_in_group("gardes").any(
+		func(g: Garde): return g != garde and g.etat == Garde.Etat.CHASSE)
+	if not deja:
+		_messages.afficher("REPÉRÉ", "Sème-le, cache-toi ou tranche-le.", 1.6)
+	fois_repere += 1
+
+
+## Vrai tant qu'au moins un garde nous poursuit.
+func en_chasse() -> bool:
+	for garde: Garde in get_tree().get_nodes_in_group("gardes"):
+		if garde.etat == Garde.Etat.CHASSE:
+			return true
+	return false
+
+
+## Bruit à un endroit (plancher qui grince, clochettes) : les gardes à portée viennent voir.
+func bruit(point: Vector3, rayon: float, conseil := "") -> void:
+	Onde.emettre(self, point, rayon)
+	for garde: Garde in get_tree().get_nodes_in_group("gardes"):
+		if garde.global_position.distance_to(point) < rayon:
+			garde.entendre(point)
+	if not conseil.is_empty() and conseil not in _conseils_donnes:
+		_conseils_donnes.append(conseil)
+		_messages.afficher("CHUT !", conseil, 2.5)
+
+
+## Le garde nous a rattrapés et frappés.
 func _sur_repere(_garde: Garde) -> void:
 	if ninja.bloque:
 		return
-	fois_repere += 1
 	ninja.bloque = true
 	decouvert = true
 	mort.emit()

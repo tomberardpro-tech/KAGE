@@ -1,11 +1,13 @@
 class_name Garde
 extends CharacterBody3D
-## Garde samouraï : fait sa ronde, regarde devant lui, vient voir quand une lanterne s'éteint.
-## Il repère le ninja s'il le voit en pleine lumière, ou de près dans la pénombre.
+## Garde samouraï : fait sa ronde, regarde devant lui, vient voir quand une lanterne s'éteint
+## ou quand il entend un bruit. S'il voit le ninja assez longtemps, il le prend en chasse :
+## on peut le semer, se cacher ou le trancher. S'il nous rattrape, il frappe.
 
-signal joueur_repere(garde: Garde)
+signal joueur_repere(garde: Garde)  ## le garde a frappé le ninja : défaite
+signal chasse_commencee(garde: Garde)
 
-enum Etat { RONDE, ENQUETE, ALERTE, MORT }
+enum Etat { RONDE, ENQUETE, ALERTE, MORT, CHASSE }
 
 ## Points de la ronde (coordonnées du monde). Vide : le garde reste en faction.
 @export var ronde: PackedVector3Array
@@ -15,6 +17,13 @@ enum Etat { RONDE, ENQUETE, ALERTE, MORT }
 @export_range(5, 80) var demi_angle := 25.0
 @export var portee_penombre := 2.0  ## distance où il repère même sans lumière
 @export var pause_bout_de_ronde := 1.5
+
+@export_group("Chasse")
+@export var vitesse_chasse := 3.8  ## le ninja court à 5,5 : on peut le semer
+@export var portee_frappe := 1.2
+@export var duree_frappe := 0.45  ## temps d'élan avant le coup : le temps de s'écarter
+@export var temps_pour_semer := 3.5  ## secondes sans nous voir avant d'abandonner
+@export var portee_cri := 10.0  ## les gardes à cette distance viennent voir
 
 var etat := Etat.RONDE
 var soupcon := 0.0  ## 0 → 1 : à 1 le ninja est repéré
@@ -27,6 +36,9 @@ var _point_enquete: Vector3
 var _balayage := 0.0
 var _cone: MeshInstance3D
 var _cone_materiau: StandardMaterial3D
+var _frappe := -1.0  ## > 0 : élan du coup en cours
+var _perdu := 0.0
+var _dernier_vu: Vector3
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -51,6 +63,8 @@ func reinitialiser() -> void:
 	soupcon = 0.0
 	_cible = 0
 	_attente = 0.0
+	_frappe = -1.0
+	_visuel.position = Vector3.ZERO
 	_tourner_vers(_regard_depart, 1.0)
 
 
@@ -80,6 +94,8 @@ func _physics_process(delta: float) -> void:
 			_enqueter(delta)
 		Etat.ALERTE:
 			velocity = Vector3.ZERO
+		Etat.CHASSE:
+			_chasser(delta)
 	if not is_on_floor():
 		velocity.y -= 18.0 * delta
 	move_and_slide()
@@ -129,17 +145,80 @@ func _aller_vers(point: Vector3, delta: float) -> bool:
 
 
 func _sur_lanterne_eteinte(lanterne: Lanterne) -> void:
-	if etat == Etat.MORT or etat == Etat.ALERTE:
-		return
 	if global_position.distance_to(lanterne.global_position) < 14.0:
+		entendre(lanterne.global_position)
+
+
+## Un bruit (lanterne, plancher qui grince, clochettes) : il va voir, sauf s'il est déjà occupé.
+func entendre(point: Vector3) -> void:
+	if etat != Etat.RONDE and etat != Etat.ENQUETE:
+		return
+	etat = Etat.ENQUETE
+	var ecart := global_position - point
+	ecart.y = 0.0
+	_point_enquete = point + ecart.normalized() * 1.2 if ecart.length() > 1.2 else global_position
+	_attente = 0.0
+
+
+func _commencer_chasse(ninja: Ninja) -> void:
+	etat = Etat.CHASSE
+	_perdu = 0.0
+	_frappe = -1.0
+	_dernier_vu = ninja.global_position
+	chasse_commencee.emit(self)
+	for autre: Garde in get_tree().get_nodes_in_group("gardes"):
+		if autre != self and autre.global_position.distance_to(global_position) < portee_cri:
+			autre.entendre(ninja.global_position)
+
+
+## Il court vers le dernier endroit où il nous a vus et frappe quand il est assez près.
+func _chasser(delta: float) -> void:
+	var ninja: Ninja = get_tree().get_first_node_in_group("ninja")
+	if ninja == null or ninja.bloque:
+		velocity = Vector3.ZERO
+		return
+	var ecart := ninja.global_position - global_position
+	ecart.y = 0.0
+	if _frappe >= 0.0:
+		velocity = Vector3.ZERO
+		_frappe -= delta
+		_tourner_vers(ecart.normalized(), delta * 10.0)
+		# Il recule un peu pour prendre son élan, puis porte le coup.
+		_visuel.position = -_direction_regard() * 0.25 * sin(clampf(1.0 - _frappe / duree_frappe, 0.0, 1.0) * PI)
+		if _frappe < 0.0:
+			_visuel.position = Vector3.ZERO
+			if ecart.length() < portee_frappe + 0.4 and not ninja.en_dash:
+				joueur_repere.emit(self)
+		return
+	if _perdu > temps_pour_semer:
+		# Semé : il fouille l'endroit où il nous a vus pour la dernière fois.
 		etat = Etat.ENQUETE
-		_point_enquete = lanterne.global_position + (global_position - lanterne.global_position).normalized() * 1.2
+		soupcon = 0.0
+		_point_enquete = _dernier_vu
 		_attente = 0.0
+		return
+	if ecart.length() < portee_frappe and _perdu == 0.0:
+		_frappe = duree_frappe
+		velocity = Vector3.ZERO
+		return
+	var vitesse_normale := vitesse
+	vitesse = vitesse_chasse
+	if _aller_vers(_dernier_vu, delta):
+		_perdu = maxf(_perdu, 0.01)
+	vitesse = vitesse_normale
 
 
 func _surveiller(delta: float) -> void:
 	var ninja: Ninja = get_tree().get_first_node_in_group("ninja")
 	var voit := ninja != null and not ninja.bloque and _voit(ninja)
+	if etat == Etat.CHASSE:
+		if voit:
+			_dernier_vu = ninja.global_position
+			_perdu = 0.0
+		else:
+			_perdu += delta
+		_cone_materiau.albedo_color = Color(Palette.LAQUE, 0.6)
+		return
 	if voit:
 		var vitesse_soupcon := 3.0 if ninja.est_eclaire() else 1.2
 		soupcon = minf(soupcon + vitesse_soupcon * delta, 1.0)
@@ -149,7 +228,7 @@ func _surveiller(delta: float) -> void:
 			vers.y = 0.0
 			_tourner_vers(vers.normalized(), delta * 8.0)
 		if soupcon >= 1.0:
-			joueur_repere.emit(self)
+			_commencer_chasse(ninja)
 	else:
 		soupcon = maxf(soupcon - 0.5 * delta, 0.0)
 		if etat == Etat.ALERTE and soupcon <= 0.0:
@@ -162,11 +241,13 @@ func _voit(ninja: Ninja) -> bool:
 		return false
 	var vers := ninja.global_position - global_position
 	var distance := Vector2(vers.x, vers.z).length()
-	var limite := portee if ninja.est_eclaire() else portee_penombre
+	# En chasse, il a les yeux rivés sur nous : pas besoin de lumière, ni d'être dans son cône.
+	var chasse := etat == Etat.CHASSE
+	var limite := portee if chasse or ninja.est_eclaire() else portee_penombre
 	if distance > limite:
 		return false
 	var plat := Vector3(vers.x, 0.0, vers.z).normalized()
-	if distance > 1.0 and rad_to_deg(plat.angle_to(_direction_regard())) > demi_angle:
+	if not chasse and distance > 1.0 and rad_to_deg(plat.angle_to(_direction_regard())) > demi_angle:
 		return false
 	# Rien entre lui et le ninja ?
 	var yeux := global_position + Vector3.UP * 1.2

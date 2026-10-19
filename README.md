@@ -85,7 +85,9 @@ godot --headless --script res://scripts/tools/build_palais.gd
 
 On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script. Le titre, les textes et le niveau suivant se règlent au début de chaque script.
 
-- **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te repère : tu repars du dernier autel.
+- **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te **prend en chasse** et appelle les gardes proches : sème-le (il court moins vite que toi), cache-toi ou tranche-le d'un dash. S'il te rattrape, il prend son élan et frappe : tu repars du dernier autel.
+- **Planchers rossignol** (`scripts/rossignol.gd`, lattes claires) : ils grincent si tu marches debout, et les gardes proches viennent voir. Accroupi, tu passes sans bruit.
+- **Fils à clochettes** (`scripts/clochettes.gd`, fil rouge et clochettes dorées) : saute par-dessus ou coupe-les avec E. Si tu les traverses, ils sonnent et les gardes accourent.
 - **Se cacher** (`scripts/zone.gd`) : ombre des arbres, herbes hautes (accroupi). La lumière des lanternes et le clair de lune te trahissent, comme la lune sur les toits.
 - **Lanternes** : un dash au sabre les éteint, et le garde le plus proche vient voir.
 - **Lune** : des nuages passent toutes les 14 s et coupent le clair de lune pendant 5 s.

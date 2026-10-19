@@ -14,8 +14,21 @@ var allumee := true
 
 func _ready() -> void:
 	add_to_group("lanternes")
+	add_to_group("interactifs")
 	(_zone.get_node("Forme") as CollisionShape3D).shape.radius = rayon
 	_lumiere.omni_range = rayon + 1.0
+
+
+func texte_action() -> String:
+	return "TRANCHER LA LANTERNE"
+
+
+func peut_interagir() -> bool:
+	return allumee
+
+
+func interagir() -> void:
+	eteindre()
 
 
 func eteindre() -> void:

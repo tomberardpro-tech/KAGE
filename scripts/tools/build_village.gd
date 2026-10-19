@@ -2,6 +2,7 @@ extends "res://scripts/tools/constructeur.gd"
 ## Génère scenes/levels/village.tscn : niveau 1, le village au pied du château.
 ## Lancer : godot --headless --script res://scripts/tools/build_village.gd
 ## Niveau d'apprentissage : peu de gardes, myopes et lents, beaucoup d'ombre.
+## Un premier fil à clochettes sur le chemin et un plancher qui grince chez le chef.
 ## On part des rizières au sud, on traverse le village et on prend le plan du château
 ## chez le chef, puis on sort par le portail nord-est.
 
@@ -36,6 +37,8 @@ func _init() -> void:
 		["GardeRue", 420, 950, [[420, 950], [780, 950]]],
 		["GardeChef", 600, 470, []],
 	], {"vitesse": 1.3, "portee": 6.0, "portee_penombre": 1.6})
+	rossignols([[436, 176, 328, 188]])
+	clochettes([[540, 560, 660, 560]])
 	autels([["Depart", 600, 1640], ["AutelGrenier", 1010, 520]])
 	parchemin(600, 260)
 	sortie(1050, 60, Vector3(4.0, 2.0, 2.0))

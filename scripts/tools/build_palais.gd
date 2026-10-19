@@ -48,6 +48,9 @@ func _init() -> void:
 		["GardeCourNord", 300, 730, [[300, 730], [1500, 730]]],
 		["GardeSalle", 1200, 560, [[1200, 560], [600, 560]]],
 	], {"vitesse": 1.8, "portee": 8.5, "demi_angle": 30.0, "portee_penombre": 2.4})
+	# Plancher rossignol dans toute la salle du seigneur et sous les galeries de la cour.
+	rossignols([[516, 336, 768, 348], [140, 700, 1520, 40]])
+	clochettes([[140, 2060, 600, 2060], [140, 560, 500, 560], [1100, 1150, 1100, 1300], [700, 1150, 700, 1300]])
 	autels([["Depart", 900, 2150], ["AutelJardin", 1540, 1790]])
 	parchemin(900, 420)
 	sortie(80, 440, Vector3(2.0, 2.0, 4.8))

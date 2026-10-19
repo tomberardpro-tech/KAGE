@@ -338,6 +338,35 @@ func autels(liste: Array) -> void:
 		ajouter(autel, flamme)
 
 
+## Planchers rossignol (grincent si on marche debout) : [x, y, largeur, profondeur] en px.
+func rossignols(rects: Array) -> void:
+	var script := load("res://scripts/rossignol.gd")
+	for i in rects.size():
+		var r: Array = rects[i]
+		var z := Area3D.new()
+		z.set_script(script)
+		z.name = "Rossignol%d" % i
+		z.taille = Vector2(r[2], r[3]) * ECHELLE
+		z.position = P(r[0] + r[2] / 2.0, r[1] + r[3] / 2.0)
+		ajouter(racine, z)
+
+
+## Fils à clochettes tendus entre deux points : [x1, y1, x2, y2] en px.
+func clochettes(fils: Array) -> void:
+	var script := load("res://scripts/clochettes.gd")
+	for i in fils.size():
+		var f: Array = fils[i]
+		var a := P(f[0], f[1])
+		var b := P(f[2], f[3])
+		var z := Area3D.new()
+		z.set_script(script)
+		z.name = "Clochettes%d" % i
+		z.longueur = a.distance_to(b)
+		z.position = (a + b) / 2.0
+		z.rotation.y = -atan2(b.z - a.z, b.x - a.x)
+		ajouter(racine, z)
+
+
 func parchemin(x: float, y: float) -> void:
 	var p := Area3D.new()
 	p.set_script(load("res://scripts/ramassable.gd"))

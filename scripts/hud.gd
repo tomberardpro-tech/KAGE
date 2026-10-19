@@ -16,6 +16,7 @@ var _vignette: TextureRect
 var _etat := Etat.CACHE
 var _jauge := 0.2
 var _invite := 0.0  # opacité de l'invite d'action
+var _action := "TRANCHER LA LANTERNE"
 
 var _anton: Font
 var _plex_bold: Font
@@ -60,7 +61,7 @@ func _process(delta: float) -> void:
 			soupcon = maxf(soupcon, garde.soupcon)
 
 	var cible: float
-	if niveau.decouvert:
+	if niveau.decouvert or niveau.en_chasse():
 		_etat = Etat.DECOUVERT
 		cible = 1.0
 	elif soupcon > 0.0:
@@ -74,10 +75,13 @@ func _process(delta: float) -> void:
 		cible = 0.55 if ninja.est_eclaire() else 0.4
 	_jauge = lerpf(_jauge, cible, 1.0 - exp(-10.0 * delta))
 
-	var rouge := 1.0 if niveau.decouvert else soupcon * 0.45
+	var rouge := 1.0 if niveau.decouvert else 0.7 if niveau.en_chasse() else soupcon * 0.45
 	_vignette.modulate.a = lerpf(_vignette.modulate.a, rouge, 1.0 - exp(-8.0 * delta))
 
-	var montre := not ninja.bloque and ninja.lanterne_proche() != null
+	var objet := ninja.objet_proche() if not ninja.bloque else null
+	if objet:
+		_action = objet.texte_action()
+	var montre := objet != null
 	_invite = move_toward(_invite, 1.0 if montre else 0.0, delta * 6.0)
 	_dessin.queue_redraw()
 
@@ -179,7 +183,7 @@ func _dessiner_invite(taille: Vector2) -> void:
 	var touche := Rect2(r.position.x + 34, r.position.y + 15, 55, 58)
 	_dessin.draw_rect(touche, Color(Palette.ENCRE, a))
 	_texte(_plex_bold, "E", touche.position + Vector2(17, 9), 30, Color(Palette.WASHI, a))
-	_texte(_plex_semibold, "TRANCHER LA LANTERNE", Vector2(r.position.x + 112, r.position.y + 21), 30, Color(Palette.ENCRE, a))
+	_texte(_plex_semibold, _action, Vector2(r.position.x + 112, r.position.y + 21), 30, Color(Palette.ENCRE, a))
 
 
 # --- Marqueurs au-dessus des gardes ---------------------------------------
@@ -189,7 +193,7 @@ func _dessiner_marqueurs() -> void:
 	if camera == null:
 		return
 	for garde: Garde in get_tree().get_nodes_in_group("gardes"):
-		var alerte := garde.etat == Garde.Etat.ALERTE
+		var alerte := garde.etat == Garde.Etat.ALERTE or garde.etat == Garde.Etat.CHASSE
 		var mefiant := garde.etat == Garde.Etat.ENQUETE or (garde.etat == Garde.Etat.RONDE and garde.soupcon > 0.0)
 		if not (alerte or mefiant):
 			continue

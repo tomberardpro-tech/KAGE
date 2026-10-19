@@ -145,9 +145,9 @@ func _physics_process(delta: float) -> void:
 		_lancer_dash()
 
 	if Input.is_action_just_pressed("interact"):
-		var lanterne := lanterne_proche()
-		if lanterne:
-			lanterne.eteindre()
+		var objet := objet_proche()
+		if objet:
+			objet.interagir()
 
 	if global_position.y < -10.0:
 		reapparaitre()
@@ -219,16 +219,25 @@ func progression_charge() -> float:
 	return _recharge_charge / recharge_charge
 
 
-## Lanterne allumée assez proche pour être tranchée avec E.
-func lanterne_proche() -> Lanterne:
-	var meilleure: Lanterne = null
+## Lanterne allumée ou fil à clochettes assez proche pour être tranché avec E.
+func objet_proche() -> Node3D:
+	var meilleur: Node3D = null
 	var distance := PORTEE_INTERACTION
-	for lanterne in get_tree().get_nodes_in_group("lanternes"):
-		var d: float = lanterne.global_position.distance_to(global_position)
-		if lanterne.allumee and d < distance:
+	for objet: Node3D in get_tree().get_nodes_in_group("interactifs"):
+		var d := _distance_a(objet)
+		if objet.peut_interagir() and d < distance:
 			distance = d
-			meilleure = lanterne
-	return meilleure
+			meilleur = objet
+	return meilleur
+
+
+## Distance au sol ; pour un fil, distance au point le plus proche du fil.
+func _distance_a(objet: Node3D) -> float:
+	var local := objet.to_local(global_position)
+	if objet is Clochettes:
+		local.x = maxf(absf(local.x) - objet.longueur / 2.0, 0.0)
+	local.y = 0.0
+	return local.length()
 
 
 ## Le sabre touche les gardes et les lanternes proches pendant le dash.
