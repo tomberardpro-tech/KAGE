@@ -16,7 +16,8 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 | --- | --- |
 | Se déplacer | ZQSD (ou WASD) / flèches |
 | Sauter | Espace |
-| Se faufiler | Maj |
+| S'accroupir | Ctrl ou C |
+| Dash au sabre | Clic gauche (vers la souris) |
 | Interagir | E |
 | Pause | Échap |
 
@@ -25,7 +26,17 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 ## Écrans
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
-- **Jeu** (`scenes/jeu.tscn`) : scène provisoire, Échap ramène au menu.
+- **Jeu** (`scenes/jeu.tscn`) : terrain de test avec un muret, des caisses, une maison et un rempart. Échap ramène au menu.
+
+## Le ninja
+
+`scenes/characters/ninja.tscn` et `scripts/ninja.gd` (forme provisoire en attendant le modèle 3D).
+
+- Marche à 5,5 m/s, accroupi à 2,2 m/s.
+- Saut d'environ 1,2 m : assez pour monter sur un muret.
+- En sautant contre un mur ou un toit jusqu'à 2,4 m, il s'accroche et se hisse dessus.
+- Dash au sabre de 5 m vers la souris, rechargé en 0,6 s.
+- Tous les réglages sont modifiables dans l'inspecteur de Godot.
 
 ![Menu principal](docs/menu.png)
 

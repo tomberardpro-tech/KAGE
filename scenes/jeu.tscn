@@ -1,7 +1,8 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="1_cam"]
 [ext_resource type="Script" path="res://scripts/jeu.gd" id="2_jeu"]
+[ext_resource type="PackedScene" path="res://scenes/characters/ninja.tscn" id="3_ninja"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.0549, 0.0588, 0.0706, 1)
@@ -17,21 +18,26 @@ background_mode = 2
 sky = SubResource("Sky")
 ambient_light_source = 3
 ambient_light_color = Color(0.294, 0.318, 0.376, 1)
-ambient_light_energy = 0.6
+ambient_light_energy = 0.9
 tonemap_mode = 2
 fog_enabled = true
 fog_light_color = Color(0.294, 0.318, 0.376, 1)
-fog_density = 0.02
+fog_density = 0.012
 
-[sub_resource type="PlaneMesh" id="Ground_mesh"]
-size = Vector2(60, 60)
+[sub_resource type="StandardMaterial3D" id="Sol_mat"]
+albedo_color = Color(0.16, 0.19, 0.17, 1)
 
-[sub_resource type="StandardMaterial3D" id="Ground_mat"]
-albedo_color = Color(0.086, 0.09, 0.11, 1)
+[sub_resource type="StandardMaterial3D" id="Pierre"]
+albedo_color = Color(0.42, 0.44, 0.5, 1)
 
-[sub_resource type="CapsuleMesh" id="Ninja_mesh"]
-radius = 0.4
-height = 1.2
+[sub_resource type="StandardMaterial3D" id="Bois"]
+albedo_color = Color(0.36, 0.25, 0.18, 1)
+
+[sub_resource type="StandardMaterial3D" id="Tuiles"]
+albedo_color = Color(0.2, 0.22, 0.27, 1)
+
+[sub_resource type="StandardMaterial3D" id="Washi"]
+albedo_color = Color(0.918, 0.89, 0.839, 1)
 
 [node name="Jeu" type="Node3D"]
 script = ExtResource("2_jeu")
@@ -42,18 +48,46 @@ environment = SubResource("Env")
 [node name="Lune" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 20, 0)
 light_color = Color(0.871, 0.816, 0.788, 1)
-light_energy = 0.8
+light_energy = 0.9
 shadow_enabled = true
 
-[node name="Sol" type="MeshInstance3D" parent="."]
-mesh = SubResource("Ground_mesh")
-surface_material_override/0 = SubResource("Ground_mat")
+[node name="Terrain" type="CSGCombiner3D" parent="."]
+use_collision = true
 
-[node name="Ninja" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-mesh = SubResource("Ninja_mesh")
+[node name="Sol" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
+size = Vector3(60, 1, 60)
+material = SubResource("Sol_mat")
+
+[node name="Muret" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 0.5, -4)
+size = Vector3(6, 1, 1)
+material = SubResource("Pierre")
+
+[node name="Caisses" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0.6, -3)
+size = Vector3(1.6, 1.2, 1.6)
+material = SubResource("Bois")
+
+[node name="MaisonMurs" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, -10)
+size = Vector3(6, 2.2, 4)
+material = SubResource("Washi")
+
+[node name="MaisonToit" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, -10)
+size = Vector3(7, 0.4, 5)
+material = SubResource("Tuiles")
+
+[node name="Rempart" type="CSGBox3D" parent="Terrain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 1.75, -11)
+size = Vector3(4, 3.5, 4)
+material = SubResource("Pierre")
+
+[node name="Ninja" parent="." instance=ExtResource("3_ninja")]
 
 [node name="Camera" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, 0.581, 0.814, 0, -0.814, 0.581, 0, 14, 10)
 fov = 40.0
 current = true
 script = ExtResource("1_cam")
