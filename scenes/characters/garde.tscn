@@ -1,56 +1,11 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/garde.gd" id="1"]
+[ext_resource type="PackedScene" path="res://scenes/characters/garde_modele.tscn" id="2"]
 
 [sub_resource type="CapsuleShape3D" id="Forme"]
 radius = 0.4
 height = 1.4
-
-[sub_resource type="StandardMaterial3D" id="Armure"]
-albedo_color = Color(0.13, 0.12, 0.14, 1)
-
-[sub_resource type="StandardMaterial3D" id="Visage"]
-albedo_color = Color(0.72, 0.16, 0.12, 1)
-
-[sub_resource type="StandardMaterial3D" id="Or"]
-albedo_color = Color(0.85, 0.6, 0.3, 1)
-metallic = 0.6
-roughness = 0.4
-
-[sub_resource type="StandardMaterial3D" id="Bois"]
-albedo_color = Color(0.3, 0.2, 0.14, 1)
-
-[sub_resource type="CapsuleMesh" id="Corps"]
-material = SubResource("Armure")
-radius = 0.36
-height = 0.85
-
-[sub_resource type="SphereMesh" id="Tete"]
-material = SubResource("Visage")
-radius = 0.36
-height = 0.66
-
-[sub_resource type="SphereMesh" id="Casque"]
-material = SubResource("Armure")
-radius = 0.42
-height = 0.5
-is_hemisphere = true
-
-[sub_resource type="BoxMesh" id="Cimier"]
-material = SubResource("Or")
-size = Vector3(0.6, 0.18, 0.05)
-
-[sub_resource type="CylinderMesh" id="Hampe"]
-material = SubResource("Bois")
-top_radius = 0.03
-bottom_radius = 0.03
-height = 2.0
-
-[sub_resource type="CylinderMesh" id="Lame"]
-material = SubResource("Or")
-top_radius = 0.0
-bottom_radius = 0.07
-height = 0.35
 
 [node name="Garde" type="CharacterBody3D"]
 script = ExtResource("1")
@@ -61,26 +16,4 @@ shape = SubResource("Forme")
 
 [node name="Visuel" type="Node3D" parent="."]
 
-[node name="Corps" type="MeshInstance3D" parent="Visuel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.43, 0)
-mesh = SubResource("Corps")
-
-[node name="Tete" type="MeshInstance3D" parent="Visuel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.05, 0)
-mesh = SubResource("Tete")
-
-[node name="Casque" type="MeshInstance3D" parent="Visuel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.12, -0.03)
-mesh = SubResource("Casque")
-
-[node name="Cimier" type="MeshInstance3D" parent="Visuel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.42, 0.12)
-mesh = SubResource("Cimier")
-
-[node name="Lance" type="MeshInstance3D" parent="Visuel"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.45, 1.0, 0.1)
-mesh = SubResource("Hampe")
-
-[node name="Lame" type="MeshInstance3D" parent="Visuel/Lance"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.17, 0)
-mesh = SubResource("Lame")
+[node name="Modele" parent="Visuel" instance=ExtResource("2")]
