@@ -447,3 +447,8 @@ func _joueur() -> void:
 	var messages: Node = load("res://scenes/ui/messages.tscn").instantiate()
 	messages.name = "Messages"
 	_ajouter(racine, messages)
+	for nom in ["Hud", "Ecrans"]:
+		var calque := CanvasLayer.new()
+		calque.name = nom
+		calque.set_script(load("res://scripts/%s.gd" % ("hud" if nom == "Hud" else "ecrans_jeu")))
+		_ajouter(racine, calque)

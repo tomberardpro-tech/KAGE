@@ -18,7 +18,7 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 | Sauter | Espace |
 | S'accroupir | Ctrl ou C |
 | Dash au sabre | Clic gauche (vers la souris) |
-| Interagir | E |
+| Trancher une lanterne proche | E |
 | Pause | Échap |
 
 Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERTY et WASD sur un QWERTY.
@@ -36,7 +36,8 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 - Marche à 5,5 m/s, accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.
 - En sautant contre un mur ou un toit jusqu'à 2,4 m, il s'accroche et se hisse dessus.
-- Dash au sabre de 5 m vers la souris, rechargé en 0,6 s.
+- Dash au sabre de 5 m vers la souris : 3 charges, une charge revient toutes les 3 s.
+- E près d'une lanterne allumée l'éteint sans dasher.
 - Tous les réglages sont modifiables dans l'inspecteur de Godot.
 
 ![Menu principal](docs/menu.png)
@@ -80,6 +81,14 @@ On peut ensuite retoucher `scenes/levels/chateau.tscn` dans Godot, mais une nouv
 - **Lune** : des nuages passent toutes les 14 s et coupent le clair de lune pendant 5 s.
 - **Autels** : points de reprise. **Parchemin** dans le donjon, **sortie** dans le rempart est.
 - Fin de partie : temps, bonus Fantôme (jamais repéré) et Pacifiste (aucun garde tué).
+
+## Interface en jeu
+
+D'après les maquettes HUD et les écrans du Figma :
+
+- **HUD** (`scripts/hud.gd`) : œil et jauge de visibilité (CACHÉ, EXPOSÉ, REPÉRÉ, DÉCOUVERT), lune qui pâlit quand les nuages la cachent, parchemin 0 / 1, charges de dash, invite « E · Trancher la lanterne », marqueurs ? et ! au-dessus des gardes méfiants ou alertés, bords rouges quand on est vu.
+- **Écrans** (`scripts/ecrans_jeu.gd`, parchemins dessinés par `scripts/rouleau.gd`) : tutoriel au départ, pause (Échap : reprendre, recommencer à l'autel, quitter), défaite (R pour repartir de l'autel) et victoire avec le score (temps, Fantôme, Pacifiste ; Entrée pour le menu, R pour rejouer).
+- Il n'y a pas de vies : un garde qui te repère te renvoie au dernier autel, autant de fois qu'il le faut.
 
 ## Captures
 

@@ -1,12 +1,11 @@
 class_name Niveau
 extends Node3D
 ## Règles du niveau : point de reprise, parchemin, sortie, mort, victoire et nuages sur la lune.
+## Le HUD et les écrans (tutoriel, pause, défaite, victoire) sont des enfants du niveau.
 
 signal parchemin_pris
 signal victoire(temps: float)
 signal mort
-
-const SCENE_MENU := "res://scenes/ui/menu.tscn"
 
 @export var cycle_nuages := 14.0  ## secondes entre deux passages de nuages
 @export var duree_nuages := 5.0
@@ -16,6 +15,7 @@ var a_le_parchemin := false
 var temps := 0.0
 var fois_repere := 0
 var gardes_tues := 0
+var decouvert := false  ## entre le moment où un garde nous voit et la reprise
 
 var _point_reprise: Vector3
 var _fini := false
@@ -23,6 +23,7 @@ var _horloge_lune := 0.0
 
 @onready var ninja: Ninja = $Ninja
 @onready var _messages: Messages = $Messages
+@onready var _ecrans: EcransJeu = $Ecrans
 @onready var _lune: DirectionalLight3D = $Lune
 
 
@@ -34,7 +35,7 @@ func _ready() -> void:
 		autel.active.connect(_sur_autel)
 	$Parchemin.touche.connect(_sur_parchemin)
 	$Sortie.touche.connect(_sur_sortie)
-	_messages.afficher("NIVEAU 1 · LE CHÂTEAU", "Prends le parchemin du donjon, puis sors par le rempart est.", 4.0)
+	_ecrans.tutoriel()
 
 
 func _process(delta: float) -> void:
@@ -53,9 +54,8 @@ func _process(delta: float) -> void:
 		create_tween().tween_property(_lune, "light_energy", 0.9 if visible else 0.25, 1.5)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause") and not _fini:
-		Transition.vers(SCENE_MENU)
+func peut_mettre_en_pause() -> bool:
+	return not _fini and not decouvert
 
 
 func _sur_autel(autel: Autel) -> void:
@@ -83,14 +83,7 @@ func _sur_sortie() -> void:
 	_fini = true
 	ninja.bloque = true
 	victoire.emit(temps)
-	var sous_titre := "Temps : %d:%02d" % [int(temps) / 60, int(temps) % 60]
-	if fois_repere == 0:
-		sous_titre += " · Fantôme"
-	if gardes_tues == 0:
-		sous_titre += " · Pacifiste"
-	_messages.afficher("VICTOIRE", sous_titre, 4.0)
-	await get_tree().create_timer(4.0).timeout
-	Transition.vers(SCENE_MENU)
+	_ecrans.victoire(temps, fois_repere == 0, gardes_tues == 0)
 
 
 func _sur_repere(_garde: Garde) -> void:
@@ -98,13 +91,20 @@ func _sur_repere(_garde: Garde) -> void:
 		return
 	fois_repere += 1
 	ninja.bloque = true
+	decouvert = true
 	mort.emit()
-	_messages.afficher("DÉCOUVERT", "Tu repars du dernier autel.", 1.6)
-	await get_tree().create_timer(1.6).timeout
+	await get_tree().create_timer(0.8).timeout
+	_ecrans.defaite()
+
+
+## Les gardes reprennent leur ronde et le ninja repart du dernier autel.
+func recommencer_a_l_autel() -> void:
+	get_tree().paused = false
 	for garde in get_tree().get_nodes_in_group("gardes"):
 		garde.reinitialiser()
 	ninja.reapparaitre(_point_reprise)
 	ninja.bloque = false
+	decouvert = false
 
 
 func compter_garde_tue() -> void:

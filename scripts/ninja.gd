@@ -21,7 +21,9 @@ signal dash_lance(direction: Vector3)
 @export_group("Dash au sabre")
 @export var distance_dash := 5.0
 @export var duree_dash := 0.18
-@export var recharge_dash := 0.6
+@export var recharge_dash := 0.6     ## délai minimum entre deux dashs
+@export var charges_dash_max := 3
+@export var recharge_charge := 3.0   ## secondes pour regagner une charge
 
 var accroupi := false
 var en_dash := false
@@ -29,6 +31,8 @@ var bloque := false  ## pendant une mort ou une victoire
 
 ## Rayon du coup de sabre pendant le dash (gardes et lanternes).
 const PORTEE_SABRE := 1.3
+## Distance à laquelle on peut trancher une lanterne avec E.
+const PORTEE_INTERACTION := 1.8
 ## Au-dessus de cette hauteur, on est sur un toit : la lune peut nous éclairer.
 const HAUTEUR_TOIT := 1.4
 
@@ -41,6 +45,8 @@ var _grimpe := false
 var _dash_restant := 0.0
 var _dash_recharge := 0.0
 var _dash_direction := Vector3.ZERO
+var charges_dash := 3
+var _recharge_charge := 0.0
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -91,6 +97,11 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		return
 	_dash_recharge -= delta
+	if charges_dash < charges_dash_max:
+		_recharge_charge += delta
+		if _recharge_charge >= recharge_charge:
+			_recharge_charge = 0.0
+			charges_dash += 1
 
 	if en_dash:
 		_continuer_dash(delta)
@@ -130,8 +141,13 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor() and direction.length() > 0.1 and velocity.y < 2.5:
 		_essayer_grimper(direction.normalized())
 
-	if Input.is_action_just_pressed("dash") and _dash_recharge <= 0.0:
+	if Input.is_action_just_pressed("dash") and _dash_recharge <= 0.0 and charges_dash > 0:
 		_lancer_dash()
+
+	if Input.is_action_just_pressed("interact"):
+		var lanterne := lanterne_proche()
+		if lanterne:
+			lanterne.eteindre()
 
 	if global_position.y < -10.0:
 		reapparaitre()
@@ -141,6 +157,8 @@ func reapparaitre(position_depart := _point_depart) -> void:
 	global_position = position_depart
 	velocity = Vector3.ZERO
 	en_dash = false
+	charges_dash = charges_dash_max
+	_recharge_charge = 0.0
 
 
 func _tourner_vers(direction: Vector3, delta: float) -> void:
@@ -180,6 +198,7 @@ func _lancer_dash() -> void:
 	_dash_direction = direction
 	_dash_restant = duree_dash
 	_dash_recharge = recharge_dash
+	charges_dash -= 1
 	en_dash = true
 	_visuel.rotation.y = atan2(direction.x, direction.z)
 	dash_lance.emit(direction)
@@ -193,6 +212,23 @@ func _continuer_dash(delta: float) -> void:
 	if _dash_restant <= 0.0 or is_on_wall():
 		en_dash = false
 		velocity = _dash_direction * vitesse
+
+
+## Progression de la charge de dash en cours de recharge (0 → 1).
+func progression_charge() -> float:
+	return _recharge_charge / recharge_charge
+
+
+## Lanterne allumée assez proche pour être tranchée avec E.
+func lanterne_proche() -> Lanterne:
+	var meilleure: Lanterne = null
+	var distance := PORTEE_INTERACTION
+	for lanterne in get_tree().get_nodes_in_group("lanternes"):
+		var d: float = lanterne.global_position.distance_to(global_position)
+		if lanterne.allumee and d < distance:
+			distance = d
+			meilleure = lanterne
+	return meilleure
 
 
 ## Le sabre touche les gardes et les lanternes proches pendant le dash.

@@ -1,33 +1,35 @@
-[gd_scene load_steps=49 format=3]
+[gd_scene load_steps=51 format=3]
 
-[ext_resource type="Script" path="res://scripts/niveau.gd" id="1_orsre"]
-[ext_resource type="Script" path="res://scripts/herbes.gd" id="2_krbih"]
-[ext_resource type="Script" path="res://scripts/arbre.gd" id="3_o6d7a"]
-[ext_resource type="Script" path="res://scripts/zone.gd" id="4_vcyx4"]
-[ext_resource type="PackedScene" path="res://scenes/objets/lanterne.tscn" id="5_ugby5"]
-[ext_resource type="Script" path="res://scripts/lanterne.gd" id="6_s7b0h"]
-[ext_resource type="PackedScene" path="res://scenes/characters/garde.tscn" id="7_wbruk"]
-[ext_resource type="Script" path="res://scripts/garde.gd" id="8_2vs1v"]
-[ext_resource type="Script" path="res://scripts/autel.gd" id="9_1weo7"]
-[ext_resource type="Script" path="res://scripts/ramassable.gd" id="10_al0bd"]
-[ext_resource type="PackedScene" path="res://scenes/characters/ninja.tscn" id="11_xovd4"]
-[ext_resource type="Script" path="res://scripts/ninja.gd" id="12_28v35"]
-[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="13_tbto3"]
-[ext_resource type="PackedScene" path="res://scenes/ui/messages.tscn" id="14_jjyv8"]
-[ext_resource type="Script" path="res://scripts/messages.gd" id="15_cfs3t"]
+[ext_resource type="Script" path="res://scripts/niveau.gd" id="1_o6d7a"]
+[ext_resource type="Script" path="res://scripts/herbes.gd" id="2_vcyx4"]
+[ext_resource type="Script" path="res://scripts/arbre.gd" id="3_ugby5"]
+[ext_resource type="Script" path="res://scripts/zone.gd" id="4_s7b0h"]
+[ext_resource type="PackedScene" path="res://scenes/objets/lanterne.tscn" id="5_wbruk"]
+[ext_resource type="Script" path="res://scripts/lanterne.gd" id="6_2vs1v"]
+[ext_resource type="PackedScene" path="res://scenes/characters/garde.tscn" id="7_1weo7"]
+[ext_resource type="Script" path="res://scripts/garde.gd" id="8_al0bd"]
+[ext_resource type="Script" path="res://scripts/autel.gd" id="9_xovd4"]
+[ext_resource type="Script" path="res://scripts/ramassable.gd" id="10_28v35"]
+[ext_resource type="PackedScene" path="res://scenes/characters/ninja.tscn" id="11_tbto3"]
+[ext_resource type="Script" path="res://scripts/ninja.gd" id="12_jjyv8"]
+[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="13_cfs3t"]
+[ext_resource type="PackedScene" path="res://scenes/ui/messages.tscn" id="14_fgeqm"]
+[ext_resource type="Script" path="res://scripts/messages.gd" id="15_ast4k"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="16_7repe"]
+[ext_resource type="Script" path="res://scripts/ecrans_jeu.gd" id="17_wwdkd"]
 
-[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_fgeqm"]
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_dghry"]
 sky_top_color = Color(0.054902, 0.0588235, 0.0705882, 1)
 sky_horizon_color = Color(0.294118, 0.317647, 0.376471, 1)
 ground_bottom_color = Color(0.054902, 0.0588235, 0.0705882, 1)
 ground_horizon_color = Color(0.294118, 0.317647, 0.376471, 1)
 
-[sub_resource type="Sky" id="Sky_ast4k"]
-sky_material = SubResource("ProceduralSkyMaterial_fgeqm")
+[sub_resource type="Sky" id="Sky_ypwmg"]
+sky_material = SubResource("ProceduralSkyMaterial_dghry")
 
-[sub_resource type="Environment" id="Environment_7repe"]
+[sub_resource type="Environment" id="Environment_i7pqy"]
 background_mode = 2
-sky = SubResource("Sky_ast4k")
+sky = SubResource("Sky_ypwmg")
 ambient_light_source = 2
 ambient_light_color = Color(0.294118, 0.352941, 0.470588, 1)
 ambient_light_energy = 0.55
@@ -36,124 +38,126 @@ fog_enabled = true
 fog_light_color = Color(0.164706, 0.188235, 0.25098, 1)
 fog_density = 0.008
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wwdkd"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1lkkm"]
 albedo_color = Color(0.141176, 0.207843, 0.164706, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_dghry"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1c5nl"]
 albedo_color = Color(0.133333, 0.196078, 0.290196, 1)
 metallic = 0.3
 roughness = 0.15
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ypwmg"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7imil"]
 albedo_color = Color(0.227451, 0.231373, 0.258824, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_i7pqy"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_46fq7"]
 albedo_color = Color(0.294118, 0.301961, 0.337255, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1lkkm"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gdicr"]
 albedo_color = Color(0.72549, 0.694118, 0.639216, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1c5nl"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_waoek"]
 albedo_color = Color(0.168627, 0.176471, 0.2, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_7imil"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_q1gmw"]
 albedo_color = Color(0.352941, 0.243137, 0.168627, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_46fq7"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_df4qn"]
 albedo_color = Color(0.352941, 0.364706, 0.4, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_gdicr"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e73y6"]
 albedo_color = Color(0.231373, 0.227451, 0.188235, 1)
 roughness = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_waoek"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mmg7w"]
 albedo_color = Color(0.419608, 0.392157, 0.25098, 1)
 roughness = 0.9
 
-[sub_resource type="PlaneMesh" id="PlaneMesh_q1gmw"]
-material = SubResource("StandardMaterial3D_dghry")
+[sub_resource type="PlaneMesh" id="PlaneMesh_8di3m"]
+material = SubResource("StandardMaterial3D_1c5nl")
 size = Vector2(65.6, 3.6)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_df4qn"]
-size = Vector3(65.6, 4, 1.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_e73y6"]
-size = Vector3(65.6, 4, 1.6)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_mmg7w"]
-size = Vector3(1.6, 4, 86.4)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_8di3m"]
-size = Vector3(1.6, 4, 86.4)
-
 [sub_resource type="BoxShape3D" id="BoxShape3D_kvgrg"]
-size = Vector3(30.4, 4, 0.4)
+size = Vector3(65.6, 4, 1.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_u2er1"]
-size = Vector3(30.4, 4, 0.4)
+size = Vector3(65.6, 4, 1.6)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_2e271"]
-size = Vector3(2.4, 4, 0.4)
+size = Vector3(1.6, 4, 86.4)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_glxxr"]
+size = Vector3(1.6, 4, 86.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_84ark"]
+size = Vector3(30.4, 4, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_e110e"]
+size = Vector3(30.4, 4, 0.4)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_v6knp"]
 size = Vector3(2.4, 4, 0.4)
 
-[sub_resource type="CylinderShape3D" id="CylinderShape3D_84ark"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_3ee2a"]
+size = Vector3(2.4, 4, 0.4)
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_e110e"]
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_6sfmo"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l578n"]
 albedo_color = Color(0.760784, 0.231373, 0.133333, 1)
 roughness = 0.9
 
-[sub_resource type="SphereMesh" id="SphereMesh_v6knp"]
-material = SubResource("StandardMaterial3D_e110e")
+[sub_resource type="SphereMesh" id="SphereMesh_3nc2v"]
+material = SubResource("StandardMaterial3D_l578n")
 radius = 0.12
 height = 0.16
 
-[sub_resource type="MultiMesh" id="MultiMesh_3ee2a"]
+[sub_resource type="MultiMesh" id="MultiMesh_4adna"]
 transform_format = 1
 instance_count = 260
-mesh = SubResource("SphereMesh_v6knp")
+mesh = SubResource("SphereMesh_3nc2v")
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_6sfmo"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_8ut5r"]
 radius = 1.6
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_l578n"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_jxr8c"]
 radius = 1.6
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_3nc2v"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_2spdb"]
 radius = 1.6
 
-[sub_resource type="SphereShape3D" id="SphereShape3D_4adna"]
+[sub_resource type="SphereShape3D" id="SphereShape3D_hs880"]
 radius = 0.9
 
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_8ut5r"]
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_o3jsg"]
 albedo_color = Color(0.917647, 0.890196, 0.839216, 1)
 roughness = 0.9
 emission_enabled = true
 emission = Color(0.85098, 0.603922, 0.305882, 1)
 emission_energy_multiplier = 0.6
 
-[sub_resource type="CylinderMesh" id="CylinderMesh_jxr8c"]
-material = SubResource("StandardMaterial3D_8ut5r")
+[sub_resource type="CylinderMesh" id="CylinderMesh_xo3jm"]
+material = SubResource("StandardMaterial3D_o3jsg")
 top_radius = 0.12
 bottom_radius = 0.12
 height = 0.7
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_2spdb"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_jlol8"]
 size = Vector3(2, 2, 4.8)
 
 [node name="Chateau" type="Node3D"]
-script = ExtResource("1_orsre")
+script = ExtResource("1_o6d7a")
+cycle_nuages = 14.0
+duree_nuages = 5.0
 
 [node name="Ambiance" type="WorldEnvironment" parent="."]
-environment = SubResource("Environment_7repe")
+environment = SubResource("Environment_i7pqy")
 
 [node name="Lune" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.906308, -0.346189, 0.242404, 0, 0.573576, 0.819152, -0.422618, -0.742404, 0.519837, 0, 0, 0)
@@ -167,405 +171,405 @@ use_collision = true
 [node name="Sol" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, -2.8)
 size = Vector3(65.6, 2, 86.4)
-material = SubResource("StandardMaterial3D_wwdkd")
+material = SubResource("StandardMaterial3D_1lkkm")
 
 [node name="Douves" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.6, 23.8)
 operation = 2
 size = Vector3(65.6, 1.2, 3.6)
-material = SubResource("StandardMaterial3D_dghry")
+material = SubResource("StandardMaterial3D_1c5nl")
 
 [node name="CourExterieure" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 10)
 size = Vector3(57.6, 0.02, 19.2)
-material = SubResource("StandardMaterial3D_ypwmg")
+material = SubResource("StandardMaterial3D_7imil")
 
 [node name="CourInterieure" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -12.4)
 size = Vector3(57.6, 0.02, 22.4)
-material = SubResource("StandardMaterial3D_ypwmg")
+material = SubResource("StandardMaterial3D_7imil")
 
 [node name="AlleeExterieure" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 10)
 size = Vector3(3.2, 0.03, 19.2)
-material = SubResource("StandardMaterial3D_i7pqy")
+material = SubResource("StandardMaterial3D_46fq7")
 
 [node name="AlleeInterieure" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, -9.6)
 size = Vector3(2.4, 0.03, 16.8)
-material = SubResource("StandardMaterial3D_i7pqy")
+material = SubResource("StandardMaterial3D_46fq7")
 
 [node name="PasDePorte" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, -0.4)
 size = Vector3(3.2, 0.03, 1.6)
-material = SubResource("StandardMaterial3D_i7pqy")
+material = SubResource("StandardMaterial3D_46fq7")
 
 [node name="RempartSudOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.4, 1.7, 20.4)
 size = Vector3(28, 3.4, 1.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartSudOuestTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.4, 3.525, 20.4)
 size = Vector3(28.48, 0.25, 2.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="RempartSudEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4, 1.7, 20.4)
 size = Vector3(28, 3.4, 1.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartSudEstTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4, 3.525, 20.4)
 size = Vector3(28.48, 0.25, 2.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="RempartOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.6, 1.7, -11.2)
 size = Vector3(1.6, 3.4, 61.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartOuestTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.6, 3.525, -11.2)
 size = Vector3(2.08, 0.25, 62.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="RempartEstNord" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 1.7, -39)
 size = Vector3(1.6, 3.4, 6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartEstNordTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 3.525, -39)
 size = Vector3(2.08, 0.25, 6.48)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="RempartEstSud" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 1.7, -5.8)
 size = Vector3(1.6, 3.4, 50.8)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartEstSudTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 3.525, -5.8)
 size = Vector3(2.08, 0.25, 51.28)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="RempartNord" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -41.2)
 size = Vector3(57.6, 3.4, 1.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RempartNordTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.525, -41.2)
 size = Vector3(58.08, 0.25, 2.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="MurInterieurOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 1.5, -0.4)
 size = Vector3(22.4, 3, 1.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="MurInterieurOuestTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 3.125, -0.4)
 size = Vector3(22.88, 0.25, 2.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="MurInterieurEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.6, 1.5, -0.4)
 size = Vector3(22.4, 3, 1.6)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="MurInterieurEstTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.6, 3.125, -0.4)
 size = Vector3(22.88, 0.25, 2.08)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="PorteSud830" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 2, 20.4)
 size = Vector3(0.4, 4, 2.4)
-material = SubResource("StandardMaterial3D_7imil")
+material = SubResource("StandardMaterial3D_q1gmw")
 
 [node name="PorteSud960" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 2, 20.4)
 size = Vector3(0.4, 4, 2.4)
-material = SubResource("StandardMaterial3D_7imil")
+material = SubResource("StandardMaterial3D_q1gmw")
 
 [node name="PorteInterieure730" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.6, 1.8, -0.4)
 size = Vector3(0.4, 3.6, 2.4)
-material = SubResource("StandardMaterial3D_7imil")
+material = SubResource("StandardMaterial3D_q1gmw")
 
 [node name="PorteInterieure1060" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.6, 1.8, -0.4)
 size = Vector3(0.4, 3.6, 2.4)
-material = SubResource("StandardMaterial3D_7imil")
+material = SubResource("StandardMaterial3D_q1gmw")
 
 [node name="LinteauSud" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, 20.4)
 size = Vector3(5.6, 0.4, 2.4)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="LinteauSortie" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29.6, 3.6, -33.6)
 size = Vector3(2, 0.4, 4.8)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="Remise" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 0.75, 15.4)
 size = Vector3(6.4, 1.5, 4.4)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="RemiseSoubassement" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 0.2, 15.4)
 size = Vector3(6.56, 0.4, 4.56)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="RemiseToit" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 1.65, 15.4)
 size = Vector3(7.52, 0.3, 5.52)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="Caserne" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.4, 0.95, -12.8)
 size = Vector3(13.6, 1.9, 16.8)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="CaserneSoubassement" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.4, 0.2, -12.8)
 size = Vector3(13.76, 0.4, 16.96)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="CaserneToit" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.4, 2.05, -12.8)
 size = Vector3(14.72, 0.3, 17.92)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="Entrepot" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 0.95, -12.8)
 size = Vector3(13.6, 1.9, 16.8)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="EntrepotSoubassement" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 0.2, -12.8)
 size = Vector3(13.76, 0.4, 16.96)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="EntrepotToit" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 2.05, -12.8)
 size = Vector3(14.72, 0.3, 17.92)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonSol" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, -32)
 size = Vector3(32, 0.04, 16.8)
-material = SubResource("StandardMaterial3D_gdicr")
+material = SubResource("StandardMaterial3D_e73y6")
 
 [node name="Tatami0" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 0.03, -32)
 size = Vector3(4.8, 0.06, 12)
-material = SubResource("StandardMaterial3D_waoek")
+material = SubResource("StandardMaterial3D_mmg7w")
 
 [node name="Tatami1" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.6, 0.03, -32)
 size = Vector3(4.8, 0.06, 12)
-material = SubResource("StandardMaterial3D_waoek")
+material = SubResource("StandardMaterial3D_mmg7w")
 
 [node name="Tatami2" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -32)
 size = Vector3(4.8, 0.06, 12)
-material = SubResource("StandardMaterial3D_waoek")
+material = SubResource("StandardMaterial3D_mmg7w")
 
 [node name="Tatami3" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6, 0.03, -32)
 size = Vector3(4.8, 0.06, 12)
-material = SubResource("StandardMaterial3D_waoek")
+material = SubResource("StandardMaterial3D_mmg7w")
 
 [node name="Tatami4" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 0.03, -32)
 size = Vector3(4.8, 0.06, 12)
-material = SubResource("StandardMaterial3D_waoek")
+material = SubResource("StandardMaterial3D_mmg7w")
 
 [node name="DonjonMurNord" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -40.08)
 size = Vector3(32, 3.4, 0.64)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="DonjonMurNordTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.525, -40.08)
 size = Vector3(32.48, 0.25, 1.12)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonMurOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.68, 1.7, -32)
 size = Vector3(0.64, 3.4, 16.8)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="DonjonMurOuestTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.68, 3.525, -32)
 size = Vector3(1.12, 0.25, 17.28)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonMurEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.68, 1.7, -32)
 size = Vector3(0.64, 3.4, 16.8)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="DonjonMurEstTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.68, 3.525, -32)
 size = Vector3(1.12, 0.25, 17.28)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonMurSudOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 1.7, -23.92)
 size = Vector3(12.8, 3.4, 0.64)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="DonjonMurSudOuestTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.6, 3.525, -23.92)
 size = Vector3(13.28, 0.25, 1.12)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonMurSudEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.6, 1.7, -23.92)
 size = Vector3(12.8, 3.4, 0.64)
-material = SubResource("StandardMaterial3D_1lkkm")
+material = SubResource("StandardMaterial3D_gdicr")
 
 [node name="DonjonMurSudEstTuiles" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.6, 3.525, -23.92)
 size = Vector3(13.28, 0.25, 1.12)
-material = SubResource("StandardMaterial3D_1c5nl")
+material = SubResource("StandardMaterial3D_waoek")
 
 [node name="DonjonSocleNord" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, -40.6)
 size = Vector3(32.96, 0.6, 0.56)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="DonjonSocleOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.2, 0.3, -32)
 size = Vector3(0.56, 0.6, 17.76)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="DonjonSocleEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.2, 0.3, -32)
 size = Vector3(0.56, 0.6, 17.76)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="DonjonSocleSudOuest" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.8, 0.3, -23.4)
 size = Vector3(13.36, 0.6, 0.56)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="DonjonSocleSudEst" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.8, 0.3, -23.4)
 size = Vector3(13.36, 0.6, 0.56)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="PontLevis" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.025, 23.8)
 size = Vector3(4.8, 0.15, 4.4)
-material = SubResource("StandardMaterial3D_7imil")
+material = SubResource("StandardMaterial3D_q1gmw")
 
 [node name="Etang" type="CSGBox3D" parent="Decor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.6, 0.02, 13.8)
 size = Vector3(7.2, 0.04, 5.2)
-material = SubResource("StandardMaterial3D_dghry")
+material = SubResource("StandardMaterial3D_1c5nl")
 
 [node name="Eau" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.45, 23.8)
-mesh = SubResource("PlaneMesh_q1gmw")
+mesh = SubResource("PlaneMesh_8di3m")
 
 [node name="Limites" type="StaticBody3D" parent="."]
 
 [node name="@CollisionShape3D@2" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -46.8)
-shape = SubResource("BoxShape3D_df4qn")
+shape = SubResource("BoxShape3D_kvgrg")
 
 [node name="@CollisionShape3D@3" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 41.2)
-shape = SubResource("BoxShape3D_e73y6")
+shape = SubResource("BoxShape3D_u2er1")
 
 [node name="@CollisionShape3D@4" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.6, 2, -2.8)
-shape = SubResource("BoxShape3D_mmg7w")
+shape = SubResource("BoxShape3D_2e271")
 
 [node name="@CollisionShape3D@5" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.6, 2, -2.8)
-shape = SubResource("BoxShape3D_8di3m")
+shape = SubResource("BoxShape3D_glxxr")
 
 [node name="@CollisionShape3D@6" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 2, 25.8)
-shape = SubResource("BoxShape3D_kvgrg")
+shape = SubResource("BoxShape3D_84ark")
 
 [node name="@CollisionShape3D@7" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.6, 2, 25.8)
-shape = SubResource("BoxShape3D_u2er1")
+shape = SubResource("BoxShape3D_e110e")
 
 [node name="@CollisionShape3D@8" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.6, 2, 21.8)
-shape = SubResource("BoxShape3D_2e271")
+shape = SubResource("BoxShape3D_v6knp")
 
 [node name="@CollisionShape3D@9" type="CollisionShape3D" parent="Limites"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.6, 2, 21.8)
-shape = SubResource("BoxShape3D_glxxr")
+shape = SubResource("BoxShape3D_3ee2a")
 
 [node name="Herbes0" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.8, 0, 33.4)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(10.4, 6.8)
 
 [node name="Herbes1" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.2, 0, 32.8)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(12, 7.2)
 
 [node name="Herbes2" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.4, 0, 14)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(8.8, 6.4)
 
 [node name="Herbes3" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 0, 15.8)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(9.6, 5.2)
 
 [node name="Herbes4" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.8, 0, 4.2)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(7.2, 4.4)
 
 [node name="Herbes5" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.2, 0, -4)
-script = ExtResource("2_krbih")
+script = ExtResource("2_vcyx4")
 taille = Vector2(7.2, 4)
 
 [node name="Arbre0" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.4, 0, 3.4)
-script = ExtResource("3_o6d7a")
+script = ExtResource("3_ugby5")
 rayon = 2.2
 
 [node name="Arbre1" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.4, 0, 3.8)
-script = ExtResource("3_o6d7a")
+script = ExtResource("3_ugby5")
 rayon = 1.8
 
 [node name="Arbre2" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.6, 0, -10.4)
-script = ExtResource("3_o6d7a")
+script = ExtResource("3_ugby5")
 rayon = 2.8
 
 [node name="Arbre3" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8.2, 0, -12.6)
-script = ExtResource("3_o6d7a")
+script = ExtResource("3_ugby5")
 rayon = 3.0
 
 [node name="ClairDeLune" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -16)
-script = ExtResource("4_vcyx4")
+script = ExtResource("4_s7b0h")
 type = 3
 
 [node name="@CollisionShape3D@10" type="CollisionShape3D" parent="ClairDeLune"]
 transform = Transform3D(16, 0, 0, 0, 1, 0, 0, 0, 12, 0, 1, 0)
-shape = SubResource("CylinderShape3D_84ark")
+shape = SubResource("CylinderShape3D_6sfmo")
 
 [node name="Rayon" type="SpotLight3D" parent="ClairDeLune"]
 transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 14, 0)
@@ -575,98 +579,98 @@ spot_range = 20.0
 spot_angle = 26.0
 
 [node name="Higanbanas" type="MultiMeshInstance3D" parent="."]
-multimesh = SubResource("MultiMesh_3ee2a")
+multimesh = SubResource("MultiMesh_4adna")
 
 [node name="Lanternes" type="Node3D" parent="."]
 
-[node name="Lanterne0" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne0" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4, 0, 17.6)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 rayon = 3.0
 
-[node name="Lanterne1" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne1" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.4, 0, 17.6)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 rayon = 3.0
 
-[node name="Lanterne2" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne2" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.8, 0, 6.8)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne3" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne3" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14.4, 0, 4.4)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne4" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne4" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.8, 0, 1.2)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne5" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne5" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.8, 0, 1.2)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne6" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne6" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6.4, 0, -20.4)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne7" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne7" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6.4, 0, -20.4)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
-[node name="Lanterne8" type="Node3D" parent="Lanternes" instance=ExtResource("5_ugby5")]
+[node name="Lanterne8" type="Node3D" parent="Lanternes" instance=ExtResource("5_wbruk")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -10)
-script = ExtResource("6_s7b0h")
+script = ExtResource("6_2vs1v")
 
 [node name="Gardes" type="Node3D" parent="."]
 
-[node name="GardePorteSud" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardePorteSud" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16.4)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 
-[node name="GardeOuest" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardeOuest" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.6, 0, 7.6)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 ronde = PackedVector3Array(-20.8, 0, 7.6, -7.2, 0, 7.6)
 
-[node name="GardeEst" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardeEst" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.2, 0, 7.2)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 ronde = PackedVector3Array(22.4, 0, 7.2, 7.2, 0, 7.2)
 
-[node name="GardePorteInterieure" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardePorteInterieure" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.8)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 
-[node name="GardeCourNord" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardeCourNord" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.4, 0, -17.2)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 ronde = PackedVector3Array(-11.2, 0, -17.2, 10.4, 0, -17.2)
 
-[node name="GardeCourSud" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardeCourSud" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.4, 0, -7.6)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 ronde = PackedVector3Array(10.4, 0, -7.6, -8, 0, -7.6)
 
-[node name="GardeDonjon" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_wbruk")]
+[node name="GardeDonjon" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_1weo7")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -27.6)
-script = ExtResource("8_2vs1v")
+script = ExtResource("8_al0bd")
 
 [node name="Depart" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 37.6)
-script = ExtResource("9_1weo7")
+script = ExtResource("9_xovd4")
 
 [node name="@CollisionShape3D@11" type="CollisionShape3D" parent="Depart"]
-shape = SubResource("SphereShape3D_6sfmo")
+shape = SubResource("SphereShape3D_8ut5r")
 
 [node name="Socle" type="CSGBox3D" parent="Depart"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
 size = Vector3(0.9, 0.6, 0.6)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="Toit" type="CSGBox3D" parent="Depart"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 size = Vector3(1.2, 0.15, 0.8)
-material = SubResource("StandardMaterial3D_e110e")
+material = SubResource("StandardMaterial3D_l578n")
 
 [node name="Flamme" type="OmniLight3D" parent="Depart"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
@@ -676,20 +680,20 @@ omni_range = 2.0
 
 [node name="AutelOuest" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.4, 0, 16.4)
-script = ExtResource("9_1weo7")
+script = ExtResource("9_xovd4")
 
 [node name="@CollisionShape3D@12" type="CollisionShape3D" parent="AutelOuest"]
-shape = SubResource("SphereShape3D_l578n")
+shape = SubResource("SphereShape3D_jxr8c")
 
 [node name="Socle" type="CSGBox3D" parent="AutelOuest"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
 size = Vector3(0.9, 0.6, 0.6)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="Toit" type="CSGBox3D" parent="AutelOuest"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 size = Vector3(1.2, 0.15, 0.8)
-material = SubResource("StandardMaterial3D_e110e")
+material = SubResource("StandardMaterial3D_l578n")
 
 [node name="Flamme" type="OmniLight3D" parent="AutelOuest"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
@@ -700,20 +704,20 @@ omni_range = 2.0
 
 [node name="AutelEst" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 21.2, 0, -2.8)
-script = ExtResource("9_1weo7")
+script = ExtResource("9_xovd4")
 
 [node name="@CollisionShape3D@13" type="CollisionShape3D" parent="AutelEst"]
-shape = SubResource("SphereShape3D_3nc2v")
+shape = SubResource("SphereShape3D_2spdb")
 
 [node name="Socle" type="CSGBox3D" parent="AutelEst"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
 size = Vector3(0.9, 0.6, 0.6)
-material = SubResource("StandardMaterial3D_46fq7")
+material = SubResource("StandardMaterial3D_df4qn")
 
 [node name="Toit" type="CSGBox3D" parent="AutelEst"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
 size = Vector3(1.2, 0.15, 0.8)
-material = SubResource("StandardMaterial3D_e110e")
+material = SubResource("StandardMaterial3D_l578n")
 
 [node name="Flamme" type="OmniLight3D" parent="AutelEst"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
@@ -724,15 +728,15 @@ omni_range = 2.0
 
 [node name="Parchemin" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -32.8)
-script = ExtResource("10_al0bd")
+script = ExtResource("10_28v35")
 tourne = true
 
 [node name="@CollisionShape3D@14" type="CollisionShape3D" parent="Parchemin"]
-shape = SubResource("SphereShape3D_4adna")
+shape = SubResource("SphereShape3D_hs880")
 
 [node name="Rouleau" type="MeshInstance3D" parent="Parchemin"]
 transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
-mesh = SubResource("CylinderMesh_jxr8c")
+mesh = SubResource("CylinderMesh_xo3jm")
 
 [node name="Halo" type="OmniLight3D" parent="Parchemin"]
 light_color = Color(0.85098, 0.603922, 0.305882, 1)
@@ -741,22 +745,28 @@ omni_range = 2.5
 
 [node name="Sortie" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1, -33.6)
-script = ExtResource("10_al0bd")
+script = ExtResource("10_28v35")
 
 [node name="@CollisionShape3D@15" type="CollisionShape3D" parent="Sortie"]
-shape = SubResource("BoxShape3D_2spdb")
+shape = SubResource("BoxShape3D_jlol8")
 
-[node name="Ninja" type="CharacterBody3D" parent="." instance=ExtResource("11_xovd4")]
+[node name="Ninja" type="CharacterBody3D" parent="." instance=ExtResource("11_tbto3")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 35.6)
 floor_snap_length = 0.3
-script = ExtResource("12_28v35")
+script = ExtResource("12_jjyv8")
 
 [node name="Camera" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.5, 46.6)
 current = true
 fov = 40.0
-script = ExtResource("13_tbto3")
+script = ExtResource("13_cfs3t")
 target = NodePath("../Ninja")
 
-[node name="Messages" type="CanvasLayer" parent="." instance=ExtResource("14_jjyv8")]
-script = ExtResource("15_cfs3t")
+[node name="Messages" type="CanvasLayer" parent="." instance=ExtResource("14_fgeqm")]
+script = ExtResource("15_ast4k")
+
+[node name="Hud" type="CanvasLayer" parent="."]
+script = ExtResource("16_7repe")
+
+[node name="Ecrans" type="CanvasLayer" parent="."]
+script = ExtResource("17_wwdkd")
