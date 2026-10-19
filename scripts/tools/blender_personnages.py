@@ -33,8 +33,8 @@ COULEURS = {
 	"bois": ("#5A3A22", 0.8, 0.0),
 	"acier": ("#C9CCD2", 0.3, 0.7),
 	"oni": ("#B5281C", 0.6, 0.0),
-	"blanc": ("#FBF7F0", 0.3, 0.0),
-	"iris": ("#5A3420", 0.25, 0.0),
+	"blanc": ("#FBF7F0", 0.2, 0.0),
+	"iris": ("#3B2216", 0.15, 0.0),
 	"jaune": ("#FFC531", 0.5, 0.0),
 }
 
@@ -333,9 +333,10 @@ def plaque(parent, nom, centre, r_haut, r_bas, haut, bas, a0, a1, mat, epaisseur
 	return finir(o, mat)
 
 
-def fondre(parent, nom, pieces, mat, voxel=0.008, cible=3000, creux=(), lissage=6):
+def fondre(parent, nom, pieces, mat, voxel=0.008, cible=3000, creux=(), lissage=6, garder=()):
 	"""Fond plusieurs pièces en une seule forme continue (remaillage par voxels),
-	creuse éventuellement des ouvertures, puis allège le maillage."""
+	creuse éventuellement des ouvertures (`creux`) ou ne garde que ce qui est
+	dans une forme (`garder`), puis allège le maillage."""
 	bpy.context.view_layer.update()
 	dg = bpy.context.evaluated_depsgraph_get()
 	bm = bmesh.new()
@@ -358,8 +359,11 @@ def fondre(parent, nom, pieces, mat, voxel=0.008, cible=3000, creux=(), lissage=
 	for c in creux:
 		b = o.modifiers.new("Creux", "BOOLEAN")
 		b.operation, b.object, b.solver = "DIFFERENCE", c, "EXACT"
+	for c in garder:
+		b = o.modifiers.new("Garder", "BOOLEAN")
+		b.operation, b.object, b.solver = "INTERSECT", c, "EXACT"
 	cuire(o)
-	for c in creux:
+	for c in list(creux) + list(garder):
 		bpy.data.objects.remove(c)
 	if len(o.data.polygons) > cible:
 		d = o.modifiers.new("Allege", "DECIMATE")
@@ -386,6 +390,23 @@ def gabarit(nom, position, taille, parent=None):
 	me = maillage_temp(bpy.ops.mesh.primitive_uv_sphere_add, segments=32, ring_count=16, radius=0.5)
 	etirer(me, taille)
 	return placer(objet(nom, me), parent, position)
+
+
+def prisme(parent, nom, contour, z0, z1):
+	"""Forme de découpe : contour (x, y) vu de face, tiré en profondeur de z0 à z1."""
+	n = len(contour)
+	verts = [(x, y, z) for z in (z0, z1) for x, y in contour]
+	faces = [tuple(range(n)), tuple(range(2 * n - 1, n - 1, -1))]
+	faces += [(i, (i + 1) % n, n + (i + 1) % n, n + i) for i in range(n)]
+	me = bpy.data.meshes.new(nom)
+	me.from_pydata([pos(v) for v in verts], [], faces)
+	me.update()
+	bm = bmesh.new()
+	bm.from_mesh(me)
+	bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+	bm.to_mesh(me)
+	bm.free()
+	return placer(objet(nom, me), parent, (0, 0, 0))
 
 
 def sur_ellipsoide(centre, rayons, x, y, decol=0.006):
@@ -454,29 +475,30 @@ def ninja():
 
 	# Tête : capuche ronde d'un seul tenant, grande ouverture pour le visage
 	tete = pivot(None, "Tete", (0, 0.91, 0))
-	ouverture = gabarit("Ouverture", (0, 0.005, 0.22), (0.50, 0.27, 0.24), tete)
+	# ouverture en rectangle arrondi, juste à la hauteur des yeux
+	ouverture = boite(tete, "Ouverture", (0, -0.05, 0.22), (0.45, 0.17, 0.30), "noir")
 	fondre(tete, "Capuche", [
 		boule(tete, "a", (0, 0.0, 0), (0.54, 0.58, 0.52), "tissu"),
 		boule(tete, "b", (0, -0.10, 0.0), (0.50, 0.32, 0.47), "tissu"),
 	], "tissu", voxel=0.004, cible=8000, creux=[ouverture])
-	boule(tete, "Visage", (0, -0.01, 0.10), (0.50, 0.30, 0.31), "peau")
-	# Bandeau gris en haut de l'ouverture, pointe au milieu
-	fondre(tete, "Bandeau", [
-		boule(tete, "a", (0, 0.09, 0.10), (0.47, 0.10, 0.32), "gris"),
-		boule(tete, "b", (0, 0.10, 0.245), (0.10, 0.08, 0.06), "gris", (0, 0, 45)),
-	], "gris", voxel=0.004, cible=2500)
+	boule(tete, "Visage", (0, -0.04, 0.10), (0.50, 0.24, 0.31), "peau")
+	# Bandeau gris posé sur la capuche au-dessus des yeux, en pointe vers le haut
+	fondre(tete, "Bandeau", [boule(tete, "a", (0, 0, 0.004), (0.556, 0.596, 0.536), "gris")], "gris",
+		voxel=0.004, cible=3000, lissage=0, garder=[prisme(tete, "Pointe",
+			[(-0.29, 0.027), (0.29, 0.027), (0.29, 0.10), (0, 0.215), (-0.29, 0.10)], 0.07, 0.4)])
+	# Grands yeux sombres et brillants, fin liseré blanc
 	for cote, s in ((-1, "G"), (1, "D")):
-		x, y, r = cote * 0.095, -0.04, (0, cote * 22, 0)
-		boule(tete, "Blanc" + s, (x, y, 0.235), (0.10, 0.13, 0.03), "blanc", r)
-		boule(tete, "Iris" + s, (x * 1.02, y, 0.245), (0.078, 0.105, 0.025), "iris", r)
-		boule(tete, "Pupille" + s, (x * 1.03, y - 0.003, 0.252), (0.045, 0.065, 0.015), "noir", r)
-		boule(tete, "Reflet" + s, (x * 1.03 - 0.014, y + 0.022, 0.258), (0.022, 0.026, 0.01), "blanc", r)
+		x, y, r = cote * 0.094, -0.05, (0, cote * 22, 0)
+		boule(tete, "Blanc" + s, (x, y, 0.234), (0.112, 0.152, 0.03), "blanc", r)
+		boule(tete, "Iris" + s, (x * 1.01, y - 0.003, 0.242), (0.096, 0.138, 0.026), "iris", r)
+		boule(tete, "Pupille" + s, (x * 1.02, y - 0.006, 0.249), (0.062, 0.098, 0.016), "noir", r)
+		boule(tete, "Reflet" + s, (x * 1.02 - cote * 0.014, y + 0.025, 0.256), (0.018, 0.045, 0.01), "blanc", r)
 
 	# Foulard rouge épais au cou, long pan plat qui flotte sur le côté
 	foulard = pivot(None, "Foulard", (0, 0.635, 0))
-	boule(foulard, "Cou", (0, 0, 0), (0.26, 0.11, 0.24), "rouge")
-	courbe(foulard, "Tour", anneau_points((0, 0, 0.005), 0.15, 0.145, 20, penche=-0.01), 0.05, "rouge",
-		ferme=True)
+	boule(foulard, "Cou", (0, 0, 0), (0.24, 0.08, 0.22), "rouge")
+	tour = anneau_points((0, 0, 0.005), 0.155, 0.15, 24, penche=-0.012)
+	ruban(foulard, "Tour", tour + tour[:2], [0.075] * 26, "rouge", epaisseur=0.035)
 	pans = pivot(foulard, "Pans", (0.14, 0.0, -0.09))
 	boule(pans, "Noeud", (0, 0, 0), (0.08, 0.08, 0.07), "rouge")
 	ruban(pans, "Pan1", [(0, 0, 0), (0.07, -0.03, -0.04), (0.15, -0.06, -0.05), (0.22, -0.11, -0.03),
@@ -488,8 +510,8 @@ def ninja():
 	for cote, s in ((-1, "G"), (1, "D")):
 		bras = pivot(None, "Bras" + s, (cote * 0.20, 0.555, 0), (0, 0, cote * 10))
 		fondre(bras, "Manche" + s, [
-			boule(bras, "a", (0, -0.05, 0), (0.13, 0.14, 0.13), "tissu"),
-			boule(bras, "b", (0, -0.09, 0), (0.15, 0.06, 0.15), "tissu"),
+			boule(bras, "a", (0, -0.04, 0), (0.14, 0.12, 0.14), "tissu"),
+			boule(bras, "b", (0, -0.10, 0), (0.165, 0.07, 0.165), "tissu"),
 		], "tissu", voxel=0.005, cible=1200)
 		tube(bras, "Bandes" + s, (0, -0.15, 0), 0.046, 0.09, "gris", 0.052)
 		courbe(bras, "Spirale" + s, spirale(0.05, 0.047, -0.11, -0.19, 2.5), 0.004, "ardoise")
@@ -502,13 +524,13 @@ def ninja():
 	for cote, s in ((-1, "G"), (1, "D")):
 		jambe = pivot(None, "Jambe" + s, (cote * 0.10, 0.30, 0))
 		fondre(jambe, "Pantalon" + s, [
-			boule(jambe, "a", (0, -0.03, 0), (0.17, 0.16, 0.17), "tissu"),
-			boule(jambe, "b", (cote * 0.006, -0.10, 0), (0.18, 0.12, 0.18), "tissu"),
+			boule(jambe, "a", (0, -0.03, 0), (0.19, 0.16, 0.19), "tissu"),
+			boule(jambe, "b", (cote * 0.008, -0.10, 0), (0.21, 0.13, 0.21), "tissu"),
 		], "tissu", voxel=0.005, cible=1200)
 		tube(jambe, "Bandes" + s, (0, -0.19, 0), 0.045, 0.08, "gris", 0.05)
 		courbe(jambe, "Spirale" + s, spirale(0.049, 0.046, -0.155, -0.225, 2), 0.004, "ardoise")
 		fondre(jambe, "Pied" + s, [
-			boule(jambe, "a", (0, -0.255, 0.025), (0.13, 0.08, 0.19), "noir"),
+			boule(jambe, "a", (0, -0.255, 0.025), (0.14, 0.09, 0.20), "noir"),
 			boule(jambe, "b", (0, -0.225, 0), (0.11, 0.05, 0.11), "noir"),
 		], "noir", voxel=0.004, cible=1000)
 	return {"tete": tete, "corps": corps, "pans": pans}
