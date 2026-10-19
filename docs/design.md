@@ -65,6 +65,7 @@ Aperçu : `scenes/ui/apercu_charte.tscn`.
 
 ## Images
 
-Les images générées (fond du menu, planches) viennent de Figma. Elles ont un
-réglage d'export PNG : **Fichier › Exporter** dans Figma, puis les déposer dans
-`assets/ui/` (fond du menu : `assets/ui/menu_fond.png`).
+Les images générées viennent de Figma (réglage d'export PNG, **Fichier › Exporter**),
+puis sont déposées dans `assets/ui/`.
+
+- Fond du menu : `assets/ui/menu_fond.png` (1536 × 864, étiré en plein écran).
