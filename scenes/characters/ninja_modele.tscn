@@ -1,7 +1,10 @@
 [gd_scene load_steps=3 format=3]
 
-[ext_resource type="PackedScene" path="res://assets/models/ninja.glb" id="1_glb"]
-[ext_resource type="Script" path="res://scripts/anim_chibi.gd" id="2_anim"]
+[ext_resource type="Script" path="res://scripts/anim_chibi.gd" id="1_anim"]
+[ext_resource type="PackedScene" path="res://assets/models/ninja.glb" id="2_glb"]
 
-[node name="Modele" instance=ExtResource("1_glb")]
-script = ExtResource("2_anim")
+[node name="Modele" type="Node3D"]
+script = ExtResource("1_anim")
+
+[node name="Ninja" parent="." instance=ExtResource("2_glb")]
+transform = Transform3D(1.786, 0, 0, 0, 1.786, 0, 0, 0, 1.786, 0, 0.625, 0)

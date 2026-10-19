@@ -2,19 +2,19 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c1ckt614y40e5"
-path="res://.godot/imported/garde_Image_0.png-9df6f1bc488114229655ea52b6b72534.ctex"
+uid="uid://cr4pppxr8aqme"
+path="res://.godot/imported/ninja_0.png-c1c6db54d5ac33b9e806beed0fe71a4a.ctex"
 metadata={
 "vram_texture": false
 }
 generator_parameters={
-"md5": "10f2f5ba46232ce8e30e2006a55b65ba"
+"md5": "492839f4b3d3fd27be7523673f5d3e6b"
 }
 
 [deps]
 
-source_file="res://assets/models/garde_Image_0.png"
-dest_files=["res://.godot/imported/garde_Image_0.png-9df6f1bc488114229655ea52b6b72534.ctex"]
+source_file="res://assets/models/ninja_0.png"
+dest_files=["res://.godot/imported/ninja_0.png-c1c6db54d5ac33b9e806beed0fe71a4a.ctex"]
 
 [params]
 

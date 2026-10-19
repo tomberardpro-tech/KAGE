@@ -33,10 +33,10 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 
 `scenes/characters/ninja.tscn` et `scripts/ninja.gd`.
 
-Modèles 3D : le ninja et le garde ont été générés avec TRELLIS (trellis3d.net) à partir des planches,
-puis préparés dans Blender par `scripts/tools/blender_squelette.py` (taille, lissage, squelette
-Corps / Tete / BrasG / BrasD / JambeG / JambeD). Les fichiers bruts sont dans `assets/models/sources/`.
-`scripts/anim_chibi.gd` anime les os (marche, dash).
+Modèles 3D : le ninja et le garde ont été générés avec TRELLIS (trellis3d.net) à partir des planches.
+Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) : les scènes
+`*_modele.tscn` règlent seulement la taille et la position, et l'import ignore les lumières du fichier.
+`scripts/anim_chibi.gd` leur donne un petit rebond en marchant.
 
 - Marche à 5,5 m/s, accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.
