@@ -419,97 +419,98 @@ def vider_scene():
 # --- Ninja ------------------------------------------------------------------
 
 def ninja():
-	corps = pivot(None, "Corps", (0, 0.30, 0))
+	# Proportions relevées sur la référence : 1,25 m, tête 45 %, jambes jusqu'aux genoux bouffants
+	corps = pivot(None, "Corps", (0, 0.27, 0))
 	# Veste noire croisée d'un seul tenant, col en V gris, ceinture nouée devant
-	tronc = (0, 0.15, 0), (0.24, 0.23, 0.19)
+	tronc = (0, 0.17, 0), (0.20, 0.17, 0.15)
 	fondre(corps, "Veste", [
-		boule(corps, "a", (0, 0.15, 0), (0.48, 0.46, 0.38), "tissu"),
-		boule(corps, "b", (0, 0.31, 0), (0.34, 0.12, 0.28), "tissu"),
-		boule(corps, "c", (0, -0.01, 0), (0.50, 0.18, 0.40), "tissu"),
+		boule(corps, "a", (0, 0.17, 0), (0.40, 0.34, 0.30), "tissu"),
+		boule(corps, "b", (0, 0.31, 0), (0.26, 0.10, 0.22), "tissu"),
+		boule(corps, "c", (0, 0.06, 0), (0.42, 0.14, 0.32), "tissu"),
 	], "tissu", cible=2500)
-	boule(corps, "ColV", sur_ellipsoide(*tronc, 0, 0.30, -0.012), (0.10, 0.10, 0.03), "gris", (-25, 0, 0))
-	courbe(corps, "ReversG", [sur_ellipsoide(*tronc, -0.10 + 0.17 * t, 0.33 - 0.27 * t, 0.006)
-		for t in (0, 0.33, 0.66, 1)], 0.016, "tissu")
-	courbe(corps, "ReversD", [sur_ellipsoide(*tronc, 0.10 - 0.11 * t, 0.33 - 0.16 * t, 0.006)
-		for t in (0, 0.5, 1)], 0.016, "tissu")
-	anneau(corps, "Ceinture", (0, 0.04, 0), 0.215, 0.27, 0.075, "gris")
-	boule(corps, "Noeud", (0, 0.04, 0.255), (0.09, 0.075, 0.06), "gris")
-	ruban(corps, "PanG", [(-0.01, 0.03, 0.27), (-0.035, -0.04, 0.275), (-0.05, -0.13, 0.26)],
-		[0.045, 0.04, 0.035], "gris", haut=(1, 0, 0))
-	ruban(corps, "PanD", [(0.01, 0.03, 0.27), (0.04, -0.03, 0.28), (0.06, -0.11, 0.265)],
-		[0.045, 0.04, 0.035], "gris", haut=(1, 0, 0))
-	# petit cordon noué dans le dos
-	boule(corps, "NoeudDos", (0, 0.04, -0.255), (0.06, 0.05, 0.04), "gris")
-	courbe(corps, "Cordon", [(0, 0.03, -0.26), (0, -0.03, -0.265), (0.01, -0.06, -0.26)], 0.008, "gris")
+	boule(corps, "ColV", sur_ellipsoide(*tronc, 0, 0.29, -0.01), (0.08, 0.08, 0.025), "gris", (-25, 0, 0))
+	courbe(corps, "ReversG", [sur_ellipsoide(*tronc, -0.08 + 0.14 * t, 0.32 - 0.17 * t, 0.005)
+		for t in (0, 0.33, 0.66, 1)], 0.013, "tissu")
+	courbe(corps, "ReversD", [sur_ellipsoide(*tronc, 0.08 - 0.09 * t, 0.32 - 0.10 * t, 0.005)
+		for t in (0, 0.5, 1)], 0.013, "tissu")
+	anneau(corps, "Ceinture", (0, 0.15, 0), 0.175, 0.222, 0.065, "gris")
+	boule(corps, "Noeud", (0, 0.15, 0.21), (0.08, 0.065, 0.05), "gris")
+	ruban(corps, "PanG", [(-0.01, 0.14, 0.22), (-0.03, 0.08, 0.225), (-0.045, 0.01, 0.215)],
+		[0.04, 0.036, 0.032], "gris", haut=(1, 0, 0))
+	ruban(corps, "PanD", [(0.01, 0.14, 0.22), (0.035, 0.09, 0.228), (0.055, 0.03, 0.22)],
+		[0.04, 0.036, 0.032], "gris", haut=(1, 0, 0))
+	boule(corps, "NoeudDos", (0, 0.15, -0.215), (0.05, 0.045, 0.035), "gris")
+	courbe(corps, "Cordon", [(0, 0.14, -0.22), (0, 0.09, -0.225), (0.01, 0.06, -0.22)], 0.007, "gris")
 
 	# Katana dans le dos en diagonale : fourreau noir, garde dorée, poignée rouge tressée
-	sabre = pivot(corps, "Sabre", (0, 0.12, -0.23), (0, 0, -52))
-	courbe(sabre, "Fourreau", [(0, -0.33, 0), (0, -0.02, -0.012), (0, 0.29, 0)], 0.026, "noir")
-	tube(sabre, "Kojiri", (0, -0.345, 0), 0.03, 0.03, "or")
-	tube(sabre, "Tsuba", (0, 0.30, 0), 0.058, 0.016, "or")
-	tube(sabre, "Poignee", (0, 0.39, 0), 0.023, 0.17, "rouge")
-	for i in range(4):
-		boite(sabre, "Tresse%d" % i, (0, 0.33 + i * 0.04, 0), (0.035, 0.012, 0.035), "or", (0, 45, 0))
-	tube(sabre, "Kashira", (0, 0.485, 0), 0.027, 0.022, "or")
+	sabre = pivot(corps, "Sabre", (0, 0.20, -0.17), (0, 0, -52))
+	courbe(sabre, "Fourreau", [(0, -0.26, 0), (0, -0.02, -0.01), (0, 0.23, 0)], 0.022, "noir")
+	tube(sabre, "Kojiri", (0, -0.275, 0), 0.025, 0.025, "or")
+	tube(sabre, "Tsuba", (0, 0.24, 0), 0.048, 0.014, "or")
+	tube(sabre, "Poignee", (0, 0.31, 0), 0.02, 0.13, "rouge")
+	for i in range(3):
+		boite(sabre, "Tresse%d" % i, (0, 0.27 + i * 0.035, 0), (0.03, 0.01, 0.03), "or", (0, 45, 0))
+	tube(sabre, "Kashira", (0, 0.385, 0), 0.023, 0.018, "or")
 
-	# Tête : grosse capuche ronde d'un seul tenant, visage creusé dedans
-	tete = pivot(None, "Tete", (0, 0.88, 0))
-	ouverture = gabarit("Ouverture", (0, 0.05, 0.31), (0.60, 0.30, 0.30), tete)
+	# Tête : capuche ronde d'un seul tenant, grande ouverture pour le visage
+	tete = pivot(None, "Tete", (0, 0.91, 0))
+	ouverture = gabarit("Ouverture", (0, 0.005, 0.22), (0.50, 0.27, 0.24), tete)
 	fondre(tete, "Capuche", [
-		boule(tete, "a", (0, 0.04, -0.01), (0.80, 0.84, 0.78), "tissu"),
-		boule(tete, "b", (0, -0.17, 0.06), (0.70, 0.38, 0.64), "tissu"),
-	], "tissu", voxel=0.007, cible=5000, creux=[ouverture])
-	boule(tete, "Visage", (0, 0.04, 0.15), (0.64, 0.32, 0.44), "peau")
-	# Bandeau gris sur le front, plaque en losange au milieu
+		boule(tete, "a", (0, 0.0, 0), (0.54, 0.58, 0.52), "tissu"),
+		boule(tete, "b", (0, -0.10, 0.0), (0.50, 0.32, 0.47), "tissu"),
+	], "tissu", voxel=0.004, cible=8000, creux=[ouverture])
+	boule(tete, "Visage", (0, -0.01, 0.10), (0.50, 0.30, 0.31), "peau")
+	# Bandeau gris en haut de l'ouverture, pointe au milieu
 	fondre(tete, "Bandeau", [
-		boule(tete, "a", (0, 0.145, 0.15), (0.655, 0.09, 0.45), "gris"),
-		boule(tete, "b", (0, 0.13, 0.30), (0.15, 0.11, 0.13), "gris", (0, 0, 45)),
-	], "gris", voxel=0.005, cible=2500)
+		boule(tete, "a", (0, 0.09, 0.10), (0.47, 0.10, 0.32), "gris"),
+		boule(tete, "b", (0, 0.10, 0.245), (0.10, 0.08, 0.06), "gris", (0, 0, 45)),
+	], "gris", voxel=0.004, cible=2500)
 	for cote, s in ((-1, "G"), (1, "D")):
-		x = cote * 0.115
-		boule(tete, "Blanc" + s, (x, 0.02, 0.352), (0.125, 0.145, 0.04), "blanc")
-		boule(tete, "Iris" + s, (x, 0.018, 0.366), (0.095, 0.12, 0.03), "iris")
-		boule(tete, "Pupille" + s, (x, 0.015, 0.375), (0.055, 0.075, 0.02), "noir")
-		boule(tete, "Reflet" + s, (x - 0.018, 0.045, 0.385), (0.026, 0.03, 0.012), "blanc")
+		x, y, r = cote * 0.095, -0.04, (0, cote * 22, 0)
+		boule(tete, "Blanc" + s, (x, y, 0.235), (0.10, 0.13, 0.03), "blanc", r)
+		boule(tete, "Iris" + s, (x * 1.02, y, 0.245), (0.078, 0.105, 0.025), "iris", r)
+		boule(tete, "Pupille" + s, (x * 1.03, y - 0.003, 0.252), (0.045, 0.065, 0.015), "noir", r)
+		boule(tete, "Reflet" + s, (x * 1.03 - 0.014, y + 0.022, 0.258), (0.022, 0.026, 0.01), "blanc", r)
 
 	# Foulard rouge épais au cou, long pan plat qui flotte sur le côté
-	foulard = pivot(None, "Foulard", (0, 0.62, 0))
-	courbe(foulard, "Tour", anneau_points((0, 0, 0.01), 0.215, 0.21, 20, penche=-0.015), 0.07, "rouge",
+	foulard = pivot(None, "Foulard", (0, 0.635, 0))
+	boule(foulard, "Cou", (0, 0, 0), (0.26, 0.11, 0.24), "rouge")
+	courbe(foulard, "Tour", anneau_points((0, 0, 0.005), 0.15, 0.145, 20, penche=-0.01), 0.05, "rouge",
 		ferme=True)
-	pans = pivot(foulard, "Pans", (0.17, 0.0, -0.12))
-	boule(pans, "Noeud", (0, 0, 0), (0.09, 0.09, 0.08), "rouge")
-	ruban(pans, "Pan1", [(0, 0, 0), (0.08, -0.03, -0.05), (0.17, -0.07, -0.06), (0.26, -0.13, -0.04),
-		(0.32, -0.20, -0.06)], [0.10, 0.11, 0.11, 0.10, 0.07], "rouge", epaisseur=0.018)
-	ruban(pans, "Pan2", [(0, -0.02, 0), (0.05, -0.07, -0.05), (0.09, -0.13, -0.06)],
-		[0.08, 0.07, 0.05], "rouge", epaisseur=0.016)
+	pans = pivot(foulard, "Pans", (0.14, 0.0, -0.09))
+	boule(pans, "Noeud", (0, 0, 0), (0.08, 0.08, 0.07), "rouge")
+	ruban(pans, "Pan1", [(0, 0, 0), (0.07, -0.03, -0.04), (0.15, -0.06, -0.05), (0.22, -0.11, -0.03),
+		(0.27, -0.17, -0.05)], [0.085, 0.095, 0.095, 0.085, 0.06], "rouge", epaisseur=0.016)
+	ruban(pans, "Pan2", [(0, -0.02, 0), (0.04, -0.06, -0.04), (0.08, -0.11, -0.05)],
+		[0.07, 0.06, 0.045], "rouge", epaisseur=0.014)
 
 	# Bras : manche courte, avant-bras bandé de gris, main ronde
 	for cote, s in ((-1, "G"), (1, "D")):
-		bras = pivot(None, "Bras" + s, (cote * 0.24, 0.55, 0), (0, 0, cote * 16))
+		bras = pivot(None, "Bras" + s, (cote * 0.20, 0.555, 0), (0, 0, cote * 10))
 		fondre(bras, "Manche" + s, [
-			boule(bras, "a", (0, -0.06, 0), (0.16, 0.17, 0.16), "tissu"),
-			boule(bras, "b", (0, -0.11, 0), (0.19, 0.08, 0.19), "tissu"),
-		], "tissu", voxel=0.006, cible=1200)
-		tube(bras, "Bandes" + s, (0, -0.19, 0), 0.056, 0.12, "gris", 0.064)
-		courbe(bras, "Spirale" + s, spirale(0.062, 0.057, -0.135, -0.24, 2.5), 0.005, "ardoise")
+			boule(bras, "a", (0, -0.05, 0), (0.13, 0.14, 0.13), "tissu"),
+			boule(bras, "b", (0, -0.09, 0), (0.15, 0.06, 0.15), "tissu"),
+		], "tissu", voxel=0.005, cible=1200)
+		tube(bras, "Bandes" + s, (0, -0.15, 0), 0.046, 0.09, "gris", 0.052)
+		courbe(bras, "Spirale" + s, spirale(0.05, 0.047, -0.11, -0.19, 2.5), 0.004, "ardoise")
 		fondre(bras, "Main" + s, [
-			boule(bras, "a", (0, -0.285, 0), (0.12, 0.125, 0.11), "peau"),
-			boule(bras, "b", (-cote * 0.045, -0.27, 0.035), (0.045, 0.065, 0.045), "peau", (0, 0, cote * 30)),
-		], "peau", voxel=0.005, cible=1000)
+			boule(bras, "a", (0, -0.235, 0), (0.10, 0.105, 0.095), "peau"),
+			boule(bras, "b", (-cote * 0.038, -0.222, 0.03), (0.04, 0.055, 0.04), "peau", (0, 0, cote * 30)),
+		], "peau", voxel=0.004, cible=1000)
 
 	# Jambes : pantalon bouffant aux genoux, mollets bandés, chaussons noirs
 	for cote, s in ((-1, "G"), (1, "D")):
-		jambe = pivot(None, "Jambe" + s, (cote * 0.11, 0.26, 0))
+		jambe = pivot(None, "Jambe" + s, (cote * 0.10, 0.30, 0))
 		fondre(jambe, "Pantalon" + s, [
-			boule(jambe, "a", (0, -0.02, 0), (0.18, 0.14, 0.18), "tissu"),
-			boule(jambe, "b", (cote * 0.008, -0.08, 0), (0.21, 0.12, 0.21), "tissu"),
-		], "tissu", voxel=0.006, cible=1200)
-		tube(jambe, "Bandes" + s, (0, -0.17, 0), 0.058, 0.09, "gris", 0.066)
-		courbe(jambe, "Spirale" + s, spirale(0.064, 0.059, -0.13, -0.21, 2), 0.005, "ardoise")
+			boule(jambe, "a", (0, -0.03, 0), (0.17, 0.16, 0.17), "tissu"),
+			boule(jambe, "b", (cote * 0.006, -0.10, 0), (0.18, 0.12, 0.18), "tissu"),
+		], "tissu", voxel=0.005, cible=1200)
+		tube(jambe, "Bandes" + s, (0, -0.19, 0), 0.045, 0.08, "gris", 0.05)
+		courbe(jambe, "Spirale" + s, spirale(0.049, 0.046, -0.155, -0.225, 2), 0.004, "ardoise")
 		fondre(jambe, "Pied" + s, [
-			boule(jambe, "a", (0, -0.235, 0.025), (0.15, 0.09, 0.21), "noir"),
-			boule(jambe, "b", (0, -0.20, 0), (0.13, 0.06, 0.13), "noir"),
-		], "noir", voxel=0.005, cible=1000)
+			boule(jambe, "a", (0, -0.255, 0.025), (0.13, 0.08, 0.19), "noir"),
+			boule(jambe, "b", (0, -0.225, 0), (0.11, 0.05, 0.11), "noir"),
+		], "noir", voxel=0.004, cible=1000)
 	return {"tete": tete, "corps": corps, "pans": pans}
 
 
