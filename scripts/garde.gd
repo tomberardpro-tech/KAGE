@@ -73,6 +73,8 @@ func tuer() -> void:
 		return
 	etat = Etat.MORT
 	remove_from_group("gardes")
+	Sons.jouer("tranche")
+	Sons.jouer("garde_tombe", -4.0)
 	var niveau := get_tree().current_scene
 	if niveau.has_method("compter_garde_tue"):
 		niveau.compter_garde_tue()
@@ -187,6 +189,7 @@ func _chasser(delta: float) -> void:
 		_visuel.position = -_direction_regard() * 0.25 * sin(clampf(1.0 - _frappe / duree_frappe, 0.0, 1.0) * PI)
 		if _frappe < 0.0:
 			_visuel.position = Vector3.ZERO
+			Sons.jouer("frappe")
 			if ecart.length() < portee_frappe + 0.4 and not ninja.en_dash:
 				joueur_repere.emit(self)
 		return

@@ -16,6 +16,7 @@ Transition="*res://scripts/transition.gd"
 Reglages="*res://scripts/reglages.gd"
 Sauvegarde="*res://scripts/sauvegarde.gd"
 Capture="*res://scripts/tools/capture.gd"
+Sons="*res://scripts/sons.gd"
 
 [display]
 

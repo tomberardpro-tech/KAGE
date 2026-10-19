@@ -32,6 +32,7 @@ func _physics_process(delta: float) -> void:
 	if Vector2(_ninja.velocity.x, _ninja.velocity.z).length() < 1.0 or _horloge > 0.0:
 		return
 	_horloge = intervalle
+	Sons.jouer("grincement", -3.0, randf_range(0.9, 1.15))
 	var niveau := get_tree().current_scene
 	if niveau.has_method("bruit"):
 		niveau.bruit(_ninja.global_position, portee_bruit, "Le plancher grince. Accroupis-toi (Ctrl) pour marcher sans bruit.")

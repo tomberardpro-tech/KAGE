@@ -35,6 +35,7 @@ func eteindre() -> void:
 	if not allumee:
 		return
 	allumee = false
+	Sons.jouer("lanterne", -2.0)
 	_zone.active = false
 	_flamme.visible = false
 	var tween := create_tween()

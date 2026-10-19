@@ -45,11 +45,13 @@ func _ready() -> void:
 	$Parchemin.touche.connect(_sur_parchemin)
 	$Sortie.touche.connect(_sur_sortie)
 	_ecrans.tutoriel()
+	Sons.musique("jeu")
 
 
 func _process(delta: float) -> void:
 	if not _fini:
 		temps += delta
+		Sons.chasse(en_chasse() and not decouvert)
 	# Les nuages passent devant la lune de temps en temps.
 	_horloge_lune = fmod(_horloge_lune + delta, cycle_nuages)
 	var visible := _horloge_lune < cycle_nuages - duree_nuages
@@ -71,6 +73,7 @@ func _sur_autel(autel: Autel) -> void:
 	if _point_reprise.distance_to(autel.global_position) > 1.0:
 		_point_reprise = autel.global_position + Vector3(0, 0, 1.2)
 		if autel.name != "Depart":
+			Sons.jouer("autel")
 			_messages.afficher("AUTEL", "Tu repartiras d'ici.", 1.6)
 
 
@@ -80,6 +83,7 @@ func _sur_parchemin() -> void:
 	a_le_parchemin = true
 	$Parchemin.queue_free()
 	parchemin_pris.emit()
+	Sons.jouer("parchemin")
 	_messages.afficher("PARCHEMIN RÉCUPÉRÉ", ou_sortie, 3.0)
 
 
@@ -92,6 +96,7 @@ func _sur_sortie() -> void:
 	_fini = true
 	ninja.bloque = true
 	victoire.emit(temps)
+	Sons.jingle("victoire")
 	if not niveau_suivant.is_empty():
 		Sauvegarde.atteindre(niveau_suivant)
 	_ecrans.victoire(temps, fois_repere == 0, gardes_tues == 0)
@@ -103,6 +108,7 @@ func _sur_chasse(garde: Garde) -> void:
 		func(g: Garde): return g != garde and g.etat == Garde.Etat.CHASSE)
 	if not deja:
 		_messages.afficher("REPÉRÉ", "Sème-le, cache-toi ou tranche-le.", 1.6)
+		Sons.jouer("alerte")
 	fois_repere += 1
 
 
@@ -131,6 +137,7 @@ func _sur_repere(_garde: Garde) -> void:
 		return
 	ninja.bloque = true
 	decouvert = true
+	Sons.jingle("defaite")
 	mort.emit()
 	await get_tree().create_timer(0.8).timeout
 	_ecrans.defaite()
@@ -144,6 +151,7 @@ func recommencer_a_l_autel() -> void:
 	ninja.reapparaitre(_point_reprise)
 	ninja.bloque = false
 	decouvert = false
+	Sons.musique("jeu")
 
 
 func compter_garde_tue() -> void:

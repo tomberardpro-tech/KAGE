@@ -48,6 +48,7 @@ func _ready() -> void:
 	focus_entered.connect(_mettre_a_jour)
 	focus_exited.connect(_mettre_a_jour)
 	mouse_entered.connect(func(): if not disabled: grab_focus())
+	pressed.connect(func(): Sons.jouer("clic"))
 	resized.connect(_placer)
 	_placer()
 	_mettre_a_jour()

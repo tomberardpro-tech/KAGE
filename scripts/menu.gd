@@ -29,6 +29,7 @@ func _ready() -> void:
 	_options.hide()
 
 	_nouvelle.grab_focus()
+	Sons.musique("menu")
 
 
 func _unhandled_input(event: InputEvent) -> void:

@@ -111,3 +111,14 @@ godot --path . -- --capture=res://scenes/ui/menu.tscn --sortie=capture.png
 ## Design
 
 Maquettes et charte graphique sur Figma : https://www.figma.com/design/PuRaFypYJ9RKAvVU2PYy2m
+
+## Sons
+
+Les musiques et bruitages (`assets/audio/`) sont joués par le script global `Sons` (`scripts/sons.gd`) :
+musique douce au koto en jeu, tambours taiko quand un garde te poursuit. Ils sont tous créés par synthèse :
+
+```
+python3 scripts/tools/generer_sons.py
+```
+
+Détails et crédits dans [CREDITS.md](CREDITS.md).

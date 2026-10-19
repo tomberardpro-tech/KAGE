@@ -40,6 +40,7 @@ func interagir() -> void:
 	if not intact:
 		return
 	intact = false
+	Sons.jouer("coupe")
 	_fil.visible = false
 	for c in _clochettes:
 		create_tween().tween_property(c, "position:y", 0.05, 0.3)
@@ -49,6 +50,7 @@ func _sur_entree(corps: Node3D) -> void:
 	if not intact or not corps is Ninja:
 		return
 	intact = false
+	Sons.jouer("clochettes")
 	_fil.visible = false
 	for c in _clochettes:
 		var tween := create_tween()

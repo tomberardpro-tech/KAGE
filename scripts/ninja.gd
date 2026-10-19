@@ -47,6 +47,7 @@ var _dash_recharge := 0.0
 var _dash_direction := Vector3.ZERO
 var charges_dash := 3
 var _recharge_charge := 0.0
+var _pas := 0.0
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -122,6 +123,7 @@ func _physics_process(delta: float) -> void:
 		_saut_demande = 0.0
 		_sol_recent = 0.0
 		a_saute.emit()
+		Sons.jouer("saut", -6.0)
 	if not is_on_floor():
 		velocity.y -= gravite * delta
 	elif Input.is_action_just_released("jump") and velocity.y > 0.0:
@@ -137,6 +139,7 @@ func _physics_process(delta: float) -> void:
 		_tourner_vers(direction, delta)
 
 	move_and_slide()
+	_bruit_de_pas(delta)
 
 	if not is_on_floor() and direction.length() > 0.1 and velocity.y < 2.5:
 		_essayer_grimper(direction.normalized())
@@ -151,6 +154,18 @@ func _physics_process(delta: float) -> void:
 
 	if global_position.y < -10.0:
 		reapparaitre()
+
+
+## Pas feutrés en courant ; accroupi, on ne s'entend pas.
+func _bruit_de_pas(delta: float) -> void:
+	var vitesse_sol := Vector2(velocity.x, velocity.z).length()
+	if not is_on_floor() or accroupi or vitesse_sol < 1.0:
+		_pas = 0.0
+		return
+	_pas -= delta
+	if _pas <= 0.0:
+		_pas = 0.3
+		Sons.jouer("pas", -14.0, randf_range(0.85, 1.15))
 
 
 func reapparaitre(position_depart := _point_depart) -> void:
@@ -184,6 +199,7 @@ func _essayer_grimper(direction: Vector3) -> void:
 	_grimpe = true
 	velocity = Vector3.ZERO
 	a_grimpe.emit()
+	Sons.jouer("grimpe", -4.0)
 	var arrivee: Vector3 = impact.position + direction * 0.25 + Vector3.UP * 0.05
 	var tween := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	tween.tween_property(self, "global_position", Vector3(global_position.x, arrivee.y, global_position.z), 0.18)
@@ -202,6 +218,7 @@ func _lancer_dash() -> void:
 	en_dash = true
 	_visuel.rotation.y = atan2(direction.x, direction.z)
 	dash_lance.emit(direction)
+	Sons.jouer("dash", -2.0, randf_range(0.95, 1.1))
 
 
 func _continuer_dash(delta: float) -> void:
