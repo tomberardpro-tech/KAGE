@@ -1,4 +1,4 @@
-extends "res://scripts/tools/constructeur.gd"
+extends "res://scripts/tools/decor.gd"
 ## Génère scenes/levels/palais.tscn : niveau 3, le palais du seigneur.
 ## Lancer : godot --headless --script res://scripts/tools/build_palais.gd
 ## Le plus difficile : 10 gardes qui voient plus loin et marchent plus vite,
@@ -54,6 +54,7 @@ func _init() -> void:
 	autels([["Depart", 900, 2150], ["AutelJardin", 1540, 1790]])
 	parchemin(900, 420)
 	sortie(80, 440, Vector3(2.0, 2.0, 4.8))
+	_decor()
 	joueur(900, 2090)
 	finir("res://scenes/levels/palais.tscn")
 
@@ -113,10 +114,13 @@ func _salle_du_seigneur() -> void:
 ## Bassin aux carpes avec son pont rouge, et rochers du jardin zen.
 func _jardins() -> void:
 	boite("Bassin", 700, 1350, 400, 260, 0.04, "eau")
-	boite("Pont", 860, 1330, 80, 300, 0.2, "laque")
-	boite("Rocher0", 450, 2000, 60, 60, 0.6, "pierre")
-	boite("Rocher1", 1250, 2050, 80, 60, 0.7, "pierre")
-	boite("Rocher2", 650, 2120, 50, 50, 0.5, "pierre")
+	boite("Pont", 860, 1330, 80, 300, 0.2, "bois")
+	# Rochers du jardin zen (avec collision, comme avant)
+	rochers([[462, 2012, 1.4, 0], [1290, 2080, 1.8, 1], [675, 2145, 1.2, 2],
+		[530, 2060, 0.5, 6], [1230, 2110, 0.6, 7], [1330, 2040, 0.45, 8]])
+	ratisser(462, 2012, 1.0)
+	ratisser(1290, 2080, 1.3)
+	ratisser(675, 2145, 0.9)
 
 
 func _vegetation() -> void:
@@ -125,3 +129,32 @@ func _vegetation() -> void:
 	clair_de_lune("ClairDeLune", 900, 880, 500, 300)
 	clair_de_lune("ClairDeLuneJardin", 900, 1480, 400, 300)
 	higanbanas(120, 2200, 0, 1800, 2190, 2240, 900)
+
+
+## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
+func _decor() -> void:
+	# Jardin du bassin : pont rouge, cascade, nénuphars, berges de galets
+	pont_rouge(860, 1330, 80, 300, 0.2)
+	cascade("Cascade", 1010, 1360, 2.2)
+	berge(700, 1350, 400, 260)
+	nenuphars(720, 1450, 120, 140, 10)
+	nenuphars(960, 1470, 120, 120, 8)
+	massif_higanbanas(700, 1622, 130, 30, 24)
+	massif_higanbanas(970, 1622, 130, 30, 24)
+	bambous(420, 1128, 200, 36, 10)
+	bambous(1180, 1128, 200, 36, 10)
+	bambous(1340, 310, 280, 40, 12)
+	bambous(330, 310, 150, 40, 6)
+	bannieres([[760, 1140, 0], [1040, 1140, 0], [780, 2180, 0], [1020, 2180, 0]])
+	braseros([[740, 800], [1060, 800], [840, 1860], [960, 1860]])
+	buissons([
+		[415, 1580, 1.0], [1385, 1580, 1.0], [420, 1830, 1.0], [1380, 1830, 0.9],
+		[680, 1640, 0.9], [1120, 1640, 0.9], [680, 1335, 0.8], [1130, 1300, 0.8],
+		[170, 330, 1.0], [1630, 330, 1.0], [165, 1050, 0.9], [1640, 1050, 0.9],
+		[235, 860, 0.9], [1535, 860, 0.9], [160, 1950, 1.0], [1640, 1950, 1.0],
+	])
+	rochers([[1560, 1050, 0.6, 6], [420, 1360, 0.5, 7], [1380, 1400, 0.6, 2]])
+	parsemer(420, 1130, 960, 740, 70)
+	lucioles([[700, 1350, 400, 260], [420, 1350, 150, 300], [1250, 1350, 150, 300],
+		[150, 310, 300, 150], [1350, 310, 300, 150], [300, 1940, 300, 200], [1200, 1940, 300, 200]])
+	brume([[680, 1330, 440, 300], [140, 1930, 700, 240], [960, 1930, 700, 240]])

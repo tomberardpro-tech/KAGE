@@ -1,4 +1,4 @@
-extends "res://scripts/tools/constructeur.gd"
+extends "res://scripts/tools/decor.gd"
 ## Génère scenes/levels/village.tscn : niveau 1, le village au pied du château.
 ## Lancer : godot --headless --script res://scripts/tools/build_village.gd
 ## Niveau d'apprentissage : peu de gardes, myopes et lents, beaucoup d'ombre.
@@ -42,6 +42,7 @@ func _init() -> void:
 	autels([["Depart", 600, 1640], ["AutelGrenier", 1010, 520]])
 	parchemin(600, 260)
 	sortie(1050, 60, Vector3(4.0, 2.0, 2.0))
+	_decor()
 	joueur(600, 1590)
 	finir("res://scenes/levels/village.tscn")
 
@@ -111,3 +112,31 @@ func _vegetation() -> void:
 	arbres([[400, 840, 120], [720, 1110, 110], [940, 880, 110], [160, 860, 100], [880, 420, 130]])
 	clair_de_lune("ClairDeLune", 600, 860, 300, 220)
 	higanbanas(140, 850, 0, 1200, 1620, 1700, 600)
+
+
+## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
+func _decor() -> void:
+	# Rondins pointus sur les deux faces de la palissade
+	pieux(60, 1250, 480, 20, H_PALISSADE)
+	pieux(660, 1250, 480, 20, H_PALISSADE)
+	pieux(60, 100, 20, 1170, H_PALISSADE)
+	pieux(1120, 100, 20, 1170, H_PALISSADE)
+	pieux(60, 100, 940, 20, H_PALISSADE)
+	pieux(1100, 100, 40, 20, H_PALISSADE)
+	# Ruisseau qui traverse le village, avec son petit pont rouge sur le chemin
+	ruisseau("Ruisseau", [[70, 1225], [300, 1208], [520, 1220], [700, 1212], [900, 1224], [1110, 1210]], 30)
+	pont_rouge(570, 1182, 60, 70, 0.05)
+	for r in [[100, 1340, 380, 100], [720, 1340, 380, 100], [100, 1540, 380, 60], [720, 1540, 380, 60]]:
+		riz(r[0], r[1], r[2], r[3])
+	bannieres([[490, 1305, 0], [710, 1305, 0]])
+	buissons([
+		[100, 1150, 1.0], [1090, 1150, 1.0], [820, 1070, 0.8], [130, 600, 1.0], [1080, 600, 1.0],
+		[400, 400, 0.9], [800, 400, 0.9], [370, 1010, 0.8], [90, 1300, 1.1], [1110, 1300, 1.1],
+	])
+	rochers([[250, 1300, 0.7, 2], [950, 1305, 0.8, 0], [745, 790, 0.4, 7], [180, 940, 0.5, 6]])
+	bambous(90, 130, 300, 50, 12)
+	bambous(1075, 200, 35, 280, 10)
+	parsemer(60, 1270, 1080, 70, 40)
+	parsemer(80, 120, 1040, 1120, 110)
+	lucioles([[100, 1340, 500, 260], [600, 1340, 500, 260], [120, 820, 200, 200], [860, 380, 200, 200]])
+	brume([[100, 1330, 500, 280], [600, 1330, 500, 280], [60, 1190, 1080, 60]])

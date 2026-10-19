@@ -7,7 +7,10 @@ extends Zone
 		taille = v
 		if is_inside_tree():
 			_construire()
-@export var densite := 6.0  ## brins par m²
+@export var densite := 12.0  ## brins par m²
+
+
+static var _materiau: ShaderMaterial
 
 
 func _ready() -> void:
@@ -29,11 +32,11 @@ func _construire() -> void:
 	add_child(forme)
 
 	var brin := PrismMesh.new()
-	brin.size = Vector3(0.12, 0.9, 0.04)
-	var materiau := StandardMaterial3D.new()
-	materiau.albedo_color = Color("#2f4436")
-	materiau.cull_mode = BaseMaterial3D.CULL_DISABLED
-	brin.material = materiau
+	brin.size = Vector3(0.09, 1.0, 0.03)
+	if not _materiau:
+		_materiau = ShaderMaterial.new()
+		_materiau.shader = load("res://assets/shaders/herbe.gdshader")
+	brin.material = _materiau
 	var nombre := int(PI * taille.x * taille.y / 4.0 * densite)
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D

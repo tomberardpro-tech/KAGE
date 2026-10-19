@@ -75,13 +75,23 @@ Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) 
 
 ## Les niveaux
 
-Chaque niveau est généré par un script (1 px du plan = 4 cm). Le château suit le plan Figma « Le château » ; le village et le palais ont été dessinés directement dans leur script. Les outils communs sont dans `scripts/tools/constructeur.gd`.
+Chaque niveau est généré par un script (1 px du plan = 4 cm). Le château suit le plan Figma « Le château » ; le village et le palais ont été dessinés directement dans leur script. Les outils communs sont dans `scripts/tools/constructeur.gd`, le décor d'ambiance dans `scripts/tools/decor.gd`.
 
 ```
-godot --headless --script res://scripts/tools/build_village.gd
-godot --headless --script res://scripts/tools/build_chateau.gd
-godot --headless --script res://scripts/tools/build_palais.gd
+godot --path . -- --construire=res://scripts/tools/build_village.gd
+godot --path . -- --construire=res://scripts/tools/build_chateau.gd
+godot --path . -- --construire=res://scripts/tools/build_palais.gd
 ```
+
+(Lancé ainsi, avec une fenêtre, pour que les scripts globaux et les MultiMesh du décor soient bien enregistrés.)
+
+### Décor d'ambiance (ticket 4.4)
+
+Murs blancs à soubassement de pierre, fenêtres à barreaux et toits de tuiles, bâtiments à colombages avec shoji éclairés,
+lanternes en pierre (tōrō) et sur poteau qui vacillent, pins taillés, buissons, bambous, herbes hautes qui ondulent,
+higanbanas, eau animée avec nénuphars et berges de galets, cascades, ruisseau, ponts rouges, bannières au mon du clan,
+braseros, palissade en rondins, rizières, jardin zen ratissé, lucioles et brume. Textures Poly Haven et rochers Kenney
+(CC0, voir [CREDITS.md](CREDITS.md)). Le décor n'a pas de collision (sauf les gros rochers) : il ne change pas le jeu.
 
 On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script. Le titre, les textes et le niveau suivant se règlent au début de chaque script.
 

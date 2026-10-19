@@ -9,6 +9,10 @@ extends Zone
 			_construire()
 
 
+static var _feuilles: ShaderMaterial
+static var _ecorce: StandardMaterial3D
+
+
 func _ready() -> void:
 	type = Type.OMBRE
 	super._ready()
@@ -26,30 +30,52 @@ func _construire() -> void:
 	forme.position.y = 1.0
 	add_child(forme)
 
-	var bois := StandardMaterial3D.new()
-	bois.albedo_color = Color("#3a2a1e")
-	var feuilles := StandardMaterial3D.new()
-	feuilles.albedo_color = Color("#1f3326")
-
-	var tronc := MeshInstance3D.new()
-	var cyl := CylinderMesh.new()
-	cyl.top_radius = 0.15
-	cyl.bottom_radius = 0.25
-	cyl.height = 2.6
-	cyl.material = bois
-	tronc.mesh = cyl
-	tronc.position.y = 1.3
-	add_child(tronc)
-	# Feuillage en plateaux, comme un pin taillé
+	if not _feuilles:
+		_feuilles = ShaderMaterial.new()
+		_feuilles.shader = load("res://assets/shaders/feuillage.gdshader")
+		_feuilles.set_shader_parameter("couleur_claire", Color("#2d4a32"))
+		_feuilles.set_shader_parameter("couleur_sombre", Color("#09170f"))
+		_feuilles.set_shader_parameter("touffes", 5.0)
+		_ecorce = StandardMaterial3D.new()
+		_ecorce.albedo_color = Color("#3a2a1e")
+		_ecorce.roughness = 1.0
+	# Pin japonais taillé : tronc tordu, branches qui partent sur les côtés
+	# et feuillage en nuages aplatis au bout de chaque branche.
+	var hasard := RandomNumberGenerator.new()
+	hasard.seed = hash(global_position.round()) if is_inside_tree() else 1
+	var pos := Vector3.ZERO
+	var dir := Vector3(hasard.randf_range(-0.3, 0.3), 1.0, hasard.randf_range(-0.3, 0.3)).normalized()
+	var sommets: Array[Vector3] = []
 	for i in 3:
-		var plateau := MeshInstance3D.new()
-		var sphere := SphereMesh.new()
-		sphere.radius = rayon * (0.9 - i * 0.2)
-		sphere.height = 0.9
-		sphere.material = feuilles
-		plateau.mesh = sphere
-		plateau.position = Vector3((i - 1) * 0.4, 2.3 + i * 0.6, (1 - i) * 0.2)
-		add_child(plateau)
+		var longueur := 1.0 - i * 0.15
+		var suivant := pos + dir * longueur
+		_branche(pos, suivant, 0.24 - i * 0.05, 0.19 - i * 0.05)
+		sommets.append(suivant)
+		pos = suivant
+		dir = (dir + Vector3(hasard.randf_range(-0.5, 0.5), 0.3, hasard.randf_range(-0.5, 0.5))).normalized()
+	var nuages: Array[Vector3] = [pos + Vector3(0, 0.25, 0)]
+	var nombre := 3 + int(rayon)
+	for k in nombre:
+		var depart: Vector3 = sommets[1 + k % 2]
+		var a := k * TAU / nombre + hasard.randf_range(-0.4, 0.4)
+		var fin := depart + Vector3(cos(a) * rayon * 0.6, hasard.randf_range(0.0, 0.4), sin(a) * rayon * 0.6)
+		_branche(depart, fin, 0.08, 0.05)
+		nuages.append(fin)
+	for c in nuages:
+		var taille := rayon * hasard.randf_range(0.38, 0.5)
+		for j in 4:
+			var boule := MeshInstance3D.new()
+			var sphere := SphereMesh.new()
+			sphere.radius = 0.5
+			sphere.height = 1.0
+			sphere.radial_segments = 12
+			sphere.rings = 6
+			sphere.material = _feuilles
+			boule.mesh = sphere
+			var s := taille * (1.0 if j == 0 else hasard.randf_range(0.55, 0.8))
+			boule.scale = Vector3(s * 1.5, s * 0.6, s * 1.5)
+			boule.position = c + (Vector3.ZERO if j == 0 else Vector3(hasard.randf_range(-1, 1) * taille * 0.6, hasard.randf_range(0.0, 0.2), hasard.randf_range(-1, 1) * taille * 0.6))
+			add_child(boule)
 	# Ombre au sol
 	var ombre := MeshInstance3D.new()
 	var disque := CylinderMesh.new()
@@ -65,3 +91,20 @@ func _construire() -> void:
 	ombre.position.y = 0.03
 	ombre.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(ombre)
+
+
+func _branche(a: Vector3, b: Vector3, r_bas: float, r_haut: float) -> void:
+	var morceau := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = r_haut
+	cyl.bottom_radius = r_bas
+	cyl.height = a.distance_to(b)
+	cyl.radial_segments = 7
+	cyl.rings = 1
+	cyl.material = _ecorce
+	morceau.mesh = cyl
+	var haut := (b - a).normalized()
+	var cote := haut.cross(Vector3.FORWARD if absf(haut.z) < 0.9 else Vector3.RIGHT).normalized()
+	morceau.basis = Basis(cote, haut, cote.cross(haut))
+	morceau.position = (a + b) / 2.0
+	add_child(morceau)

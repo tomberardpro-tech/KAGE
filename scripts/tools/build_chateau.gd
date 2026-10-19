@@ -1,4 +1,4 @@
-extends "res://scripts/tools/constructeur.gd"
+extends "res://scripts/tools/decor.gd"
 ## Génère scenes/levels/chateau.tscn à partir du plan Figma « Niveau 1 · Le château ».
 ## Lancer : godot --headless --script res://scripts/tools/build_chateau.gd
 ## Le centre du plan (900, 1350) devient l'origine.
@@ -29,6 +29,7 @@ func _init() -> void:
 	_lanternes()
 	_gardes()
 	_objectifs()
+	_decor()
 	joueur(900, 2240)
 	finir("res://scenes/levels/chateau.tscn")
 
@@ -41,11 +42,12 @@ func _sols() -> void:
 	var douves := boite("Douves", 80, 1900, 1640, 90, 1.2, "eau", null, -1.2)
 	douves.operation = CSGShape3D.OPERATION_SUBTRACTION
 	# Cours pavées (légèrement surélevées pour ne pas scintiller)
-	boite("CourExterieure", 180, 1360, 1440, 480, 0.02, "pave")
+	boite("CourExterieure", 180, 1360, 1440, 480, 0.02, "herbe")
 	boite("CourInterieure", 180, 760, 1440, 560, 0.02, "pave")
 	boite("AlleeExterieure", 860, 1360, 80, 480, 0.03, "allee")
 	boite("AlleeInterieure", 870, 900, 60, 420, 0.03, "allee")
 	boite("PasDePorte", 860, 1320, 80, 40, 0.03, "allee")
+	boite("AlleeDepart", 860, 2000, 80, 320, 0.03, "allee")
 
 
 func _remparts() -> void:
@@ -142,3 +144,41 @@ func _objectifs() -> void:
 	autels([["Depart", 900, 2290], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280]])
 	parchemin(900, 530)
 	sortie(1650, 510, Vector3(2.0, 2.0, 4.8))
+
+
+## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
+func _decor() -> void:
+	# Devant le château : pont rouge, bannières, berges des douves
+	pont_rouge(840, 1890, 120, 110, 0.05)
+	bannieres([[790, 2040, 0], [1010, 2040, 0], [705, 1290, 0], [1095, 1290, 0]])
+	braseros([[790, 1800], [1010, 1800], [780, 800], [1020, 800]])
+	buissons([
+		[300, 2025, 1.2], [420, 2018, 0.9], [1380, 2025, 1.2], [1500, 2018, 0.9],
+		[150, 2310, 1.5], [1650, 2310, 1.5], [620, 2030, 0.8], [1180, 2030, 0.8],
+		# Cour extérieure, contre les remparts et la remise
+		[220, 1812, 1.0], [470, 1812, 0.9], [1150, 1812, 1.0], [1300, 1812, 0.8], [1520, 1812, 1.1],
+		[760, 1700, 0.8], [1600, 1400, 1.0],
+		# Cour intérieure, devant la caserne et l'entrepôt
+		[600, 850, 0.9], [1220, 850, 0.9], [1225, 1290, 0.8], [210, 1290, 0.9],
+	])
+	rochers([
+		[230, 2200, 1.2, 0], [1560, 2180, 1.0, 1], [700, 2300, 0.6, 6], [1120, 2290, 0.5, 7],
+		[1300, 1740, 0.6, 2], [1095, 1620, 0.5, 6], [660, 1250, 0.5, 7], [1140, 1255, 0.6, 6],
+	])
+	# L'étang de la cour extérieure, avec sa cascade
+	cascade("Cascade", 1190, 1648, 1.8)
+	nenuphars(1110, 1690, 160, 60, 9)
+	berge(1100, 1630, 180, 130)
+	berge(80, 1900, 760, 90)
+	berge(960, 1900, 760, 90)
+	massif_higanbanas(1290, 1640, 50, 110, 22)
+	massif_higanbanas(620, 1170, 60, 50, 14)
+	bambous(1560, 1380, 50, 140, 10)
+	bambous(185, 1560, 40, 50, 6)
+	bambous(190, 770, 280, 40, 12)
+	bambous(1330, 770, 270, 40, 12)
+	parsemer(100, 2000, 1600, 340, 90)
+	parsemer(190, 1370, 1420, 460, 60)
+	lucioles([[150, 2020, 600, 300], [1050, 2020, 600, 300], [200, 1600, 300, 200],
+		[1300, 1640, 300, 170], [600, 980, 220, 200], [1000, 920, 220, 200]])
+	brume([[80, 1880, 800, 130], [920, 1880, 800, 130], [100, 2250, 1600, 110], [1080, 1600, 240, 200]])

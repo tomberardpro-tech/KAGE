@@ -37,7 +37,9 @@ func finir(chemin: String) -> void:
 	if err == OK and not reglages_niveau.is_empty():
 		_ecrire_reglages(chemin)
 	print(chemin.get_file(), " -> ", error_string(err))
-	quit(err)
+	# Lancé par l'outil Capture (--construire), ce script n'est pas la boucle principale.
+	var boucle := Engine.get_main_loop() as SceneTree
+	boucle.quit(err)
 
 
 ## Les réglages du niveau (titre, textes, niveau suivant) sont écrits directement dans le .tscn :
