@@ -31,7 +31,12 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 
 ## Le ninja
 
-`scenes/characters/ninja.tscn` et `scripts/ninja.gd` (forme provisoire en attendant le modèle 3D).
+`scenes/characters/ninja.tscn` et `scripts/ninja.gd`.
+
+Modèles 3D : le ninja et le garde ont été générés avec TRELLIS (trellis3d.net) à partir des planches,
+puis préparés dans Blender par `scripts/tools/blender_squelette.py` (taille, lissage, squelette
+Corps / Tete / BrasG / BrasD / JambeG / JambeD). Les fichiers bruts sont dans `assets/models/sources/`.
+`scripts/anim_chibi.gd` anime les os (marche, dash).
 
 - Marche à 5,5 m/s, accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.

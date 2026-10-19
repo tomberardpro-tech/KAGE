@@ -1,6 +1,8 @@
 extends Node3D
 ## Animation simple des modèles chibi : jambes et bras qui balancent en marchant,
 ## petit rebond, foulard qui flotte, pose de dash pour le ninja.
+## Marche avec des pivots (modèles en pièces) ou avec un squelette dont les os
+## portent les mêmes noms (modèles d'un seul tenant, voir blender_squelette.py).
 
 @export var amplitude := 38.0  ## balancement des jambes en marche, en degrés
 @export var cadence := 11.0
@@ -8,6 +10,9 @@ extends Node3D
 var _corps: CharacterBody3D
 var _phase := 0.0
 var _repos := {}  # rotation de départ de chaque pivot
+var _squelette: Skeleton3D
+var _os := {}  # nom -> [indice, rotation de repos, axe X du modèle vu par l'os]
+var _angles := {}  # angle actuel de chaque os, en radians
 
 @onready var _jambes := [get_node_or_null("JambeG"), get_node_or_null("JambeD")]
 @onready var _bras := [get_node_or_null("BrasG"), get_node_or_null("BrasD")]
@@ -24,6 +29,15 @@ func _ready() -> void:
 	for pivot in _jambes + _bras + [_tronc, _tete, _pans]:
 		if pivot:
 			_repos[pivot] = pivot.rotation
+	var squelettes := find_children("*", "Skeleton3D", true, false)
+	if not squelettes.is_empty():
+		_squelette = squelettes[0]
+		for nom in ["JambeG", "JambeD", "BrasG", "BrasD", "Corps", "Tete"]:
+			var i := _squelette.find_bone(nom)
+			if i >= 0:
+				var axe := _squelette.get_bone_global_rest(i).basis.inverse() * Vector3.RIGHT
+				_os[nom] = [i, _squelette.get_bone_pose_rotation(i), axe.normalized()]
+				_angles[nom] = 0.0
 
 
 func _process(delta: float) -> void:
@@ -51,6 +65,9 @@ func _process(delta: float) -> void:
 				cible_bras = _repos[_bras[i]] + Vector3(deg_to_rad(70.0), 0, 0)
 			_bras[i].rotation = _bras[i].rotation.lerp(cible_bras, lissage)
 
+	if _squelette:
+		_animer_os(s, dash, marche, lissage)
+
 	# Petit rebond et penché en avant pendant la course et le dash
 	position.y = absf(sin(_phase)) * 0.04 * marche
 	if _tronc:
@@ -63,3 +80,19 @@ func _process(delta: float) -> void:
 		var vent := deg_to_rad(sin(t * 7.0) * (6.0 + 14.0 * marche))
 		var leve := deg_to_rad(-25.0 * marche - (30.0 if dash else 0.0))
 		_pans.rotation = _repos[_pans] + Vector3(leve, vent, 0)
+
+
+## Même balancement que les pivots, appliqué aux os du squelette.
+func _animer_os(s: float, dash: bool, marche: float, lissage: float) -> void:
+	var cibles := {
+		"JambeG": -40.0 if dash else amplitude * s,
+		"JambeD": 35.0 if dash else -amplitude * s,
+		"BrasG": 70.0 if dash else -amplitude * 0.8 * s,
+		"BrasD": 70.0 if dash else amplitude * 0.8 * s,
+		"Corps": 28.0 if dash else 6.0 * marche,
+		"Tete": 8.0 if dash else 0.0,
+	}
+	for nom in _os:
+		var o: Array = _os[nom]
+		_angles[nom] = lerpf(_angles[nom], deg_to_rad(cibles[nom]), lissage)
+		_squelette.set_bone_pose_rotation(o[0], o[1] * Quaternion(o[2], _angles[nom]))

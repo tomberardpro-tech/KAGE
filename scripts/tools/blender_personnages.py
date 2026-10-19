@@ -20,6 +20,9 @@ from mathutils import Matrix, Vector
 
 EXPORT = os.path.join(os.path.expanduser("~"), "Desktop", "KAGE_modeles")
 LISSAGE = 1  # niveaux de subdivision (0 = brut, 2 = très lisse mais lourd)
+PEINTURE = True  # peint les ombres douces dans les textures (quelques minutes)
+PEINTURE_PASSES = 32
+FACES_MAX = 24000  # budget de faces par personnage (7 gardes à l'écran sur le web)
 
 COULEURS = {
 	"peau": ("#F1C7A2", 0.7, 0.0),
@@ -694,6 +697,80 @@ def animer_marche(pieces):
 	scene.frame_set(1)
 
 
+def peindre():
+	"""Peint les ombres douces (occlusion ambiante) dans une texture par pièce,
+	comme une texture faite à la main : creux plus sombres, contacts ombrés."""
+	sc = bpy.context.scene
+	sc.render.engine = "CYCLES"
+	sc.cycles.samples = PEINTURE_PASSES
+	sc.render.bake.margin = 4
+	if sc.world is None:
+		sc.world = bpy.data.worlds.new("Monde")
+	sc.world.light_settings.distance = 0.12
+	pieces = [o for o in sc.objects if o.type == "MESH" and o.data.materials]
+	for o in pieces:
+		cuire(o)
+	# allège tout le personnage pour le web avant de peindre
+	total = sum(len(o.data.polygons) for o in pieces)
+	if total > FACES_MAX:
+		for o in pieces:
+			if len(o.data.polygons) > 150:
+				d = o.modifiers.new("Allege", "DECIMATE")
+				d.ratio = FACES_MAX / total
+				cuire(o)
+	for o in pieces:
+		nom = o.data.materials[0].name.replace("kage_", "")
+		if nom in ("blanc", "iris", "jaune") or max(o.dimensions) < 0.04:
+			continue
+		n = 512 if max(o.dimensions) > 0.35 else 256 if max(o.dimensions) > 0.12 else 128
+		# nouvelle carte UV dépliée proprement, pour peindre sans chevauchement
+		bpy.ops.object.select_all(action="DESELECT")
+		o.select_set(True)
+		bpy.context.view_layer.objects.active = o
+		uv_motif = o.data.uv_layers[0].name
+		peinture = o.data.uv_layers.new(name="Peinture")
+		o.data.uv_layers.active = peinture
+		bpy.ops.object.mode_set(mode="EDIT")
+		bpy.ops.mesh.select_all(action="SELECT")
+		bpy.ops.uv.smart_project(angle_limit=math.radians(60), island_margin=0.02)
+		bpy.ops.object.mode_set(mode="OBJECT")
+		m = o.data.materials[0].copy()
+		o.data.materials[0] = m
+		arbre = m.node_tree
+		for t in [t for t in arbre.nodes if t.type == "TEX_IMAGE"]:  # le motif garde ses UV d'origine
+			uv = arbre.nodes.new("ShaderNodeUVMap")
+			uv.uv_map = uv_motif
+			arbre.links.new(uv.outputs["UV"], t.inputs["Vector"])
+		cible = arbre.nodes.new("ShaderNodeTexImage")
+		arbre.nodes.active = cible
+		cuites = []
+		for passe in ("DIFFUSE", "AO"):
+			img = bpy.data.images.new("%s_%s" % (o.name, passe), n, n)
+			cible.image = img
+			if passe == "DIFFUSE":
+				bpy.ops.object.bake(type="DIFFUSE", pass_filter={"COLOR"})
+			else:
+				bpy.ops.object.bake(type="AO")
+			cuites.append(np.array(img.pixels[:]).reshape(n, n, 4))
+			bpy.data.images.remove(img)
+		couleur, ao = cuites
+		finale = couleur.copy()
+		finale[..., :3] = couleur[..., :3] * (0.35 + 0.65 * ao[..., :1])
+		img = bpy.data.images.new("peint_" + o.name, n, n)
+		img.pixels.foreach_set(finale.astype(np.float32).ravel())
+		img.pack()
+		# matériau final : seulement la texture peinte, sur la nouvelle carte UV
+		bsdf = arbre.nodes["Principled BSDF"]
+		for t in [t for t in arbre.nodes if t.type in ("TEX_IMAGE", "UVMAP")]:
+			arbre.nodes.remove(t)
+		tex = arbre.nodes.new("ShaderNodeTexImage")
+		tex.image = img
+		arbre.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+		o.data.uv_layers.remove(o.data.uv_layers[uv_motif])
+	sc.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in [
+		e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items] else "BLENDER_EEVEE"
+
+
 def exporter(nom):
 	os.makedirs(EXPORT, exist_ok=True)
 	chemin = os.path.join(EXPORT, nom + ".glb")
@@ -716,8 +793,11 @@ def construire():
 	# Un personnage à la fois, pour que les pivots gardent leurs noms exacts
 	for nom, fabrique in (("garde", garde), ("ninja", ninja)):
 		vider_scene()
-		animer_marche(fabrique())
-		exporter(nom)
+		pieces = fabrique()
+		if PEINTURE:
+			peindre()
+		animer_marche(pieces)
+		exporter(nom + "_formes")  # ninja.glb / garde.glb sont les modèles TRELLIS
 	# Le ninja reste dans la scène ; on règle la vue pour voir les couleurs
 	for zone in bpy.context.screen.areas if bpy.context.screen else []:
 		if zone.type == "VIEW_3D":
