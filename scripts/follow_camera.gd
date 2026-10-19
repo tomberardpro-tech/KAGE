@@ -2,7 +2,7 @@ extends Camera3D
 ## Caméra haute et dézoomée, orientée plein nord, qui suit le ninja en douceur.
 
 @export var target: Node3D
-@export var offset := Vector3(0.0, 15.0, 13.0)
+@export var offset := Vector3(0.0, 10.5, 11.0)
 @export var smoothing := 6.0
 
 
