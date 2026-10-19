@@ -75,6 +75,12 @@ def lisser(corps):
 	m.factor, m.iterations, m.smooth_type = 0.5, 4, "LENGTH_WEIGHTED"
 	m.use_only_smooth = True
 	bpy.ops.object.modifier_apply(modifier=m.name)
+	# tissu mat : sans ça le glTF reste « métal » et le personnage paraît sombre dans le jeu
+	for mat in corps.data.materials:
+		bsdf = mat and mat.node_tree and mat.node_tree.nodes.get("Principled BSDF")
+		if bsdf:
+			bsdf.inputs["Metallic"].default_value = 0.0
+			bsdf.inputs["Roughness"].default_value = 0.8
 	for img in bpy.data.images:
 		if img.size[0] and LUMIERE != 1.0:
 			px = np.array(img.pixels[:]).reshape(-1, 4)
