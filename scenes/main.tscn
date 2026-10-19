@@ -1,0 +1,58 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="1_cam"]
+
+[sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
+sky_top_color = Color(0.0549, 0.0588, 0.0706, 1)
+sky_horizon_color = Color(0.294, 0.318, 0.376, 1)
+ground_bottom_color = Color(0.0549, 0.0588, 0.0706, 1)
+ground_horizon_color = Color(0.294, 0.318, 0.376, 1)
+
+[sub_resource type="Sky" id="Sky"]
+sky_material = SubResource("Sky_mat")
+
+[sub_resource type="Environment" id="Env"]
+background_mode = 2
+sky = SubResource("Sky")
+ambient_light_source = 3
+ambient_light_color = Color(0.294, 0.318, 0.376, 1)
+ambient_light_energy = 0.6
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.294, 0.318, 0.376, 1)
+fog_density = 0.02
+
+[sub_resource type="PlaneMesh" id="Ground_mesh"]
+size = Vector2(60, 60)
+
+[sub_resource type="StandardMaterial3D" id="Ground_mat"]
+albedo_color = Color(0.086, 0.09, 0.11, 1)
+
+[sub_resource type="CapsuleMesh" id="Ninja_mesh"]
+radius = 0.4
+height = 1.2
+
+[node name="Main" type="Node3D"]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Env")
+
+[node name="Lune" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 20, 0)
+light_color = Color(0.871, 0.816, 0.788, 1)
+light_energy = 0.8
+shadow_enabled = true
+
+[node name="Sol" type="MeshInstance3D" parent="."]
+mesh = SubResource("Ground_mesh")
+surface_material_override/0 = SubResource("Ground_mat")
+
+[node name="Ninja" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
+mesh = SubResource("Ninja_mesh")
+
+[node name="Camera" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+fov = 40.0
+current = true
+script = ExtResource("1_cam")
+target = NodePath("../Ninja")
