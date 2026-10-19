@@ -1,0 +1,224 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://scripts/menu.gd" id="1_menu"]
+[ext_resource type="Texture2D" path="res://assets/ui/menu_fond.png" id="2_fond"]
+[ext_resource type="Script" path="res://scripts/menu_bouton.gd" id="3_bouton"]
+
+[sub_resource type="Gradient" id="Degrade"]
+offsets = PackedFloat32Array(0, 0.45, 0.7)
+colors = PackedColorArray(0.0549, 0.0588, 0.0706, 0.85, 0.0549, 0.0588, 0.0706, 0.55, 0.0549, 0.0588, 0.0706, 0)
+
+[sub_resource type="GradientTexture2D" id="OmbreTexture"]
+gradient = SubResource("Degrade")
+width = 256
+height = 4
+
+[node name="Menu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_menu")
+
+[node name="Fond" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = ExtResource("2_fond")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="OmbreGauche" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource("OmbreTexture")
+expand_mode = 1
+
+[node name="Titres" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 150.0
+offset_top = 118.0
+offset_right = 900.0
+offset_bottom = 440.0
+mouse_filter = 2
+theme_override_constants/separation = -48
+
+[node name="Kanji" type="Label" parent="Titres"]
+layout_mode = 2
+theme_type_variation = &"Kanji"
+text = "影 忍"
+
+[node name="Logo" type="Label" parent="Titres"]
+layout_mode = 2
+theme_type_variation = &"TitreLogo"
+text = "KAGE"
+
+[node name="SousTitre" type="Label" parent="Titres"]
+layout_mode = 2
+theme_type_variation = &"SousTitre"
+text = "THE SHADOW · LE CHAMP DES HIGANBANA"
+
+[node name="Boutons" type="VBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 499.0
+offset_right = 900.0
+offset_bottom = 920.0
+theme_override_constants/separation = 1
+
+[node name="NouvellePartie" type="Button" parent="Boutons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+script = ExtResource("3_bouton")
+texte = "NOUVELLE PARTIE"
+
+[node name="Continuer" type="Button" parent="Boutons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+script = ExtResource("3_bouton")
+texte = "CONTINUER"
+
+[node name="Options" type="Button" parent="Boutons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+script = ExtResource("3_bouton")
+texte = "OPTIONS"
+
+[node name="Quitter" type="Button" parent="Boutons"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+script = ExtResource("3_bouton")
+texte = "QUITTER"
+
+[node name="Pied" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 150.0
+offset_top = -104.0
+offset_right = 700.0
+offset_bottom = -64.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="T1" type="PanelContainer" parent="Pied"]
+layout_mode = 2
+theme_type_variation = &"ToucheCadre"
+
+[node name="L" type="Label" parent="Pied/T1"]
+layout_mode = 2
+theme_type_variation = &"Touche"
+text = "↑ ↓"
+
+[node name="A1" type="Label" parent="Pied"]
+layout_mode = 2
+theme_type_variation = &"Aide"
+text = "CHOISIR"
+
+[node name="Espace" type="Control" parent="Pied"]
+custom_minimum_size = Vector2(20, 0)
+layout_mode = 2
+
+[node name="T2" type="PanelContainer" parent="Pied"]
+layout_mode = 2
+theme_type_variation = &"ToucheCadre"
+
+[node name="L" type="Label" parent="Pied/T2"]
+layout_mode = 2
+theme_type_variation = &"Touche"
+text = "ENTRÉE"
+
+[node name="A2" type="Label" parent="Pied"]
+layout_mode = 2
+theme_type_variation = &"Aide"
+text = "VALIDER"
+
+[node name="Version" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -400.0
+offset_top = -92.0
+offset_right = -80.0
+offset_bottom = -62.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_type_variation = &"Version"
+text = "v0.1 · prototype"
+horizontal_alignment = 2
+
+[node name="PanneauOptions" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme_type_variation = &"Voile"
+
+[node name="Centre" type="CenterContainer" parent="PanneauOptions"]
+layout_mode = 2
+
+[node name="Parchemin" type="PanelContainer" parent="PanneauOptions/Centre"]
+custom_minimum_size = Vector2(620, 0)
+layout_mode = 2
+theme_type_variation = &"Parchemin"
+
+[node name="V" type="VBoxContainer" parent="PanneauOptions/Centre/Parchemin"]
+layout_mode = 2
+theme_override_constants/separation = 22
+
+[node name="Etiquette" type="Label" parent="PanneauOptions/Centre/Parchemin/V"]
+layout_mode = 2
+theme_type_variation = &"Etiquette"
+text = "RÉGLAGES"
+
+[node name="Titre" type="Label" parent="PanneauOptions/Centre/Parchemin/V"]
+layout_mode = 2
+theme_type_variation = &"TitreParchemin"
+theme_override_font_sizes/font_size = 56
+text = "OPTIONS"
+
+[node name="LigneVolume" type="HBoxContainer" parent="PanneauOptions/Centre/Parchemin/V"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="L" type="Label" parent="PanneauOptions/Centre/Parchemin/V/LigneVolume"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_type_variation = &"TexteParchemin"
+text = "Volume"
+
+[node name="Volume" type="HSlider" parent="PanneauOptions/Centre/Parchemin/V/LigneVolume"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+step = 5.0
+
+[node name="PleinEcran" type="CheckButton" parent="PanneauOptions/Centre/Parchemin/V"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Plein écran"
+
+[node name="Retour" type="Button" parent="PanneauOptions/Centre/Parchemin/V"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+theme_type_variation = &"BoutonParchemin"
+text = "← RETOUR"

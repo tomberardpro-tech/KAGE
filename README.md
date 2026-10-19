@@ -22,6 +22,13 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 
 Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERTY et WASD sur un QWERTY.
 
+## Écrans
+
+- **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
+- **Jeu** (`scenes/jeu.tscn`) : scène provisoire, Échap ramène au menu.
+
+![Menu principal](docs/menu.png)
+
 ## Dossiers
 
 | Dossier | Contenu |
@@ -37,11 +44,19 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 
 ## Réglages
 
+- Scripts globaux : `Transition` (fondu entre écrans), `Reglages` (volume, plein écran), `Sauvegarde`.
+
 - Affichage en 1920 × 1080, adapté à la taille de la fenêtre.
 - Rendu « Compatibility », le seul qui marche dans le navigateur.
 - Export **Web** prêt dans `export_presets.cfg`, sortie dans `build/web/`.
 - Caméra haute et dézoomée, orientée plein nord, qui suit le ninja (`scripts/follow_camera.gd`).
 - Couleurs de la charte dans `scripts/palette.gd`, thème Godot (polices et styles) dans `assets/ui/kage_theme.tres`. Détails dans [docs/design.md](docs/design.md).
+
+## Captures
+
+```
+godot --path . -- --capture=res://scenes/ui/menu.tscn --sortie=capture.png
+```
 
 ## Design
 

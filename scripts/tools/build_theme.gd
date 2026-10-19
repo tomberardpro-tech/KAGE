@@ -26,13 +26,13 @@ func _init() -> void:
 	_label(theme, "TitreEcran", anton, 140, Palette.WASHI)      # PAUSE, VICTOIRE…
 	_label(theme, "TitreHud", anton, 51, Palette.WASHI)         # CACHÉ, 0 / 1
 	_label(theme, "TitreParchemin", anton, 32, Palette.ENCRE)   # SE CACHER
-	_label(theme, "SousTitre", plex_medium, 22, Palette.GRIS)   # THE SHADOW · …
+	_label(theme, "SousTitre", _espace(plex_medium, 4), 22, Palette.WASHI.darkened(0.12)) # THE SHADOW · …
 	_label(theme, "Consigne", plex_semibold, 30, Palette.WASHI) # TRANCHER LA LANTERNE
 	_label(theme, "TexteParchemin", plex, 22, Palette.ENCRE)    # textes des tutoriels
 	_label(theme, "Etiquette", plex_semibold, 20, Palette.LAQUE)# TUTORIEL, DIALOGUE
-	_label(theme, "Aide", plex_medium, 18, Palette.GRIS)        # CHOISIR, VALIDER
+	_label(theme, "Aide", _espace(plex_medium, 3), 18, Palette.WASHI.darkened(0.2)) # CHOISIR, VALIDER
 	_label(theme, "Touche", plex_bold, 18, Palette.ENCRE)       # ↑ ↓, ENTRÉE
-	_label(theme, "Version", plex, 16, Palette.GRIS)
+	_label(theme, "Version", _espace(plex, 2), 16, Palette.GRIS)
 	_label(theme, "Kanji", kanji, 48, Palette.LAQUE)            # 影 忍
 	_label(theme, "KanjiFond", kanji, 600, Color(Palette.WASHI, 0.06)) # grand 休 en fond
 
@@ -40,7 +40,6 @@ func _init() -> void:
 	var empty := StyleBoxEmpty.new()
 	empty.content_margin_left = 28
 	empty.content_margin_right = 28
-	var parchemin := _parchemin_box()
 	theme.set_type_variation("BoutonMenu", "Button")
 	theme.set_font("font", "BoutonMenu", anton)
 	theme.set_font_size("font_size", "BoutonMenu", 50)
@@ -51,10 +50,45 @@ func _init() -> void:
 	theme.set_color("font_disabled_color", "BoutonMenu", Palette.GRIS)
 	theme.set_stylebox("normal", "BoutonMenu", empty)
 	theme.set_stylebox("disabled", "BoutonMenu", empty)
-	theme.set_stylebox("hover", "BoutonMenu", parchemin)
-	theme.set_stylebox("focus", "BoutonMenu", parchemin)
-	theme.set_stylebox("pressed", "BoutonMenu", parchemin)
+	theme.set_stylebox("hover", "BoutonMenu", empty)
+	theme.set_stylebox("focus", "BoutonMenu", empty)
+	theme.set_stylebox("pressed", "BoutonMenu", empty)
 	theme.set_constant("h_separation", "BoutonMenu", 16)
+
+	# Boutons simples sur parchemin (options, pause)
+	theme.set_type_variation("BoutonParchemin", "Button")
+	theme.set_font("font", "BoutonParchemin", anton)
+	theme.set_font_size("font_size", "BoutonParchemin", 32)
+	theme.set_color("font_color", "BoutonParchemin", Palette.ARDOISE)
+	theme.set_color("font_hover_color", "BoutonParchemin", Palette.LAQUE)
+	theme.set_color("font_focus_color", "BoutonParchemin", Palette.LAQUE)
+	theme.set_color("font_pressed_color", "BoutonParchemin", Palette.LAQUE)
+	for state in ["normal", "hover", "focus", "pressed", "disabled"]:
+		theme.set_stylebox(state, "BoutonParchemin", StyleBoxEmpty.new())
+
+	# Cases et curseurs sur parchemin
+	theme.set_color("font_color", "CheckButton", Palette.ENCRE)
+	theme.set_color("font_hover_color", "CheckButton", Palette.LAQUE)
+	theme.set_color("font_focus_color", "CheckButton", Palette.LAQUE)
+	theme.set_color("font_pressed_color", "CheckButton", Palette.ENCRE)
+	theme.set_color("font_hover_pressed_color", "CheckButton", Palette.LAQUE)
+	var rail := StyleBoxFlat.new()
+	rail.bg_color = Color(Palette.ENCRE, 0.25)
+	rail.set_corner_radius_all(3)
+	rail.content_margin_top = 3
+	rail.content_margin_bottom = 3
+	var rempli := rail.duplicate()
+	rempli.bg_color = Palette.LAQUE
+	theme.set_stylebox("slider", "HSlider", rail)
+	theme.set_stylebox("grabber_area", "HSlider", rempli)
+	theme.set_stylebox("grabber_area_highlight", "HSlider", rempli)
+	var focus := StyleBoxFlat.new()
+	focus.draw_center = false
+	focus.border_color = Palette.LAQUE
+	focus.set_border_width_all(2)
+	focus.set_corner_radius_all(3)
+	for type in ["HSlider", "CheckButton", "BoutonParchemin"]:
+		theme.set_stylebox("focus", type, focus if type != "BoutonParchemin" else StyleBoxEmpty.new())
 
 	# Panneaux parchemin (tutoriels, dialogues, bannières)
 	theme.set_type_variation("Parchemin", "PanelContainer")
@@ -70,6 +104,8 @@ func _init() -> void:
 	var touche := StyleBoxFlat.new()
 	touche.bg_color = Palette.WASHI
 	touche.set_corner_radius_all(4)
+	touche.border_color = Palette.WASHI.darkened(0.3)
+	touche.border_width_bottom = 4
 	touche.content_margin_left = 10
 	touche.content_margin_right = 10
 	touche.content_margin_top = 4
@@ -87,6 +123,13 @@ func _label(theme: Theme, name: String, font: Font, size: int, color: Color) -> 
 	theme.set_font("font", name, font)
 	theme.set_font_size("font_size", name, size)
 	theme.set_color("font_color", name, color)
+
+
+func _espace(font: Font, spacing: int) -> FontVariation:
+	var variation := FontVariation.new()
+	variation.base_font = font
+	variation.spacing_glyph = spacing
+	return variation
 
 
 func _parchemin_box(h_margin := 28, v_margin := 6) -> StyleBoxFlat:

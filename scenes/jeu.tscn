@@ -1,6 +1,7 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/follow_camera.gd" id="1_cam"]
+[ext_resource type="Script" path="res://scripts/jeu.gd" id="2_jeu"]
 
 [sub_resource type="ProceduralSkyMaterial" id="Sky_mat"]
 sky_top_color = Color(0.0549, 0.0588, 0.0706, 1)
@@ -32,7 +33,8 @@ albedo_color = Color(0.086, 0.09, 0.11, 1)
 radius = 0.4
 height = 1.2
 
-[node name="Main" type="Node3D"]
+[node name="Jeu" type="Node3D"]
+script = ExtResource("2_jeu")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
 environment = SubResource("Env")

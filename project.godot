@@ -7,8 +7,15 @@ config_version=5
 
 config/name="KAGE"
 config/description="Infiltration ninja dans un château japonais, de nuit, sous la lune."
-run/main_scene="res://scenes/main.tscn"
+run/main_scene="res://scenes/ui/menu.tscn"
 config/features=PackedStringArray("4.4", "GL Compatibility")
+
+[autoload]
+
+Transition="*res://scripts/transition.gd"
+Reglages="*res://scripts/reglages.gd"
+Sauvegarde="*res://scripts/sauvegarde.gd"
+Capture="*res://scripts/tools/capture.gd"
 
 [display]
 
