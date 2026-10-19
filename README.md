@@ -26,7 +26,7 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 ## Écrans
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
-- **Jeu** (`scenes/jeu.tscn`) : terrain de test avec un muret, des caisses, une maison et un rempart. Échap ramène au menu.
+- **Jeu** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
 
 ## Le ninja
 
