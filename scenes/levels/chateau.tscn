@@ -153,8 +153,13 @@ size = Vector3(2, 2, 4.8)
 
 [node name="Chateau" type="Node3D"]
 script = ExtResource("1_o6d7a")
-cycle_nuages = 14.0
-duree_nuages = 5.0
+numero = 2
+titre = "LE CHÂTEAU"
+lieu = "Le château"
+objectif = "Récupère le parchemin du clan dans le donjon, puis sors par le rempart est."
+ou_parchemin = "Il est dans le donjon."
+ou_sortie = "Maintenant, file par la sortie du rempart est."
+niveau_suivant = "res://scenes/levels/palais.tscn"
 
 [node name="Ambiance" type="WorldEnvironment" parent="."]
 environment = SubResource("Environment_i7pqy")

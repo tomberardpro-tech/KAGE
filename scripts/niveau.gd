@@ -7,6 +7,13 @@ signal parchemin_pris
 signal victoire(temps: float)
 signal mort
 
+@export var numero := 1
+@export var titre := ""  ## ex. « LE CHÂTEAU », affiché au tutoriel
+@export var lieu := ""  ## ex. « Le château », pour la phrase de victoire
+@export_multiline var objectif := ""  ## dernière ligne du tutoriel
+@export var ou_parchemin := ""  ## rappel si on arrive à la sortie sans le parchemin
+@export var ou_sortie := ""  ## message quand on prend le parchemin
+@export_file("*.tscn") var niveau_suivant := ""  ## vide : dernier niveau, on revient au menu
 @export var cycle_nuages := 14.0  ## secondes entre deux passages de nuages
 @export var duree_nuages := 5.0
 
@@ -71,18 +78,20 @@ func _sur_parchemin() -> void:
 	a_le_parchemin = true
 	$Parchemin.queue_free()
 	parchemin_pris.emit()
-	_messages.afficher("PARCHEMIN RÉCUPÉRÉ", "Maintenant, file par la sortie du rempart est.", 3.0)
+	_messages.afficher("PARCHEMIN RÉCUPÉRÉ", ou_sortie, 3.0)
 
 
 func _sur_sortie() -> void:
 	if _fini:
 		return
 	if not a_le_parchemin:
-		_messages.afficher("PAS SANS LE PARCHEMIN", "Il est dans le donjon.", 2.0)
+		_messages.afficher("PAS SANS LE PARCHEMIN", ou_parchemin, 2.0)
 		return
 	_fini = true
 	ninja.bloque = true
 	victoire.emit(temps)
+	if not niveau_suivant.is_empty():
+		Sauvegarde.atteindre(niveau_suivant)
 	_ecrans.victoire(temps, fois_repere == 0, gardes_tues == 0)
 
 

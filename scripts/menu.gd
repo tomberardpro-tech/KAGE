@@ -1,8 +1,6 @@
 extends Control
 ## Menu principal : nouvelle partie, continuer, options, quitter.
 
-const SCENE_JEU := "res://scenes/levels/chateau.tscn"
-
 @onready var _nouvelle: MenuBouton = %NouvellePartie
 @onready var _continuer: MenuBouton = %Continuer
 @onready var _options_bouton: MenuBouton = %Options
@@ -18,8 +16,8 @@ func _ready() -> void:
 	# Dans le navigateur, on ne peut pas fermer le jeu : le bouton est masqué.
 	_quitter.visible = not OS.has_feature("web")
 
-	_nouvelle.pressed.connect(_lancer_partie)
-	_continuer.pressed.connect(_lancer_partie)
+	_nouvelle.pressed.connect(func(): Transition.vers(Sauvegarde.PREMIER_NIVEAU))
+	_continuer.pressed.connect(func(): Transition.vers(Sauvegarde.niveau()))
 	_options_bouton.pressed.connect(_ouvrir_options)
 	_quitter.pressed.connect(get_tree().quit)
 
@@ -37,10 +35,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	if _options.visible and (event.is_action_pressed("ui_cancel") or event.is_action_pressed("pause")):
 		_fermer_options()
 		get_viewport().set_input_as_handled()
-
-
-func _lancer_partie() -> void:
-	Transition.vers(SCENE_JEU)
 
 
 func _ouvrir_options() -> void:

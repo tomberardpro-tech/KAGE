@@ -1,0 +1,829 @@
+[gd_scene load_steps=47 format=3]
+
+[ext_resource type="Script" path="res://scripts/niveau.gd" id="1_ccrpe"]
+[ext_resource type="Script" path="res://scripts/herbes.gd" id="2_5cbd8"]
+[ext_resource type="Script" path="res://scripts/arbre.gd" id="3_xj7dp"]
+[ext_resource type="Script" path="res://scripts/zone.gd" id="4_1tdfv"]
+[ext_resource type="PackedScene" path="res://scenes/objets/lanterne.tscn" id="5_85qgt"]
+[ext_resource type="Script" path="res://scripts/lanterne.gd" id="6_28gx0"]
+[ext_resource type="PackedScene" path="res://scenes/characters/garde.tscn" id="7_yuuyw"]
+[ext_resource type="Script" path="res://scripts/garde.gd" id="8_w6gwt"]
+[ext_resource type="Script" path="res://scripts/autel.gd" id="9_382wi"]
+[ext_resource type="Script" path="res://scripts/ramassable.gd" id="10_0tmnc"]
+[ext_resource type="PackedScene" path="res://scenes/characters/ninja.tscn" id="11_5hyt8"]
+[ext_resource type="Script" path="res://scripts/ninja.gd" id="12_d4kyp"]
+[ext_resource type="Script" path="res://scripts/follow_camera.gd" id="13_3l0ua"]
+[ext_resource type="PackedScene" path="res://scenes/ui/messages.tscn" id="14_p30vl"]
+[ext_resource type="Script" path="res://scripts/messages.gd" id="15_p5in7"]
+[ext_resource type="Script" path="res://scripts/hud.gd" id="16_e656q"]
+[ext_resource type="Script" path="res://scripts/ecrans_jeu.gd" id="17_dgsjj"]
+
+[sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_iub76"]
+sky_top_color = Color(0.054902, 0.0588235, 0.0705882, 1)
+sky_horizon_color = Color(0.294118, 0.317647, 0.376471, 1)
+ground_bottom_color = Color(0.054902, 0.0588235, 0.0705882, 1)
+ground_horizon_color = Color(0.294118, 0.317647, 0.376471, 1)
+
+[sub_resource type="Sky" id="Sky_ifk84"]
+sky_material = SubResource("ProceduralSkyMaterial_iub76")
+
+[sub_resource type="Environment" id="Environment_7ge03"]
+background_mode = 2
+sky = SubResource("Sky_ifk84")
+ambient_light_source = 2
+ambient_light_color = Color(0.294118, 0.352941, 0.470588, 1)
+ambient_light_energy = 0.55
+tonemap_mode = 2
+fog_enabled = true
+fog_light_color = Color(0.164706, 0.188235, 0.25098, 1)
+fog_density = 0.008
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_x1k6q"]
+albedo_color = Color(0.141176, 0.207843, 0.164706, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_amwsr"]
+albedo_color = Color(0.368627, 0.352941, 0.321569, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_wl3bd"]
+albedo_color = Color(0.227451, 0.231373, 0.258824, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ltegq"]
+albedo_color = Color(0.294118, 0.301961, 0.337255, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_suj6x"]
+albedo_color = Color(0.72549, 0.694118, 0.639216, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_185h5"]
+albedo_color = Color(0.168627, 0.176471, 0.2, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5xead"]
+albedo_color = Color(0.556863, 0.164706, 0.101961, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_d046w"]
+albedo_color = Color(0.352941, 0.364706, 0.4, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_042vv"]
+albedo_color = Color(0.231373, 0.227451, 0.188235, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l01qm"]
+albedo_color = Color(0.419608, 0.392157, 0.25098, 1)
+roughness = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_aj3y8"]
+albedo_color = Color(0.133333, 0.196078, 0.290196, 1)
+metallic = 0.3
+roughness = 0.15
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_8m26g"]
+size = Vector3(75.2, 4, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qa55m"]
+size = Vector3(75.2, 4, 1.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qaxf6"]
+size = Vector3(1.6, 4, 81.6)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_oxbdo"]
+size = Vector3(1.6, 4, 81.6)
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_r0eo2"]
+
+[sub_resource type="CylinderShape3D" id="CylinderShape3D_5v0g0"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_t2ya1"]
+albedo_color = Color(0.760784, 0.231373, 0.133333, 1)
+roughness = 0.9
+
+[sub_resource type="SphereMesh" id="SphereMesh_pvfkt"]
+material = SubResource("StandardMaterial3D_t2ya1")
+radius = 0.12
+height = 0.16
+
+[sub_resource type="MultiMesh" id="MultiMesh_u7cq7"]
+transform_format = 1
+instance_count = 120
+mesh = SubResource("SphereMesh_pvfkt")
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_p4oav"]
+radius = 1.6
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_4ma5h"]
+radius = 1.6
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_6xdgd"]
+radius = 0.9
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1s2uc"]
+albedo_color = Color(0.917647, 0.890196, 0.839216, 1)
+roughness = 0.9
+emission_enabled = true
+emission = Color(0.85098, 0.603922, 0.305882, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_bdd8o"]
+material = SubResource("StandardMaterial3D_1s2uc")
+top_radius = 0.12
+bottom_radius = 0.12
+height = 0.7
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_hkbxr"]
+size = Vector3(2, 2, 4.8)
+
+[node name="Palais" type="Node3D"]
+script = ExtResource("1_ccrpe")
+numero = 3
+titre = "LE PALAIS"
+lieu = "Le palais"
+objectif = "Reprends le dernier parchemin du clan dans la salle du seigneur, puis sors par la brèche du rempart ouest."
+ou_parchemin = "Il est dans la salle du seigneur, au nord."
+ou_sortie = "Maintenant, file par la brèche du rempart ouest."
+niveau_suivant = ""
+
+[node name="Ambiance" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_7ge03")
+
+[node name="Lune" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.906308, -0.346189, 0.242404, 0, 0.573576, 0.819152, -0.422618, -0.742404, 0.519837, 0, 0, 0)
+light_color = Color(0.788235, 0.815686, 0.909804, 1)
+light_energy = 0.9
+shadow_enabled = true
+
+[node name="Decor" type="CSGCombiner3D" parent="."]
+use_collision = true
+
+[node name="Sol" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 0.8)
+size = Vector3(75.2, 2, 81.6)
+material = SubResource("StandardMaterial3D_x1k6q")
+
+[node name="JardinZen" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 34)
+size = Vector3(60.8, 0.02, 10.4)
+material = SubResource("StandardMaterial3D_amwsr")
+
+[node name="Cour" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, -20.4)
+size = Vector3(60.8, 0.02, 31.2)
+material = SubResource("StandardMaterial3D_wl3bd")
+
+[node name="AlleeSud" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, 34.8)
+size = Vector3(3.2, 0.03, 12)
+material = SubResource("StandardMaterial3D_ltegq")
+
+[node name="AlleeCour" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.015, -12.4)
+size = Vector3(3.2, 0.03, 15.2)
+material = SubResource("StandardMaterial3D_ltegq")
+
+[node name="RempartSudOuest" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.2, 1.7, 28)
+size = Vector3(29.6, 3.4, 1.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartSudOuestTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17.2, 3.525, 28)
+size = Vector3(30.08, 0.25, 2.08)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="RempartSudEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.2, 1.7, 28)
+size = Vector3(29.6, 3.4, 1.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartSudEstTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17.2, 3.525, 28)
+size = Vector3(30.08, 0.25, 2.08)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="RempartOuestSud" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.2, 1.7, -0.4)
+size = Vector3(1.6, 3.4, 55.2)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartOuestSudTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.2, 3.525, -0.4)
+size = Vector3(2.08, 0.25, 55.68)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="RempartOuestNord" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.2, 1.7, -35.2)
+size = Vector3(1.6, 3.4, 4.8)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartOuestNordTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.2, 3.525, -35.2)
+size = Vector3(2.08, 0.25, 5.28)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="RempartEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.2, 1.7, -5.2)
+size = Vector3(1.6, 3.4, 64.8)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartEstTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.2, 3.525, -5.2)
+size = Vector3(2.08, 0.25, 65.28)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="RempartNord" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -36.8)
+size = Vector3(60.8, 3.4, 1.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RempartNordTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.525, -36.8)
+size = Vector3(61.28, 0.25, 2.08)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="MurInterieurOuest" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.4, 1.5, -4)
+size = Vector3(28, 3, 1.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="MurInterieurOuestTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.4, 3.125, -4)
+size = Vector3(28.48, 0.25, 2.08)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="MurInterieurEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4, 1.5, -4)
+size = Vector3(28, 3, 1.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="MurInterieurEstTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16.4, 3.125, -4)
+size = Vector3(28.48, 0.25, 2.08)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="PorteSud830" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 2, 28)
+size = Vector3(0.4, 4, 2.4)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="PorteInterieure830" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 1.8, -4)
+size = Vector3(0.4, 3.6, 2.4)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="PorteSud960" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 2, 28)
+size = Vector3(0.4, 4, 2.4)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="PorteInterieure960" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.6, 1.8, -4)
+size = Vector3(0.4, 3.6, 2.4)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="LinteauSud" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.2, 28)
+size = Vector3(5.6, 0.4, 2.4)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="LinteauInterieur" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.8, -4)
+size = Vector3(5.6, 0.4, 2.4)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="LinteauBreche" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.2, 3.6, -30.4)
+size = Vector3(2, 0.4, 4.8)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="Remise" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.75, 31.2)
+size = Vector3(6.4, 1.5, 4)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="RemiseSoubassement" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0.2, 31.2)
+size = Vector3(6.56, 0.4, 4.16)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="RemiseToit" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1.65, 31.2)
+size = Vector3(7.52, 0.3, 5.12)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="GalerieOuest" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.2, 0.95, 8)
+size = Vector3(10.4, 1.9, 22.4)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="GalerieOuestSoubassement" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.2, 0.2, 8)
+size = Vector3(10.56, 0.4, 22.56)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="GalerieOuestToit" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.2, 2.05, 8)
+size = Vector3(11.52, 0.3, 23.52)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="GalerieEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.2, 0.95, 8)
+size = Vector3(10.4, 1.9, 22.4)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="GalerieEstSoubassement" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.2, 0.2, 8)
+size = Vector3(10.56, 0.4, 22.56)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="GalerieEstToit" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.2, 2.05, 8)
+size = Vector3(11.52, 0.3, 23.52)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="Cuisines" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.8, 0.95, -13.4)
+size = Vector3(10.4, 1.9, 7.6)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="CuisinesSoubassement" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.8, 0.2, -13.4)
+size = Vector3(10.56, 0.4, 7.76)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="CuisinesToit" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.8, 2.05, -13.4)
+size = Vector3(11.52, 0.3, 8.72)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="PavillonThe" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 0.9, -13.8)
+size = Vector3(8.8, 1.8, 6.8)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="PavillonTheSoubassement" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 0.2, -13.8)
+size = Vector3(8.96, 0.4, 6.96)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="PavillonTheToit" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20.4, 1.95, -13.8)
+size = Vector3(9.92, 0.3, 7.92)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="SalleSol" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, -27.6)
+size = Vector3(32, 0.04, 15.2)
+material = SubResource("StandardMaterial3D_042vv")
+
+[node name="Tatami0" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 0.03, -27.6)
+size = Vector3(4.8, 0.06, 10.4)
+material = SubResource("StandardMaterial3D_l01qm")
+
+[node name="Tatami1" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.6, 0.03, -27.6)
+size = Vector3(4.8, 0.06, 10.4)
+material = SubResource("StandardMaterial3D_l01qm")
+
+[node name="Tatami2" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.03, -27.6)
+size = Vector3(4.8, 0.06, 10.4)
+material = SubResource("StandardMaterial3D_l01qm")
+
+[node name="Tatami3" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.6, 0.03, -27.6)
+size = Vector3(4.8, 0.06, 10.4)
+material = SubResource("StandardMaterial3D_l01qm")
+
+[node name="Tatami4" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 0.03, -27.6)
+size = Vector3(4.8, 0.06, 10.4)
+material = SubResource("StandardMaterial3D_l01qm")
+
+[node name="TapisRouge" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.035, -26.8)
+size = Vector3(1.6, 0.07, 12)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="SalleMurNord" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.7, -34.88)
+size = Vector3(32, 3.4, 0.64)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="SalleMurNordTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.525, -34.88)
+size = Vector3(32.48, 0.25, 1.12)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="SalleMurOuest" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.68, 1.7, -27.6)
+size = Vector3(0.64, 3.4, 15.2)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="SalleMurOuestTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.68, 3.525, -27.6)
+size = Vector3(1.12, 0.25, 15.68)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="SalleMurEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.68, 1.7, -27.6)
+size = Vector3(0.64, 3.4, 15.2)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="SalleMurEstTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.68, 3.525, -27.6)
+size = Vector3(1.12, 0.25, 15.68)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="SalleMurSudOuest" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 1.7, -20.32)
+size = Vector3(13.6, 3.4, 0.64)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="SalleMurSudOuestTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.2, 3.525, -20.32)
+size = Vector3(14.08, 0.25, 1.12)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="SalleMurSudEst" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 1.7, -20.32)
+size = Vector3(13.6, 3.4, 0.64)
+material = SubResource("StandardMaterial3D_suj6x")
+
+[node name="SalleMurSudEstTuiles" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9.2, 3.525, -20.32)
+size = Vector3(14.08, 0.25, 1.12)
+material = SubResource("StandardMaterial3D_185h5")
+
+[node name="Bassin" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.02, 11.2)
+size = Vector3(16, 0.04, 10.4)
+material = SubResource("StandardMaterial3D_aj3y8")
+
+[node name="Pont" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.1, 11.2)
+size = Vector3(3.2, 0.2, 12)
+material = SubResource("StandardMaterial3D_5xead")
+
+[node name="Rocher0" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.8, 0.3, 33.2)
+size = Vector3(2.4, 0.6, 2.4)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="Rocher1" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.6, 0.35, 35.2)
+size = Vector3(3.2, 0.7, 2.4)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="Rocher2" type="CSGBox3D" parent="Decor"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0.25, 37.8)
+size = Vector3(2, 0.5, 2)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="Limites" type="StaticBody3D" parent="."]
+
+[node name="@CollisionShape3D@2" type="CollisionShape3D" parent="Limites"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, -40.8)
+shape = SubResource("BoxShape3D_8m26g")
+
+[node name="@CollisionShape3D@3" type="CollisionShape3D" parent="Limites"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 42.4)
+shape = SubResource("BoxShape3D_qa55m")
+
+[node name="@CollisionShape3D@4" type="CollisionShape3D" parent="Limites"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.8, 2, 0.8)
+shape = SubResource("BoxShape3D_qaxf6")
+
+[node name="@CollisionShape3D@5" type="CollisionShape3D" parent="Limites"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.8, 2, 0.8)
+shape = SubResource("BoxShape3D_oxbdo")
+
+[node name="Herbes0" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.6, 0, 2)
+script = ExtResource("2_5cbd8")
+taille = Vector2(6.4, 4)
+
+[node name="Herbes1" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.6, 0, 24.8)
+script = ExtResource("2_5cbd8")
+taille = Vector2(6.4, 3.2)
+
+[node name="Herbes2" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.8, 0, -11)
+script = ExtResource("2_5cbd8")
+taille = Vector2(5.6, 3.6)
+
+[node name="Herbes3" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.6, 0, 40.2)
+script = ExtResource("2_5cbd8")
+taille = Vector2(12, 2)
+
+[node name="Arbre0" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.6, 0, 12.4)
+script = ExtResource("3_xj7dp")
+rayon = 2.4
+
+[node name="Arbre1" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18.4, 0, 14.4)
+script = ExtResource("3_xj7dp")
+rayon = 2.4
+
+[node name="Arbre2" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.4, 0, -29.4)
+script = ExtResource("3_xj7dp")
+rayon = 2.6
+
+[node name="ClairDeLune" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -12.8)
+script = ExtResource("4_1tdfv")
+type = 3
+
+[node name="@CollisionShape3D@6" type="CollisionShape3D" parent="ClairDeLune"]
+transform = Transform3D(20, 0, 0, 0, 1, 0, 0, 0, 12, 0, 1, 0)
+shape = SubResource("CylinderShape3D_r0eo2")
+
+[node name="Rayon" type="SpotLight3D" parent="ClairDeLune"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 14, 0)
+light_color = Color(0.870588, 0.815686, 0.788235, 1)
+light_energy = 2.0
+spot_range = 20.0
+spot_angle = 26.0
+
+[node name="ClairDeLuneJardin" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 11.2)
+script = ExtResource("4_1tdfv")
+type = 3
+
+[node name="@CollisionShape3D@7" type="CollisionShape3D" parent="ClairDeLuneJardin"]
+transform = Transform3D(16, 0, 0, 0, 1, 0, 0, 0, 12, 0, 1, 0)
+shape = SubResource("CylinderShape3D_5v0g0")
+
+[node name="Rayon" type="SpotLight3D" parent="ClairDeLuneJardin"]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 0, 14, 0)
+light_color = Color(0.870588, 0.815686, 0.788235, 1)
+light_energy = 2.0
+spot_range = 20.0
+spot_angle = 26.0
+
+[node name="Higanbanas" type="MultiMeshInstance3D" parent="."]
+multimesh = SubResource("MultiMesh_u7cq7")
+
+[node name="Lanternes" type="Node3D" parent="."]
+
+[node name="Lanterne0" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 25.6)
+script = ExtResource("6_28gx0")
+rayon = 3.0
+
+[node name="Lanterne1" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, 25.6)
+script = ExtResource("6_28gx0")
+rayon = 3.0
+
+[node name="Lanterne2" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 34.4)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne3" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0, 34.4)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne4" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 0, 4)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne5" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 0, 4)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne6" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.2, 0, 20.8)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne7" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 11.2, 0, 20.8)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne8" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 23.2)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne9" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -1.6)
+script = ExtResource("6_28gx0")
+rayon = 3.0
+
+[node name="Lanterne10" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -1.6)
+script = ExtResource("6_28gx0")
+rayon = 3.0
+
+[node name="Lanterne11" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.2, 0, -9.6)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne12" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.2, 0, -9.6)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne13" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 0, -16.8)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne14" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, -16.8)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne15" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -31.2)
+script = ExtResource("6_28gx0")
+
+[node name="Lanterne16" type="Node3D" parent="Lanternes" instance=ExtResource("5_85qgt")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -31.2)
+script = ExtResource("6_28gx0")
+
+[node name="Gardes" type="Node3D" parent="."]
+
+[node name="GardePorteSud" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 24.8)
+script = ExtResource("8_w6gwt")
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeZen" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 0, 31.2)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(6, 0, 31.2, 24, 0, 31.2)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeJardinOuest" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.6, 0, 2)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(-13.6, 0, 2, -13.6, 0, 22)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeJardinEst" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.6, 0, 22)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(13.6, 0, 22, 13.6, 0, 2)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardePont" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 3.6)
+script = ExtResource("8_w6gwt")
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardePorteInterieure" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -6.8)
+script = ExtResource("8_w6gwt")
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeCourOuest" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 0, -7.6)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(-28, 0, -7.6, -4.8, 0, -7.6)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeCourEst" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, -7.6)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(28, 0, -7.6, 4.8, 0, -7.6)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeCourNord" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 0, -18.8)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(-24, 0, -18.8, 24, 0, -18.8)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="GardeSalle" type="CharacterBody3D" parent="Gardes" instance=ExtResource("7_yuuyw")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 0, -25.6)
+script = ExtResource("8_w6gwt")
+ronde = PackedVector3Array(12, 0, -25.6, -12, 0, -25.6)
+vitesse = 1.8
+portee = 8.5
+demi_angle = 30.0
+portee_penombre = 2.4
+
+[node name="Depart" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 38)
+script = ExtResource("9_382wi")
+
+[node name="@CollisionShape3D@8" type="CollisionShape3D" parent="Depart"]
+shape = SubResource("SphereShape3D_p4oav")
+
+[node name="Socle" type="CSGBox3D" parent="Depart"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+size = Vector3(0.9, 0.6, 0.6)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="Toit" type="CSGBox3D" parent="Depart"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+size = Vector3(1.2, 0.15, 0.8)
+material = SubResource("StandardMaterial3D_t2ya1")
+
+[node name="Flamme" type="OmniLight3D" parent="Depart"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+light_color = Color(0.85098, 0.603922, 0.305882, 1)
+light_energy = 0.8
+omni_range = 2.0
+
+[node name="AutelJardin" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.6, 0, 23.6)
+script = ExtResource("9_382wi")
+
+[node name="@CollisionShape3D@9" type="CollisionShape3D" parent="AutelJardin"]
+shape = SubResource("SphereShape3D_4ma5h")
+
+[node name="Socle" type="CSGBox3D" parent="AutelJardin"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.3, 0)
+size = Vector3(0.9, 0.6, 0.6)
+material = SubResource("StandardMaterial3D_d046w")
+
+[node name="Toit" type="CSGBox3D" parent="AutelJardin"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.95, 0)
+size = Vector3(1.2, 0.15, 0.8)
+material = SubResource("StandardMaterial3D_t2ya1")
+
+[node name="Flamme" type="OmniLight3D" parent="AutelJardin"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+visible = false
+light_color = Color(0.85098, 0.603922, 0.305882, 1)
+light_energy = 0.8
+omni_range = 2.0
+
+[node name="Parchemin" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, -31.2)
+script = ExtResource("10_0tmnc")
+tourne = true
+
+[node name="@CollisionShape3D@10" type="CollisionShape3D" parent="Parchemin"]
+shape = SubResource("SphereShape3D_6xdgd")
+
+[node name="Rouleau" type="MeshInstance3D" parent="Parchemin"]
+transform = Transform3D(-4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0, 1, 0, 0, 0)
+mesh = SubResource("CylinderMesh_bdd8o")
+
+[node name="Halo" type="OmniLight3D" parent="Parchemin"]
+light_color = Color(0.85098, 0.603922, 0.305882, 1)
+light_energy = 1.2
+omni_range = 2.5
+
+[node name="Sortie" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.8, 1, -30.4)
+script = ExtResource("10_0tmnc")
+
+[node name="@CollisionShape3D@11" type="CollisionShape3D" parent="Sortie"]
+shape = SubResource("BoxShape3D_hkbxr")
+
+[node name="Ninja" type="CharacterBody3D" parent="." instance=ExtResource("11_5hyt8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 35.6)
+floor_snap_length = 0.3
+script = ExtResource("12_d4kyp")
+
+[node name="Camera" type="Camera3D" parent="." node_paths=PackedStringArray("target")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10.5, 46.6)
+current = true
+fov = 40.0
+script = ExtResource("13_3l0ua")
+target = NodePath("../Ninja")
+
+[node name="Messages" type="CanvasLayer" parent="." instance=ExtResource("14_p30vl")]
+script = ExtResource("15_p5in7")
+
+[node name="Hud" type="CanvasLayer" parent="."]
+script = ExtResource("16_e656q")
+
+[node name="Ecrans" type="CanvasLayer" parent="."]
+script = ExtResource("17_dgsjj")

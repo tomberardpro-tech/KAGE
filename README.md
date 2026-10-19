@@ -1,6 +1,6 @@
 # KAGE
 
-Jeu d'infiltration ninja en 3D, style chibi. Le joueur se faufile de nuit, de l'entrée du château jusqu'au donjon, sans se faire repérer par les gardes.
+Jeu d'infiltration ninja en 3D, style chibi. Le joueur se faufile de nuit, du village au palais du seigneur, sans se faire repérer par les gardes.
 
 Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 
@@ -26,7 +26,10 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 ## Écrans
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
-- **Niveau 1 · Le château** (`scenes/levels/chateau.tscn`) : lancé par Nouvelle partie. On part devant le château, on traverse la cour extérieure et la cour intérieure, on prend le parchemin dans le donjon et on sort par le rempart est.
+- **Niveau 1 · Le village** (`scenes/levels/village.tscn`) : lancé par Nouvelle partie. On traverse les rizières et le village, on vole le plan du château chez le chef et on sort par le portail nord-est. 4 gardes lents et myopes.
+- **Niveau 2 · Le château** (`scenes/levels/chateau.tscn`) : on part devant le château, on traverse la cour extérieure et la cour intérieure, on prend le parchemin dans le donjon et on sort par le rempart est. 7 gardes.
+- **Niveau 3 · Le palais** (`scenes/levels/palais.tscn`) : jardin zen, jardin du bassin et cour, parchemin dans la salle du seigneur, sortie par la brèche ouest. 10 gardes plus rapides qui voient plus loin, beaucoup de lanternes, un seul autel.
+- Après une victoire, Entrée passe au niveau suivant et Continuer (menu) reprend au dernier niveau débloqué.
 - **Terrain d'essai** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
 
 ## Le ninja
@@ -70,15 +73,17 @@ Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) 
 - Caméra haute et dézoomée, orientée plein nord, qui suit le ninja (`scripts/follow_camera.gd`).
 - Couleurs de la charte dans `scripts/palette.gd`, thème Godot (polices et styles) dans `assets/ui/kage_theme.tres`. Détails dans [docs/design.md](docs/design.md).
 
-## Le niveau
+## Les niveaux
 
-Le château est généré à partir du plan Figma « Niveau 1 · Le château » (1 px du plan = 4 cm) :
+Chaque niveau est généré par un script (1 px du plan = 4 cm). Le château suit le plan Figma « Le château » ; le village et le palais ont été dessinés directement dans leur script. Les outils communs sont dans `scripts/tools/constructeur.gd`.
 
 ```
+godot --headless --script res://scripts/tools/build_village.gd
 godot --headless --script res://scripts/tools/build_chateau.gd
+godot --headless --script res://scripts/tools/build_palais.gd
 ```
 
-On peut ensuite retoucher `scenes/levels/chateau.tscn` dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script.
+On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script. Le titre, les textes et le niveau suivant se règlent au début de chaque script.
 
 - **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te repère : tu repars du dernier autel.
 - **Se cacher** (`scripts/zone.gd`) : ombre des arbres, herbes hautes (accroupi). La lumière des lanternes et le clair de lune te trahissent, comme la lune sur les toits.

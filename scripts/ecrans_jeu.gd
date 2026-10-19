@@ -78,7 +78,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			_vers_menu()
 	elif _victoire.visible:
 		if event.is_action_pressed("ui_accept"):
-			_vers_menu()
+			_continuer()
 		elif touche_r:
 			get_tree().paused = false
 			Transition.vers(niveau.scene_file_path)
@@ -95,6 +95,15 @@ func _unhandled_input(event: InputEvent) -> void:
 func _vers_menu() -> void:
 	get_tree().paused = false
 	Transition.vers(SCENE_MENU)
+
+
+## Après la victoire : niveau suivant, ou retour au menu après le dernier.
+func _continuer() -> void:
+	if niveau.niveau_suivant.is_empty():
+		_vers_menu()
+		return
+	get_tree().paused = false
+	Transition.vers(niveau.niveau_suivant)
 
 
 # --- Tutoriel --------------------------------------------------------------
@@ -123,6 +132,7 @@ func _construire_tutoriel() -> Control:
 	v.add_theme_constant_override("separation", 14)
 	rouleau.add_child(v)
 
+	v.add_child(_label("NIVEAU %d · %s" % [niveau.numero, niveau.titre], &"Aide", 18, Palette.LAQUE))
 	var titre := HBoxContainer.new()
 	titre.add_theme_constant_override("separation", 22)
 	v.add_child(titre)
@@ -134,7 +144,7 @@ func _construire_tutoriel() -> Control:
 	var corps := _label("Tant que tu n'es pas éclairé, les gardes ont du mal à te voir. "
 		+ "Accroupis-toi dans les herbes hautes, reste à l'ombre des arbres et tranche "
 		+ "les lanternes (E) ou les gardes (clic gauche, dash) qui te barrent la route.\n"
-		+ "Récupère le parchemin dans le donjon, puis sors par le rempart est.",
+		+ niveau.objectif,
 		&"TexteParchemin", 24)
 	corps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	corps.custom_minimum_size.x = 860
@@ -227,7 +237,7 @@ func victoire(temps: float, fantome: bool, pacifiste: bool) -> void:
 		enfant.queue_free()
 	_stats.add_child(_stat("時", Palette.OR, _valeur_texte("%02d:%02d" % [int(temps) / 60, int(temps) % 60]), "TEMPS"))
 	_stats.add_child(_stat("影", Palette.LAQUE, _valeur(fantome), "FANTÔME · PERSONNE NE T'A VU"))
-	_phrase_victoire.text = "Le clan te remercie. Le château n'a jamais su que tu étais là." if fantome \
+	_phrase_victoire.text = "Le clan te remercie. %s n'a jamais su que tu étais là." % niveau.lieu if fantome \
 		else "Le clan te remercie. On t'a vu, mais le parchemin est rentré."
 	_stats.add_child(_stat("和", Palette.GRIS, _valeur(pacifiste), "PACIFISTE · AUCUN GARDE TUÉ"))
 	_montrer(_victoire, 0.55)
