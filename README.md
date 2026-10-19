@@ -26,7 +26,8 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 ## Écrans
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
-- **Jeu** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
+- **Niveau 1 · Le château** (`scenes/levels/chateau.tscn`) : lancé par Nouvelle partie. On part devant le château, on traverse la cour extérieure et la cour intérieure, on prend le parchemin dans le donjon et on sort par le rempart est.
+- **Terrain d'essai** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
 
 ## Le ninja
 
@@ -62,6 +63,23 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 - Export **Web** prêt dans `export_presets.cfg`, sortie dans `build/web/`.
 - Caméra haute et dézoomée, orientée plein nord, qui suit le ninja (`scripts/follow_camera.gd`).
 - Couleurs de la charte dans `scripts/palette.gd`, thème Godot (polices et styles) dans `assets/ui/kage_theme.tres`. Détails dans [docs/design.md](docs/design.md).
+
+## Le niveau
+
+Le château est généré à partir du plan Figma « Niveau 1 · Le château » (1 px du plan = 4 cm) :
+
+```
+godot --headless --script res://scripts/tools/build_chateau.gd
+```
+
+On peut ensuite retoucher `scenes/levels/chateau.tscn` dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script.
+
+- **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te repère : tu repars du dernier autel.
+- **Se cacher** (`scripts/zone.gd`) : ombre des arbres, herbes hautes (accroupi). La lumière des lanternes et le clair de lune te trahissent, comme la lune sur les toits.
+- **Lanternes** : un dash au sabre les éteint, et le garde le plus proche vient voir.
+- **Lune** : des nuages passent toutes les 14 s et coupent le clair de lune pendant 5 s.
+- **Autels** : points de reprise. **Parchemin** dans le donjon, **sortie** dans le rempart est.
+- Fin de partie : temps, bonus Fantôme (jamais repéré) et Pacifiste (aucun garde tué).
 
 ## Captures
 

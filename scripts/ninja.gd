@@ -25,6 +25,14 @@ signal dash_lance(direction: Vector3)
 
 var accroupi := false
 var en_dash := false
+var bloque := false  ## pendant une mort ou une victoire
+
+## Rayon du coup de sabre pendant le dash (gardes et lanternes).
+const PORTEE_SABRE := 1.3
+## Au-dessus de cette hauteur, on est sur un toit : la lune peut nous éclairer.
+const HAUTEUR_TOIT := 1.4
+
+var _zones: Array[Zone] = []
 
 var _point_depart: Vector3
 var _sol_recent := 0.0
@@ -39,10 +47,48 @@ var _dash_direction := Vector3.ZERO
 
 func _ready() -> void:
 	_point_depart = global_position
+	add_to_group("ninja")
+	collision_layer = 2
+	collision_mask = 1 | 4  # décor et gardes
+
+
+func entrer_zone(zone: Zone) -> void:
+	if zone not in _zones:
+		_zones.append(zone)
+
+
+func sortir_zone(zone: Zone) -> void:
+	_zones.erase(zone)
+
+
+func _dans(type: Zone.Type) -> bool:
+	for zone in _zones:
+		if zone.active and zone.type == type:
+			return true
+	return false
+
+
+## Éclairé par une lanterne, le clair de lune, ou la lune quand on est sur un toit.
+func est_eclaire() -> bool:
+	if _dans(Zone.Type.LUMIERE) or _dans(Zone.Type.LUNE):
+		return true
+	var niveau := get_tree().current_scene
+	return global_position.y > HAUTEUR_TOIT and niveau.get("lune_visible") == true
+
+
+## Invisible : dans l'ombre (sans lumière), ou accroupi dans les herbes hautes.
+func est_cache() -> bool:
+	if _dans(Zone.Type.HERBE) and accroupi:
+		return true
+	return _dans(Zone.Type.OMBRE) and not est_eclaire()
 
 
 func _physics_process(delta: float) -> void:
 	if _grimpe:
+		return
+	if bloque:
+		velocity = Vector3(0.0, velocity.y - gravite * delta, 0.0)
+		move_and_slide()
 		return
 	_dash_recharge -= delta
 
@@ -141,11 +187,24 @@ func _lancer_dash() -> void:
 
 func _continuer_dash(delta: float) -> void:
 	_dash_restant -= delta
+	_trancher()
 	velocity = _dash_direction * (distance_dash / duree_dash)
 	move_and_slide()
 	if _dash_restant <= 0.0 or is_on_wall():
 		en_dash = false
 		velocity = _dash_direction * vitesse
+
+
+## Le sabre touche les gardes et les lanternes proches pendant le dash.
+func _trancher() -> void:
+	for cible in get_tree().get_nodes_in_group("gardes") + get_tree().get_nodes_in_group("lanternes"):
+		var ecart: Vector3 = cible.global_position - global_position
+		ecart.y = 0.0
+		if ecart.length() < PORTEE_SABRE:
+			if cible is Garde:
+				cible.tuer()
+			elif cible is Lanterne:
+				cible.eteindre()
 
 
 ## Direction au sol entre le ninja et le curseur de la souris.

@@ -1,7 +1,7 @@
 extends Control
 ## Menu principal : nouvelle partie, continuer, options, quitter.
 
-const SCENE_JEU := "res://scenes/jeu.tscn"
+const SCENE_JEU := "res://scenes/levels/chateau.tscn"
 
 @onready var _nouvelle: MenuBouton = %NouvellePartie
 @onready var _continuer: MenuBouton = %Continuer
