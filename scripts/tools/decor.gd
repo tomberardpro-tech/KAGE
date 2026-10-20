@@ -14,6 +14,7 @@ var _meshes := {}
 var _corps_rochers: StaticBody3D
 var _occupe: Array[Rect2] = []  # sols, murs, bâtiments, eau : pas de gazon dessus
 var _sol := Rect2()
+var _sols_durs := []  # [Rect2 en px, hauteur du dessus] : allées, cours pavées, chemins de terre (flaques)
 
 
 # --- Matériaux et ambiance -------------------------------------------------
@@ -80,6 +81,11 @@ func _ambiance() -> void:
 	env.glow_intensity = 0.6
 	env.glow_bloom = 0.05
 	env.glow_hdr_threshold = 0.9
+	# ciel de nuit dessiné : étoiles, lune et nuages (la brume ne le recouvre presque pas)
+	var ciel := ShaderMaterial.new()
+	ciel.shader = load(SHADERS + "ciel.gdshader")
+	env.sky.sky_material = ciel
+	env.fog_sky_affect = 0.2
 
 
 # --- Petits objets regroupés ----------------------------------------------
@@ -97,7 +103,28 @@ func boite(nom: String, x: float, y: float, w: float, d: float, h: float, mat_no
 		_sol = Rect2(x, y, w, d)
 	elif base > -0.5 and mat_nom != "herbe":
 		_occupe.append(Rect2(x, y, w, d).grow(8))
+	if base > -0.5 and mat_nom in ["allee", "pave", "terre"]:
+		_sols_durs.append([Rect2(x, y, w, d), base + h])
+	if mat_nom == "allee":
+		_bordure(Rect2(x, y, w, d), base + h)
 	return super.boite(nom, x, y, w, d, h, mat_nom, parent, base)
+
+
+## Bordure de pierres le long des deux grands côtés d'une allée.
+func _bordure(r: Rect2, haut: float) -> void:
+	var h := RandomNumberGenerator.new()
+	h.seed = int(r.position.x * 13 + r.position.y)
+	var long_x := r.size.x > r.size.y
+	var longueur := (r.size.x if long_x else r.size.y) * ECHELLE
+	var n := int(longueur / 0.36)
+	for cote in [0.0, 1.0]:
+		for i in n:
+			var t := (i + 0.5) / n
+			var px: float = r.position.x + (t * r.size.x if long_x else cote * r.size.x + (3.0 if cote == 0.0 else -3.0))
+			var py: float = r.position.y + (cote * r.size.y + (3.0 if cote == 0.0 else -3.0) if long_x else t * r.size.y)
+			var taille := Vector3(0.3, 0.07 + h.randf() * 0.04, 0.14) if long_x else Vector3(0.14, 0.07 + h.randf() * 0.04, 0.3)
+			var base := Basis(Vector3.UP, h.randf_range(-0.08, 0.08)).scaled(taille)
+			deco("Bordures", _boite_unite(), Transform3D(base, P(px, py, haut + taille.y * 0.3)), materiaux["pierre"])
 
 
 func eau(nom: String, x: float, y: float, w: float, d: float, h: float) -> void:
@@ -129,6 +156,283 @@ func _gazon() -> void:
 				deco("Gazon", touffe, Transform3D(base, P(px, py, 0.0)), m, false)
 			y += pas
 		x += pas
+
+
+## Flaques de pluie sur les allées, cours et chemins : elles brillent et reflètent les lanternes.
+func _flaques() -> void:
+	var flaque := QuadMesh.new()
+	flaque.orientation = PlaneMesh.FACE_Y
+	flaque.size = Vector2.ONE
+	var m := _shader("flaque")
+	var h := RandomNumberGenerator.new()
+	h.seed = 314
+	for s in _sols_durs:
+		var r: Rect2 = s[0]
+		var aire := r.size.x * r.size.y * ECHELLE * ECHELLE
+		for i in int(aire / 22.0) + 1:
+			var px := h.randf_range(r.position.x + 15, r.end.x - 15)
+			var py := h.randf_range(r.position.y + 15, r.end.y - 15)
+			var taille := h.randf_range(0.8, 2.2)
+			var base := Basis(Vector3.UP, h.randf() * TAU).scaled(Vector3(taille, 1, taille * h.randf_range(0.6, 1.0)))
+			deco("Flaques", flaque, Transform3D(base, P(px, py, s[1] + 0.004)), m, false)
+
+
+## Petits coins de jardin sur l'herbe libre : pierres moussues, buissons taillés,
+## pas japonais et petits sanctuaires. Rien n'a de collision : le jeu ne change pas.
+func _jardinage() -> void:
+	if _sol.size == Vector2.ZERO:
+		return
+	var h := RandomNumberGenerator.new()
+	h.seed = 4545
+	var zone := _sol.grow(-70.0)
+	var essais := int(_sol.size.x * _sol.size.y * ECHELLE * ECHELLE / 30.0)
+	for i in essais:
+		var x := h.randf_range(zone.position.x, zone.end.x)
+		var y := h.randf_range(zone.position.y, zone.end.y)
+		var libre := true
+		for r in _occupe:
+			if r.grow(35.0).has_point(Vector2(x, y)):
+				libre = false
+				break
+		if not libre:
+			continue
+		var choix := h.randf()
+		if choix < 0.35:
+			rochers([[x, y, h.randf_range(0.45, 0.7), 6 + h.randi() % 3],
+				[x + h.randf_range(10, 18), y + h.randf_range(-12, 12), h.randf_range(0.25, 0.4), 6 + h.randi() % 3],
+				[x - h.randf_range(8, 14), y + h.randf_range(6, 14), h.randf_range(0.2, 0.35), 6 + h.randi() % 3]])
+		elif choix < 0.62:
+			var taille := h.randf_range(1.1, 1.7)  # m
+			buissons([[x, y, taille]])
+			_occupe.append(Rect2(x, y, 0, 0).grow(taille / ECHELLE * 0.6))
+		elif choix < 0.85:
+			var a := h.randf() * TAU
+			var dir := Vector2(cos(a), sin(a))
+			for k in 6:
+				var q := Vector2(x, y) + dir * k * 18.0 + Vector2(-dir.y, dir.x) * sin(k * 1.3) * 6.0
+				var s := h.randf_range(0.36, 0.5)
+				var pierre := Basis(Vector3.UP, h.randf() * TAU).scaled(Vector3(s, 0.06, s * h.randf_range(0.75, 1.0)))
+				deco("PasJaponais", _galet(), Transform3D(pierre, P(q.x, q.y, 0.02)), materiaux["pierre"])
+				_occupe.append(Rect2(q, Vector2.ZERO).grow(10))
+		else:
+			_sanctuaire(P(x, y), h.randf() * TAU, 0.75)
+			_occupe.append(Rect2(x, y, 0, 0).grow(30))
+
+
+## Galet plat (cylindre à 10 côtés), rayon 0.5, hauteur 1.
+func _galet() -> CylinderMesh:
+	if not _meshes.has("galet"):
+		var g := CylinderMesh.new()
+		g.top_radius = 0.45
+		g.bottom_radius = 0.5
+		g.height = 1.0
+		g.radial_segments = 10
+		g.rings = 1
+		_meshes["galet"] = g
+	return _meshes["galet"]
+
+
+## Petit sanctuaire (hokora) : socle en pierre, maisonnette en bois à façade claire,
+## toit à deux pentes en tuiles, et un petit torii rouge devant. Sans collision.
+func _sanctuaire(centre: Vector3, angle: float, e: float) -> void:
+	var b := Basis(Vector3.UP, angle)
+	var piece := func(nom: String, local: Vector3, taille: Vector3, materiau: String, incline := 0.0) -> void:
+		var base := (b * Basis(Vector3(1, 0, 0), incline)).scaled(taille * e)
+		deco(nom, _boite_unite(), Transform3D(base, centre + b * (local * e)), materiaux[materiau])
+	piece.call("SanctuairePierre", Vector3(0, 0.12, 0), Vector3(1.0, 0.24, 0.8), "pierre")
+	piece.call("SanctuairePierre", Vector3(0, 0.32, 0), Vector3(0.78, 0.16, 0.62), "pierre")
+	piece.call("SanctuaireBois", Vector3(0, 0.62, 0), Vector3(0.56, 0.44, 0.46), "bois")
+	piece.call("SanctuaireShoji", Vector3(0, 0.62, 0.235), Vector3(0.4, 0.32, 0.02), "shoji")
+	piece.call("SanctuaireToit", Vector3(0, 0.95, 0.17), Vector3(0.78, 0.05, 0.42), "tuiles", 0.55)
+	piece.call("SanctuaireToit", Vector3(0, 0.95, -0.17), Vector3(0.78, 0.05, 0.42), "tuiles", -0.55)
+	piece.call("SanctuaireFaitage", Vector3(0, 1.05, 0), Vector3(0.82, 0.06, 0.07), "noir")
+	# petit torii rouge
+	piece.call("SanctuaireTorii", Vector3(-0.32, 0.45, 0.75), Vector3(0.06, 0.9, 0.06), "laque")
+	piece.call("SanctuaireTorii", Vector3(0.32, 0.45, 0.75), Vector3(0.06, 0.9, 0.06), "laque")
+	piece.call("SanctuaireTorii", Vector3(0, 0.92, 0.75), Vector3(0.9, 0.07, 0.09), "laque")
+	piece.call("SanctuaireTorii", Vector3(0, 0.78, 0.75), Vector3(0.72, 0.05, 0.05), "laque")
+
+
+## Autels (points de reprise) : même rôle qu'avant, mais en forme de petit sanctuaire avec sa lanterne.
+func autels(liste: Array) -> void:
+	var autel_script := load("res://scripts/autel.gd")
+	var halo: Material = load("res://assets/materiaux/halo.tres")
+	for a in liste:
+		var autel := Area3D.new()
+		autel.set_script(autel_script)
+		autel.name = a[0]
+		autel.position = P(a[1], a[2])
+		ajouter(racine, autel)
+		var forme := CollisionShape3D.new()
+		var sphere := SphereShape3D.new()
+		sphere.radius = 1.6
+		forme.shape = sphere
+		ajouter(autel, forme)
+		_sanctuaire(autel.position, 0.0, 1.15)
+		_occupe.append(Rect2(a[1], a[2], 0, 0).grow(35))
+		var flamme := OmniLight3D.new()
+		flamme.name = "Flamme"
+		flamme.light_color = Color("#ffb05a")
+		flamme.light_energy = 1.4
+		flamme.omni_range = 3.5
+		flamme.position = Vector3(0, 0.75, 0.45)
+		flamme.visible = a[0] == "Depart"
+		ajouter(autel, flamme)
+		var lueur := MeshInstance3D.new()
+		lueur.name = "Lueur"
+		var q := QuadMesh.new()
+		q.size = Vector2(0.9, 0.9)
+		lueur.mesh = q
+		lueur.material_override = halo
+		lueur.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ajouter(flamme, lueur)
+
+
+## Autour du niveau : sol de forêt, ceinture de cèdres, pins et bambous, montagnes au loin.
+## Rien n'y est atteignable (les limites du niveau restent les mêmes) : ça cache juste le vide.
+func _alentours() -> void:
+	if _sol.size == Vector2.ZERO:
+		return
+	var noeud := Node3D.new()
+	noeud.name = "Alentours"
+	ajouter(racine, noeud)
+	var marge := 75.0 / ECHELLE  # px
+	var dehors := _sol.grow(marge)
+	var sol_foret := _matiere(0, "#2f4a2b", "#1d331d")
+	# quatre bandes autour du sol du niveau (pas dessous : les douves sont creusées dedans)
+	for r in [Rect2(dehors.position, Vector2(dehors.size.x, marge)),
+			Rect2(dehors.position.x, _sol.end.y, dehors.size.x, marge),
+			Rect2(dehors.position.x, _sol.position.y, marge, _sol.size.y),
+			Rect2(_sol.end.x, _sol.position.y, marge, _sol.size.y)]:
+		var bande := MeshInstance3D.new()
+		var plan := PlaneMesh.new()
+		plan.size = r.size * ECHELLE
+		bande.mesh = plan
+		bande.material_override = sol_foret
+		bande.position = P(r.get_center().x, r.get_center().y, -0.01)
+		ajouter(noeud, bande)
+
+	var tronc := CylinderMesh.new()
+	tronc.top_radius = 0.1
+	tronc.bottom_radius = 0.18
+	tronc.height = 1.0
+	tronc.radial_segments = 6
+	tronc.rings = 1
+	var cedre := _mesh_cedre()
+	var pin := _mesh_pin_rond()
+	var feuillages := []
+	for c in [["#2c4a33", "#0a1912"], ["#34523a", "#0d1d14"], ["#3e5a35", "#11200f"]]:
+		var f: ShaderMaterial = _shader("feuillage")
+		f.set_shader_parameter("couleur_claire", Color(c[0]))
+		f.set_shader_parameter("couleur_sombre", Color(c[1]))
+		f.set_shader_parameter("touffes", 5.0)
+		feuillages.append(f)
+	_hasard.seed = 909
+	var pas := 3.3 / ECHELLE
+	var largeur := 26.0 / ECHELLE
+	var foret := _sol.grow(largeur)
+	var x := foret.position.x
+	while x < foret.end.x:
+		var y := foret.position.y
+		while y < foret.end.y:
+			var px := x + _hasard.randf_range(-0.45, 0.45) * pas
+			var py := y + _hasard.randf_range(-0.45, 0.45) * pas
+			if not _sol.grow(8.0).has_point(Vector2(px, py)):
+				var h := _hasard.randf_range(5.0, 9.5)
+				var pos := P(px, py)
+				var tourne := Basis(Vector3.UP, _hasard.randf() * TAU)
+				var k := _hasard.randi() % 3
+				if py > _sol.end.y and (py - _sol.end.y) * ECHELLE < 16.0:
+					# côté caméra : rien de haut, sinon les arbres cacheraient le ninja
+					if _hasard.randf() < 0.55:
+						var s := _hasard.randf_range(0.8, 1.7)
+						deco("ForetBuissons", _sphere(), Transform3D(tourne.scaled(Vector3(s * 1.3, s * 0.8, s * 1.3)), pos + Vector3(0, s * 0.25, 0)), feuillages[k], false)
+				elif _hasard.randf() < 0.12:
+					bambous(px - 40, py - 40, 80, 80, 7)
+				elif _hasard.randf() < 0.45:
+					var l := h * _hasard.randf_range(0.28, 0.36)
+					deco("ForetCedres%d" % k, cedre, Transform3D(tourne.scaled(Vector3(l, h, l)), pos + Vector3(0, h * 0.18, 0)), feuillages[k], false)
+					deco("ForetTroncs", tronc, Transform3D(Basis().scaled(Vector3(1, h * 0.3, 1)), pos + Vector3(0, h * 0.15, 0)), materiaux["bois"], false)
+				else:
+					var s := h * _hasard.randf_range(0.5, 0.65)
+					deco("ForetPins%d" % k, pin, Transform3D(tourne.scaled(Vector3(s, s * 0.8, s)), pos + Vector3(0, h * 0.42, 0)), feuillages[k], false)
+					deco("ForetTroncs", tronc, Transform3D(Basis().scaled(Vector3(0.8, h * 0.5, 0.8)), pos + Vector3(0, h * 0.25, 0)), materiaux["bois"], false)
+			y += pas
+		x += pas
+
+	# montagnes bleutées au loin, que la brume estompe
+	var mont := _mesh_montagne()
+	var m_mont := mat("#27304a", {"roughness": 1.0, "cull_mode": BaseMaterial3D.CULL_DISABLED})
+	var centre := _sol.get_center()
+	var rayon := maxf(_sol.size.x, _sol.size.y) * 0.5 + 90.0 / ECHELLE
+	for i in 14:
+		var a := i * TAU / 14.0 + _hasard.randf_range(-0.15, 0.15)
+		var dist := rayon * _hasard.randf_range(1.0, 1.35)
+		var hm := _hasard.randf_range(28.0, 55.0)
+		var base := Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(hm * 1.6, hm, hm * 1.6))
+		deco("Montagnes", mont, Transform3D(base, P(centre.x + cos(a) * dist, centre.y + sin(a) * dist, -2.0)), m_mont, false)
+
+
+## Cèdre (sugi) : étages de cônes de plus en plus petits, hauteur 1 (de -0.18 à 0.82).
+func _mesh_cedre() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for e in 4:
+		var bas := -0.1 + e * 0.2
+		var r := 1.0 - e * 0.2
+		_cone(st, Vector3(0, bas, 0), r * 0.55, 0.38, 8)
+	st.generate_normals()
+	return st.commit()
+
+
+## Pin rond : trois boules de feuillage serrées.
+func _mesh_pin_rond() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	for b in [[Vector3(0, 0, 0), 0.5], [Vector3(0.32, -0.12, 0.1), 0.34], [Vector3(-0.28, -0.08, -0.15), 0.36]]:
+		var boule := SphereMesh.new()
+		boule.radius = b[1]
+		boule.height = b[1] * 1.6
+		boule.radial_segments = 8
+		boule.rings = 4
+		st.append_from(boule, 0, Transform3D(Basis(), b[0]))
+	return st.commit()
+
+
+## Montagne : cône irrégulier à 12 côtés, hauteur 1, rayon 1.
+func _mesh_montagne() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var h := RandomNumberGenerator.new()
+	h.seed = 5
+	var n := 12
+	var bords := []
+	for i in n:
+		var a := i * TAU / n
+		bords.append(Vector3(cos(a), 0, sin(a)) * h.randf_range(0.7, 1.1))
+	var sommet := Vector3(h.randf_range(-0.1, 0.1), 1.0, h.randf_range(-0.1, 0.1))
+	for i in n:
+		var a: Vector3 = bords[i]
+		var b: Vector3 = bords[(i + 1) % n]
+		var milieu := (a + b) * 0.5 * 0.55 + Vector3(0, h.randf_range(0.35, 0.55), 0)
+		for v in [a, milieu, b, milieu, sommet, b, a, sommet, milieu]:
+			st.add_vertex(v)
+	st.generate_normals()
+	return st.commit()
+
+
+func _cone(st: SurfaceTool, base: Vector3, rayon: float, hauteur: float, cotes: int) -> void:
+	var pointe := base + Vector3(0, hauteur, 0)
+	for i in cotes:
+		var a := i * TAU / cotes
+		var b := (i + 1) * TAU / cotes
+		var pa := base + Vector3(cos(a), 0, sin(a)) * rayon
+		var pb := base + Vector3(cos(b), 0, sin(b)) * rayon
+		st.add_vertex(pa)
+		st.add_vertex(pointe)
+		st.add_vertex(pb)
+		st.add_vertex(pb)
+		st.add_vertex(base)
+		st.add_vertex(pa)
 
 
 ## Fleurs des champs en taches sur l'herbe libre : blanches, bleues (kikyō), jaunes et roses.
@@ -239,8 +543,11 @@ func carpes(x: float, y: float, w: float, d: float, nombre := 5) -> void:
 
 
 func finir(chemin: String) -> void:
+	_jardinage()
+	_flaques()
 	_gazon()
 	_fleurs_sauvages()
+	_alentours()
 	var noeud := Node3D.new()
 	noeud.name = "DecorJaponais"
 	ajouter(racine, noeud)

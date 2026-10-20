@@ -42,7 +42,10 @@ Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) 
 `scripts/anim_chibi.gd` leur donne un petit rebond en marchant.
 Ambiance : il pleut sur tous les niveaux (`scripts/pluie.gd` : gouttes, éclaboussures et bruit de pluie
 autour du ninja) et des esprits bleus (flammes hitodama, feux de renard ou petits fantômes) passent puis s'effacent (`scripts/esprits.gd`, sans collision).
-Des taches de fleurs des champs couvrent l'herbe libre.
+Des taches de fleurs des champs couvrent l'herbe libre, avec des coins de jardin (pierres moussues,
+buissons taillés, pas japonais, petits sanctuaires). Autour des niveaux : forêt de cèdres, pins et bambous,
+montagnes au loin et ciel de nuit dessiné (`assets/shaders/ciel.gdshader` : lune, étoiles, nuages).
+Les allées ont des bordures de pierre et des flaques (`flaque.gdshader`) ; les autels sont de petits sanctuaires.
 
 Le ninja est **riggé** : `scripts/tools/articuler.gd` lui pose un squelette de 14 os (bassin, ventre,
 poitrine, tête, bras, avant-bras, cuisses, tibias, pieds) sans toucher à son apparence (mêmes sommets, même
