@@ -41,7 +41,7 @@ Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) 
 `*_modele.tscn` règlent seulement la taille et la position, et l'import ignore les lumières du fichier.
 `scripts/anim_chibi.gd` leur donne un petit rebond en marchant.
 Ambiance : il pleut sur tous les niveaux (`scripts/pluie.gd` : gouttes, éclaboussures et bruit de pluie
-autour du ninja) et des esprits lumineux passent puis s'effacent (`scripts/esprits.gd`, sans collision).
+autour du ninja) et des esprits bleus (flammes hitodama, feux de renard ou petits fantômes) passent puis s'effacent (`scripts/esprits.gd`, sans collision).
 Des taches de fleurs des champs couvrent l'herbe libre.
 
 Le ninja est **riggé** : `scripts/tools/articuler.gd` lui pose un squelette de 14 os (bassin, ventre,
