@@ -113,7 +113,7 @@ func _physics_process(delta: float) -> void:
 	var direction := Vector3(entree.x, 0.0, entree.y)
 
 	accroupi = Input.is_action_pressed("accroupir") and is_on_floor()
-	_visuel.scale.y = lerpf(_visuel.scale.y, 0.72 if accroupi else 1.0, 1.0 - exp(-18.0 * delta))
+	_visuel.scale.y = lerpf(_visuel.scale.y, 0.9 if accroupi else 1.0, 1.0 - exp(-18.0 * delta))
 
 	# Saut, avec un peu de tolérance pour que ça reste agréable
 	_sol_recent = tolerance_saut if is_on_floor() else _sol_recent - delta
