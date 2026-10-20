@@ -1,6 +1,7 @@
 extends Node3D
 ## De temps en temps, une petite volée de corbeaux traverse le ciel au-dessus du ninja,
-## en battant des ailes, et croasse au loin. Ajoutée par niveau.gd ; purement décorative.
+## en battant des ailes, en silence (leur cri faisait un « uhuhuhu » désagréable).
+## Ajoutée par niveau.gd ; purement décorative.
 
 var cible: Node3D
 var _attente := 12.0
@@ -29,7 +30,6 @@ func _envol() -> void:
 	var depart := centre - cap * 28.0
 	var arrivee := centre + cap * 28.0
 	var nombre := randi_range(4, 7)
-	Sons.jouer("corbeau", -10.0, randf_range(0.9, 1.1))
 	for i in nombre:
 		var rang := (i + 1) / 2
 		var decalage := -cap * rang * 1.4 + cote * rang * (1.0 if i % 2 else -1.0) * 1.2
