@@ -6,6 +6,8 @@ var _voile: ColorRect
 
 func _ready() -> void:
 	layer = 100
+	# le tutoriel met le jeu en pause dès l'arrivée : le fondu doit continuer quand même
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_voile = ColorRect.new()
 	_voile.color = Palette.NOIR
 	_voile.modulate.a = 0.0

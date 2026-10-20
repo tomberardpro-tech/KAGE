@@ -2,7 +2,7 @@ extends "res://scripts/tools/decor.gd"
 ## Génère scenes/levels/village.tscn : niveau 1, le village au pied du château.
 ## Lancer : godot --headless --script res://scripts/tools/build_village.gd
 ## Niveau d'apprentissage : peu de gardes, myopes et lents, beaucoup d'ombre.
-## Un premier fil à clochettes sur le chemin et un plancher qui grince chez le chef.
+## Des guirlandes de lanternes au-dessus du chemin et un plancher qui grince chez le chef.
 ## On part des rizières au sud, on traverse le village et on prend le plan du château
 ## chez le chef, puis on sort par le portail nord-est.
 
@@ -25,6 +25,7 @@ func _init() -> void:
 	_maisons()
 	_maison_du_chef()
 	_rizieres()
+	_cabane()
 	limites([
 		[-40, -40, 1280, 40], [-40, 1700, 1280, 40], [-40, 0, 40, 1700], [1200, 0, 40, 1700],
 	])
@@ -38,12 +39,12 @@ func _init() -> void:
 		["GardeChef", 600, 470, []],
 	], {"vitesse": 1.3, "portee": 6.0, "portee_penombre": 1.6})
 	rossignols([[436, 176, 328, 188]])
-	clochettes([[540, 560, 660, 560]])
-	autels([["Depart", 600, 1640], ["AutelGrenier", 1010, 520]])
+	guirlandes([[520, 560, 680, 560], [520, 430, 680, 430], [520, 1300, 680, 1300], [520, 1500, 680, 1500]])
+	autels([["Depart", 570, 1630], ["AutelGrenier", 1010, 520]])
 	parchemin(600, 260)
 	sortie(1050, 60, Vector3(4.0, 2.0, 2.0))
 	_decor()
-	joueur(600, 1590)
+	joueur(584, 1592, deg_to_rad(64))
 	finir("res://scenes/levels/village.tscn")
 
 
@@ -81,7 +82,7 @@ func _maisons() -> void:
 	boite("Puits", 690, 760, 50, 50, 0.7, "pierre")
 
 
-## Maison du chef : murs sans toit pour voir l'intérieur, porte au sud.
+## Maison du chef : toit japonais qui s'efface quand on entre, porte au sud.
 func _maison_du_chef() -> void:
 	var e := 16.0
 	boite("ChefSol", 420, 160, 360, 220, 0.04, "parquet")
@@ -94,6 +95,21 @@ func _maison_du_chef() -> void:
 	]
 	for m in murs:
 		mur(m[0], m[1], m[2], m[3], m[4], 2.6)
+	toit_japonais("ChefToit", 420, 160, 360, 220, 2.6)
+
+
+## Cabane du départ : le ninja y commence, face au maître du clan qui lui donne sa mission.
+## Ouverte au nord, vers le village.
+func _cabane() -> void:
+	var e := 12.0
+	boite("CabaneSol", 530, 1555, 140, 110, 0.05, "parquet")
+	for m in [["CabaneOuest", 530, 1555, e, 110], ["CabaneEst", 670 - e, 1555, e, 110],
+			["CabaneNordOuest", 530, 1555, 42, e], ["CabaneNordEst", 628, 1555, 42, e]]:
+		boite(m[0], m[1], m[2], m[3], m[4], 2.2, "bois")
+	# mur sud bas : la caméra (au sud) voit l'intérieur de la cabane
+	boite("CabaneSud", 530, 1665 - e, 140, e, 0.8, "bois")
+	toit_japonais("CabaneToit", 530, 1555, 140, 110, 2.2, 1, "chaume")
+	maitre(618, 1606, deg_to_rad(-115))
 
 
 ## Rizières inondées au sud : à découvert, mais bordées d'herbes hautes.

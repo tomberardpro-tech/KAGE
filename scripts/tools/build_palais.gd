@@ -50,7 +50,7 @@ func _init() -> void:
 	], {"vitesse": 1.8, "portee": 8.5, "demi_angle": 30.0, "portee_penombre": 2.4})
 	# Plancher rossignol dans toute la salle du seigneur et sous les galeries de la cour.
 	rossignols([[516, 336, 768, 348], [140, 700, 1520, 40]])
-	clochettes([[140, 2060, 600, 2060], [140, 560, 500, 560], [1100, 1150, 1100, 1300], [700, 1150, 700, 1300]])
+	guirlandes([[160, 2060, 600, 2060], [830, 2000, 970, 2000], [830, 2150, 970, 2150], [830, 800, 970, 800], [830, 980, 970, 980]])
 	autels([["Depart", 900, 2150], ["AutelJardin", 1540, 1790]])
 	parchemin(900, 420)
 	sortie(80, 440, Vector3(2.0, 2.0, 4.8))
@@ -95,7 +95,7 @@ func _batiments() -> void:
 	batiment("PavillonThe", 1300, 770, 220, 170, 1.8)
 
 
-## Salle du seigneur : sans toit pour voir l'intérieur, porte au sud.
+## Salle du seigneur : grand toit qui s'efface quand on entre, porte au sud.
 func _salle_du_seigneur() -> void:
 	var e := 16.0
 	boite("SalleSol", 500, 320, 800, 380, 0.04, "parquet")
@@ -109,6 +109,7 @@ func _salle_du_seigneur() -> void:
 	]
 	for m in murs:
 		mur(m[0], m[1], m[2], m[3], m[4], H_REMPART)
+	toit_japonais("SalleToit", 500, 320, 800, 380, H_REMPART)
 
 
 ## Bassin aux carpes avec son pont rouge, et rochers du jardin zen.

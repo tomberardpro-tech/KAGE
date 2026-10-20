@@ -1,7 +1,7 @@
 class_name Hud
 extends CanvasLayer
 ## Interface en jeu, d'après les maquettes HUD du Figma :
-## discrétion (œil + jauge), objectif (lune + parchemin), charges de dash,
+## discrétion (œil + jauge), objectif (lune + parchemin), points de vie,
 ## invite d'action, marqueurs ? / ! au-dessus des gardes et bords rouges.
 
 const GRIS_ARDOISE := Color("#4B5160")
@@ -17,6 +17,8 @@ var _etat := Etat.CACHE
 var _jauge := 0.2
 var _invite := 0.0  # opacité de l'invite d'action
 var _action := "TRANCHER LA LANTERNE"
+var _vie_vue := 3
+var _eclat := 0.0  # flash rouge quand on prend un coup
 
 var _anton: Font
 var _plex_bold: Font
@@ -75,7 +77,12 @@ func _process(delta: float) -> void:
 		cible = 0.55 if ninja.est_eclaire() else 0.4
 	_jauge = lerpf(_jauge, cible, 1.0 - exp(-10.0 * delta))
 
+	if ninja.vie < _vie_vue:
+		_eclat = 1.0
+	_vie_vue = ninja.vie
+	_eclat = maxf(0.0, _eclat - delta * 2.5)
 	var rouge := 1.0 if niveau.decouvert else 0.7 if niveau.en_chasse() else soupcon * 0.45
+	rouge = maxf(rouge, _eclat)
 	_vignette.modulate.a = lerpf(_vignette.modulate.a, rouge, 1.0 - exp(-8.0 * delta))
 
 	var objet := ninja.objet_proche() if not ninja.bloque else null
@@ -92,7 +99,7 @@ func _dessiner() -> void:
 	var taille := _dessin.size
 	_dessiner_discretion()
 	_dessiner_objectif(taille.x)
-	_dessiner_dash(taille.y)
+	_dessiner_vie(taille.y)
 	if _invite > 0.01:
 		_dessiner_invite(taille)
 	_dessiner_marqueurs()
@@ -154,17 +161,30 @@ func _dessiner_objectif(largeur: float) -> void:
 		Palette.OR if niveau.a_le_parchemin else Palette.WASHI)
 
 
-# --- Dash (en bas à gauche) -----------------------------------------------
+# --- Points de vie (en bas à gauche) ---------------------------------------
 
-func _dessiner_dash(hauteur: float) -> void:
+func _dessiner_vie(hauteur: float) -> void:
 	var y := hauteur - 95.0
-	_texte(_plex_bold, "DASH", Vector2(64, y + 1), 25, Palette.WASHI)
+	_texte(_plex_bold, "VIE", Vector2(64, y + 1), 25, Palette.WASHI)
 	var ninja := niveau.ninja
-	for i in ninja.charges_dash_max:
-		var centre := Vector2(166 + i * 51 + 19.5, y + 19.5)
-		_losange(centre, 19.5, Palette.LAQUE if i < ninja.charges_dash else GRIS_ARDOISE)
-		if i == ninja.charges_dash:
-			_losange(centre, 19.5 * ninja.progression_charge(), Color(Palette.LAQUE, 0.55))
+	for i in ninja.vie_max:
+		var centre := Vector2(150 + i * 54 + 20, y + 20)
+		var plein := i < ninja.vie
+		# le cœur qu'on vient de perdre grossit un instant
+		var taille := 20.0 * (1.0 + (_eclat * 0.5 if i == ninja.vie else 0.0))
+		_coeur(centre, taille, Palette.LAQUE if plein else GRIS_ARDOISE)
+		if plein:
+			_coeur(centre + Vector2(-6, -6), taille * 0.28, Color(Palette.WASHI, 0.6))
+
+
+func _coeur(centre: Vector2, r: float, couleur: Color) -> void:
+	var points := PackedVector2Array()
+	for k in 40:
+		var t := TAU * k / 40.0
+		var x := 16.0 * pow(sin(t), 3)
+		var yy := 13.0 * cos(t) - 5.0 * cos(2 * t) - 2.0 * cos(3 * t) - cos(4 * t)
+		points.append(centre + Vector2(x, -yy) * r / 16.0)
+	_dessin.draw_colored_polygon(points, couleur)
 
 
 # --- Invite d'action (en bas à droite) -----------------------------------

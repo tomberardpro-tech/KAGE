@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=17 format=3]
 
 [ext_resource type="Script" path="res://scripts/anim_chibi.gd" id="1_aj3ut"]
 [ext_resource type="ArrayMesh" path="res://assets/models/ninja_articule.res" id="2_5lh7t"]
@@ -48,6 +48,52 @@ bind/12/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0.41, 0)
 bind/13/name = &"PiedD"
 bind/13/bone = -1
 bind/13/pose = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.09, 0.47, 0)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_mgp6i"]
+albedo_color = Color(0.0862745, 0.0862745, 0.109804, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_rlwu8"]
+size = Vector3(0.02, 0.024, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_l4xkk"]
+albedo_color = Color(0.788235, 0.635294, 0.290196, 1)
+metallic = 0.7
+roughness = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_nmfge"]
+size = Vector3(0.055, 0.055, 0.008)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_5n8vj"]
+albedo_color = Color(0.847059, 0.866667, 0.901961, 1)
+metallic = 0.9
+roughness = 0.2
+emission_enabled = true
+emission = Color(0.541176, 0.627451, 0.752941, 1)
+emission_energy_multiplier = 0.25
+
+[sub_resource type="BoxMesh" id="BoxMesh_ui2kr"]
+size = Vector3(0.01, 0.03, 0.52)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_usr7g"]
+albedo_color = Color(0.0862745, 0.0862745, 0.109804, 1)
+
+[sub_resource type="BoxMesh" id="BoxMesh_vhb27"]
+size = Vector3(0.02, 0.024, 0.12)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_kndji"]
+albedo_color = Color(0.788235, 0.635294, 0.290196, 1)
+metallic = 0.7
+roughness = 0.35
+
+[sub_resource type="BoxMesh" id="BoxMesh_beiwl"]
+size = Vector3(0.055, 0.055, 0.008)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_souy1"]
+albedo_color = Color(0.352941, 0.0901961, 0.0705882, 1)
+roughness = 0.4
+
+[sub_resource type="BoxMesh" id="BoxMesh_c07s7"]
+size = Vector3(0.022, 0.034, 0.54)
 
 [node name="Modele" type="Node3D"]
 script = ExtResource("1_aj3ut")
@@ -156,6 +202,47 @@ bones/13/scale = Vector3(1, 1, 1)
 [node name="Ninja" type="MeshInstance3D" parent="Squelette"]
 mesh = ExtResource("2_5lh7t")
 skin = SubResource("Skin_lapdn")
+
+[node name="MainD" type="BoneAttachment3D" parent="Squelette"]
+bone_name = "AvantBrasD"
+
+[node name="KatanaMain" type="Node3D" parent="Squelette/MainD"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, -0.1, 0)
+visible = false
+
+[node name="@MeshInstance3D@2" type="MeshInstance3D" parent="Squelette/MainD/KatanaMain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+material_override = SubResource("StandardMaterial3D_mgp6i")
+mesh = SubResource("BoxMesh_rlwu8")
+
+[node name="@MeshInstance3D@3" type="MeshInstance3D" parent="Squelette/MainD/KatanaMain"]
+material_override = SubResource("StandardMaterial3D_l4xkk")
+mesh = SubResource("BoxMesh_nmfge")
+
+[node name="@MeshInstance3D@4" type="MeshInstance3D" parent="Squelette/MainD/KatanaMain"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.265)
+material_override = SubResource("StandardMaterial3D_5n8vj")
+mesh = SubResource("BoxMesh_ui2kr")
+
+[node name="Dos" type="BoneAttachment3D" parent="Squelette"]
+bone_name = "Poitrine"
+
+[node name="KatanaDos" type="Node3D" parent="Squelette/Dos"]
+transform = Transform3D(0.819152, -2.50718e-08, 0.573576, -0.573576, -3.58063e-08, 0.819152, 0, -1, -4.37114e-08, -0.05, -0.08, -0.12)
+
+[node name="@MeshInstance3D@5" type="MeshInstance3D" parent="Squelette/Dos/KatanaDos"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
+material_override = SubResource("StandardMaterial3D_usr7g")
+mesh = SubResource("BoxMesh_vhb27")
+
+[node name="@MeshInstance3D@6" type="MeshInstance3D" parent="Squelette/Dos/KatanaDos"]
+material_override = SubResource("StandardMaterial3D_kndji")
+mesh = SubResource("BoxMesh_beiwl")
+
+[node name="@MeshInstance3D@7" type="MeshInstance3D" parent="Squelette/Dos/KatanaDos"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.265)
+material_override = SubResource("StandardMaterial3D_souy1")
+mesh = SubResource("BoxMesh_c07s7")
 
 [node name="Animations" type="AnimationPlayer" parent="."]
 libraries = {

@@ -44,8 +44,8 @@ func _ready() -> void:
 		autel.active.connect(_sur_autel)
 	$Parchemin.touche.connect(_sur_parchemin)
 	$Sortie.touche.connect(_sur_sortie)
-	_ecrans.tutoriel()
 	Sons.musique("jeu")
+	_debut()
 	# ambiance : pluie et esprits qui passent autour du ninja
 	for script in [preload("res://scripts/pluie.gd"), preload("res://scripts/esprits.gd")]:
 		var effet = script.new()
@@ -68,6 +68,29 @@ func _process(delta: float) -> void:
 				for lumiere in zone.find_children("*", "Light3D"):
 					create_tween().tween_property(lumiere, "light_energy", 2.0 if visible else 0.0, 1.5)
 		create_tween().tween_property(_lune, "light_energy", 0.9 if visible else 0.25, 1.5)
+
+
+## Au premier niveau, le maître du clan parle au ninja dans la cabane, puis vient le tutoriel.
+func _debut() -> void:
+	var maitre := get_node_or_null("Maitre")
+	if maitre:
+		var anim := maitre.get_node_or_null("Animations") as AnimationPlayer
+		if anim:
+			anim.play("repos")
+		ninja.bloque = true
+		var dialogue := Dialogue.new()
+		add_child(dialogue)
+		await get_tree().create_timer(0.8).timeout
+		await dialogue.jouer("MAÎTRE KAGEMARU", [
+			"Te voilà enfin, Kage. Approche, et parle bas : les murs ont des oreilles.",
+			"Le chef du village cache le plan du château dans sa maison, tout au nord.",
+			"Ses gardes portent des lanternes. Reste dans l'ombre, et ils passeront sans te voir.",
+			"Si l'un d'eux te barre la route, ton katana fera le reste. Mais prends garde : trois coups, et c'en est fini de toi.",
+			"Va. Et que personne ne sache que tu étais là.",
+		])
+		dialogue.queue_free()
+		ninja.bloque = false
+	_ecrans.tutoriel()
 
 
 func peut_mettre_en_pause() -> bool:

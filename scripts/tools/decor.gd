@@ -7,6 +7,7 @@ extends "res://scripts/tools/constructeur.gd"
 ## Les petits objets répétés sont regroupés en MultiMesh pour rester léger dans le navigateur.
 
 const SHADERS := "res://assets/shaders/"
+const CARRE := 16.0  ## taille des carrés de décor (m) pour que la caméra ignore ceux hors de l'écran
 
 var _deco := {}  # nom -> {"mesh": Mesh, "transforms": Array, "ombre": bool, "materiau": Material}
 var _hasard := RandomNumberGenerator.new()
@@ -86,6 +87,10 @@ func _ambiance() -> void:
 	ciel.shader = load(SHADERS + "ciel.gdshader")
 	env.sky.sky_material = ciel
 	env.fog_sky_affect = 0.2
+	# ombres de la lune seulement près de la caméra : plus nettes et bien moins coûteuses
+	var lune := racine.get_node("Lune") as DirectionalLight3D
+	lune.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	lune.directional_shadow_max_distance = 32.0
 
 
 # --- Petits objets regroupés ----------------------------------------------
@@ -288,6 +293,220 @@ func autels(liste: Array) -> void:
 		ajouter(flamme, lueur)
 
 
+## Grand toit japonais à quatre pans aux bords relevés, au-dessus d'un bâtiment [x, y, w, d] (px)
+## dont les murs font h mètres. etages = 2 : un second toit plus petit par-dessus (donjon).
+## Le toit s'efface quand le ninja entre (scripts/toit.gd), pour voir l'intérieur.
+func toit_japonais(nom: String, x: float, y: float, w: float, d: float, h: float, etages := 1, matiere := "tuiles") -> void:
+	var noeud := Node3D.new()
+	noeud.name = nom
+	noeud.set_script(load("res://scripts/toit.gd"))
+	var c := P(x + w / 2.0, y + d / 2.0)
+	noeud.set("emprise", Rect2(c.x - w * ECHELLE / 2.0, c.z - d * ECHELLE / 2.0, w * ECHELLE, d * ECHELLE))
+	ajouter(racine, noeud)
+	var lx := w * ECHELLE + 1.4
+	var lz := d * ECHELLE + 1.4
+	var bas := h + 0.4  # au-dessus des tuiles qui coiffent les murs
+	if etages == 1:
+		_pan_de_toit(noeud, c + Vector3(0, bas, 0), lx, lz, 1.0, matiere)
+		return
+	# donjon : un toit bas tronqué, un étage blanc, puis le toit du haut
+	_pan_de_toit(noeud, c + Vector3(0, bas, 0), lx, lz, 0.5)
+	var ex := w * ECHELLE * 0.62
+	var ez := d * ECHELLE * 0.62
+	var etage := MeshInstance3D.new()
+	var boite_etage := BoxMesh.new()
+	boite_etage.size = Vector3(ex, 1.7, ez)
+	etage.mesh = boite_etage
+	etage.material_override = materiaux["mur"]
+	etage.position = c + Vector3(0, bas + 0.9 + 0.85, 0)
+	ajouter(noeud, etage)
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			var poteau := MeshInstance3D.new()
+			var b := BoxMesh.new()
+			b.size = Vector3(0.2, 1.7, 0.2)
+			poteau.mesh = b
+			poteau.material_override = materiaux["bois"]
+			poteau.position = c + Vector3(sx * ex / 2.0, bas + 1.75, sz * ez / 2.0)
+			ajouter(noeud, poteau)
+	_pan_de_toit(noeud, c + Vector3(0, bas + 2.6, 0), ex + 1.3, ez + 1.3, 1.0)
+
+
+## Un toit à quatre pans en courbe (plus raide en haut, presque plat au bord, coins relevés),
+## posé en `base`, de taille lx × lz au bord ; coupe < 1 : seulement le bas (toit tronqué).
+func _pan_de_toit(parent: Node3D, base: Vector3, lx: float, lz: float, coupe: float, matiere := "tuiles") -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hx := lx / 2.0
+	var hz := lz / 2.0
+	var court := minf(hx, hz)
+	var hauteur := minf(court * 0.6, 3.6)
+	var n := 6
+	var anneaux := []
+	for k in n + 1:
+		var s := float(k) / n * coupe
+		var rentre := (court - 0.08) * s
+		var y := hauteur * pow(s, 1.7)
+		var anneau := [Vector3(-hx + rentre, y, -hz + rentre), Vector3(hx - rentre, y, -hz + rentre),
+			Vector3(hx - rentre, y, hz - rentre), Vector3(-hx + rentre, y, hz - rentre)]
+		if k == 0:
+			# coins relevés au bord du toit
+			for i in 4:
+				var coin: Vector3 = anneau[i]
+				anneau[i] = coin + Vector3(signf(coin.x) * 0.25, 0.32, signf(coin.z) * 0.25)
+		anneaux.append(anneau)
+	for k in n:
+		var a: Array = anneaux[k]
+		var b: Array = anneaux[k + 1]
+		for i in 4:
+			var j := (i + 1) % 4
+			for v in [a[i], b[j], b[i], a[i], a[j], b[j]]:  # sens horaire vu du dessus : face visible
+				st.add_vertex(base + v)
+	var haut: Array = anneaux[n]
+	for v in [haut[0], haut[2], haut[1], haut[0], haut[3], haut[2]]:
+		st.add_vertex(base + v)
+	st.generate_normals()
+	var toit := MeshInstance3D.new()
+	toit.mesh = st.commit()
+	var m: ShaderMaterial = materiaux[matiere].duplicate()
+	toit.material_override = m
+	ajouter(parent, toit)
+	if coupe < 1.0:
+		return
+	# faîtage noir et deux ornements dorés (shachihoko) au bout
+	var y_haut: float = haut[0].y
+	var long_x := hx >= hz
+	var faite := MeshInstance3D.new()
+	var bf := BoxMesh.new()
+	var l := (hx - court + 0.08) * 2.0 + 0.3 if long_x else (hz - court + 0.08) * 2.0 + 0.3
+	bf.size = Vector3(l, 0.22, 0.3) if long_x else Vector3(0.3, 0.22, l)
+	faite.mesh = bf
+	faite.material_override = materiaux["noir"]
+	faite.position = base + Vector3(0, y_haut + 0.1, 0)
+	ajouter(parent, faite)
+	for sgn in [-1.0, 1.0]:
+		var orne := MeshInstance3D.new()
+		var bo := BoxMesh.new()
+		bo.size = Vector3(0.18, 0.45, 0.14)
+		orne.mesh = bo
+		orne.material_override = materiaux["or"]
+		orne.position = base + (Vector3(sgn * l / 2.0, y_haut + 0.4, 0) if long_x else Vector3(0, y_haut + 0.4, sgn * l / 2.0))
+		orne.rotation.z = -sgn * 0.3 if long_x else 0.0
+		orne.rotation.x = sgn * 0.3 if not long_x else 0.0
+		ajouter(parent, orne)
+
+
+## Le vieux maître du clan, qui parle au ninja au début du jeu : le modèle du ninja,
+## teinté plus clair, avec un chapeau de paille, une barbe blanche et un bâton. Sans collision.
+func maitre(x: float, y: float, regard := 0.0) -> void:
+	var m: Node3D = load("res://scenes/characters/ninja_modele.tscn").instantiate()
+	m.name = "Maitre"
+	m.position = P(x, y)
+	m.rotation.y = regard
+	m.scale = Vector3.ONE * 0.95
+	ajouter(racine, m)
+	var corps: MeshInstance3D = m.find_child("Ninja", true, false)
+	# même modèle que le ninja, mais habit clair de vieux maître (la texture noire est éclaircie)
+	var tissu := (corps.mesh.surface_get_material(0) as BaseMaterial3D).albedo_texture
+	var habit := ShaderMaterial.new()
+	habit.shader = Shader.new()
+	habit.shader.code = """
+shader_type spatial;
+uniform sampler2D tissu : source_color, filter_linear_mipmap;
+void fragment() {
+	vec3 t = texture(tissu, UV).rgb;
+	float l = dot(t, vec3(0.333));
+	ALBEDO = vec3(0.8, 0.74, 0.62) * (0.45 + 0.9 * l);
+	ROUGHNESS = 0.9;
+}
+"""
+	habit.set_shader_parameter("tissu", tissu)
+	corps.material_override = habit
+	racine.set_editable_instance(m, true)  # pour que la scène garde cet habit
+	var paille := mat("#c9a35a", {"roughness": 0.9})
+	var chapeau := MeshInstance3D.new()
+	var cone := CylinderMesh.new()
+	cone.top_radius = 0.02
+	cone.bottom_radius = 0.42
+	cone.height = 0.2
+	cone.radial_segments = 14
+	chapeau.mesh = cone
+	chapeau.material_override = paille
+	chapeau.position = Vector3(0, 1.36, 0.0)
+	ajouter(m, chapeau)
+	var barbe := MeshInstance3D.new()
+	var b := CylinderMesh.new()
+	b.top_radius = 0.1
+	b.bottom_radius = 0.01
+	b.height = 0.26
+	barbe.mesh = b
+	barbe.material_override = mat("#eeeae0")
+	barbe.position = Vector3(0, 0.82, 0.2)
+	barbe.rotation.x = 0.25
+	ajouter(m, barbe)
+	var baton := MeshInstance3D.new()
+	var bb := CylinderMesh.new()
+	bb.top_radius = 0.025
+	bb.bottom_radius = 0.03
+	bb.height = 1.3
+	baton.mesh = bb
+	baton.material_override = materiaux["bois"]
+	baton.position = Vector3(-0.32, 0.65, 0.12)
+	baton.rotation.z = 0.08
+	ajouter(m, baton)
+
+
+## Guirlandes de lanternes en papier (chōchin) rouges et blanches, tendues entre deux poteaux :
+## [x1, y1, x2, y2] en px. Purement décoratives : pas de collision, pas de vraie lumière (léger).
+func guirlandes(liste: Array) -> void:
+	var poteau := CylinderMesh.new()
+	poteau.top_radius = 0.06
+	poteau.bottom_radius = 0.08
+	poteau.height = 1.0
+	poteau.radial_segments = 6
+	poteau.rings = 1
+	var lanterne := SphereMesh.new()
+	lanterne.radius = 0.5
+	lanterne.height = 1.0
+	lanterne.radial_segments = 10
+	lanterne.rings = 6
+	var corde := CylinderMesh.new()
+	corde.top_radius = 0.012
+	corde.bottom_radius = 0.012
+	corde.height = 1.0
+	corde.radial_segments = 4
+	corde.rings = 1
+	var rouge := mat("#d2321f", {"emission_enabled": true, "emission": Color("#ff5a2a"), "emission_energy_multiplier": 1.6})
+	var blanc := mat("#f3e6c8", {"emission_enabled": true, "emission": Color("#ffd28a"), "emission_energy_multiplier": 1.3})
+	var noir: Material = materiaux["noir"]
+	var h := 3.3
+	for g in liste:
+		var a := P(g[0], g[1])
+		var b := P(g[2], g[3])
+		for bout in [a, b]:
+			deco("GuirlandePoteaux", poteau, Transform3D(Basis().scaled(Vector3(1, h, 1)), bout + Vector3(0, h / 2.0, 0)), materiaux["bois"])
+			deco("GuirlandeChapeaux", _boite_unite(), Transform3D(Basis().scaled(Vector3(0.22, 0.06, 0.22)), bout + Vector3(0, h + 0.03, 0)), noir)
+		var longueur := a.distance_to(b)
+		var n := maxi(int(longueur / 0.75), 3)
+		var fleche := 0.12 * longueur + 0.2  # la corde pend au milieu
+		var precedent := a + Vector3(0, h - 0.1, 0)
+		for k in range(1, n + 1):
+			var t := float(k) / n
+			var p := a.lerp(b, t) + Vector3(0, h - 0.1 - fleche * 4.0 * t * (1.0 - t), 0)
+			# un bout de corde entre deux points de la chaînette
+			var milieu := (precedent + p) * 0.5
+			var dir := (p - precedent)
+			var base := Basis.looking_at(dir.normalized(), Vector3.UP) * Basis(Vector3(1, 0, 0), PI / 2.0)
+			deco("GuirlandeCordes", corde, Transform3D(base.scaled(Vector3(1, dir.length(), 1)), milieu), noir, false)
+			precedent = p
+			if k < n:
+				var couleur: Material = rouge if k % 2 == 0 else blanc
+				var pos := p + Vector3(0, -0.22, 0)
+				deco("GuirlandeLanternes%d" % (k % 2), lanterne, Transform3D(Basis().scaled(Vector3(0.26, 0.34, 0.26)), pos), couleur, false)
+				for dy in [0.18, -0.18]:
+					deco("GuirlandeBagues", _boite_unite(), Transform3D(Basis().scaled(Vector3(0.16, 0.035, 0.16)), pos + Vector3(0, dy, 0)), noir, false)
+
+
 ## Autour du niveau : sol de forêt, ceinture de cèdres, pins et bambous, montagnes au loin.
 ## Rien n'y est atteignable (les limites du niveau restent les mêmes) : ça cache juste le vide.
 func _alentours() -> void:
@@ -328,8 +547,8 @@ func _alentours() -> void:
 		f.set_shader_parameter("touffes", 5.0)
 		feuillages.append(f)
 	_hasard.seed = 909
-	var pas := 3.3 / ECHELLE
-	var largeur := 26.0 / ECHELLE
+	var pas := 3.8 / ECHELLE
+	var largeur := 22.0 / ECHELLE
 	var foret := _sol.grow(largeur)
 	var x := foret.position.x
 	while x < foret.end.x:
@@ -551,22 +770,32 @@ func finir(chemin: String) -> void:
 	var noeud := Node3D.new()
 	noeud.name = "DecorJaponais"
 	ajouter(racine, noeud)
+	# Chaque groupe est découpé en carrés de CARRE m : la caméra ne dessine que ceux qu'elle voit
+	# (un seul grand MultiMesh pour tout le niveau serait toujours dessiné en entier).
 	for nom in _deco:
 		var d: Dictionary = _deco[nom]
-		var multi := MultiMesh.new()
-		multi.transform_format = MultiMesh.TRANSFORM_3D
-		multi.mesh = d["mesh"]
-		multi.instance_count = d["transforms"].size()
-		for k in multi.instance_count:
-			multi.set_instance_transform(k, d["transforms"][k])
-		var rendu := MultiMeshInstance3D.new()
-		rendu.name = nom
-		rendu.multimesh = multi
-		if d["materiau"]:
-			rendu.material_override = d["materiau"]
-		if not d["ombre"]:
-			rendu.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		ajouter(noeud, rendu)
+		var carres := {}
+		for tr: Transform3D in d["transforms"]:
+			var cle := Vector2i(floori(tr.origin.x / CARRE), floori(tr.origin.z / CARRE))
+			if not carres.has(cle):
+				carres[cle] = []
+			carres[cle].append(tr)
+		for cle in carres:
+			var liste: Array = carres[cle]
+			var multi := MultiMesh.new()
+			multi.transform_format = MultiMesh.TRANSFORM_3D
+			multi.mesh = d["mesh"]
+			multi.instance_count = liste.size()
+			for k in multi.instance_count:
+				multi.set_instance_transform(k, liste[k])
+			var rendu := MultiMeshInstance3D.new()
+			rendu.name = "%s_%d_%d" % [nom, cle.x, cle.y] if carres.size() > 1 else nom
+			rendu.multimesh = multi
+			if d["materiau"]:
+				rendu.material_override = d["materiau"]
+			if not d["ombre"]:
+				rendu.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			ajouter(noeud, rendu)
 	super.finir(chemin)
 
 

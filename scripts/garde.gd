@@ -4,7 +4,7 @@ extends CharacterBody3D
 ## ou quand il entend un bruit. S'il voit le ninja assez longtemps, il le prend en chasse :
 ## on peut le semer, se cacher ou le trancher. S'il nous rattrape, il frappe.
 
-signal joueur_repere(garde: Garde)  ## le garde a frappé le ninja : défaite
+signal joueur_repere(garde: Garde)  ## le garde a porté le dernier coup (plus de vie) : défaite
 signal chasse_commencee(garde: Garde)
 
 enum Etat { RONDE, ENQUETE, ALERTE, MORT, CHASSE }
@@ -38,6 +38,7 @@ var _cone: MeshInstance3D
 var _cone_materiau: StandardMaterial3D
 var _frappe := -1.0  ## > 0 : élan du coup en cours
 var _perdu := 0.0
+var _souffle := 0.0  ## après un coup, il reprend son souffle avant de recommencer
 var _dernier_vu: Vector3
 
 @onready var _visuel: Node3D = $Visuel
@@ -64,6 +65,7 @@ func reinitialiser() -> void:
 	_cible = 0
 	_attente = 0.0
 	_frappe = -1.0
+	_souffle = 0.0
 	_visuel.position = Vector3.ZERO
 	_tourner_vers(_regard_depart, 1.0)
 
@@ -190,8 +192,14 @@ func _chasser(delta: float) -> void:
 		if _frappe < 0.0:
 			_visuel.position = Vector3.ZERO
 			Sons.jouer("frappe")
-			if ecart.length() < portee_frappe + 0.4 and not ninja.en_dash:
+			_souffle = 0.7
+			if ecart.length() < portee_frappe + 0.4 and ninja.blesser(global_position) and ninja.vie <= 0:
 				joueur_repere.emit(self)
+		return
+	if _souffle > 0.0:
+		_souffle -= delta
+		velocity = Vector3.ZERO
+		_tourner_vers(ecart.normalized(), delta * 6.0)
 		return
 	if _perdu > temps_pour_semer:
 		# Semé : il fouille l'endroit où il nous a vus pour la dernière fois.

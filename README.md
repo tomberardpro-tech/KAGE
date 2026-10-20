@@ -17,7 +17,8 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 | Se déplacer | ZQSD (ou WASD) / flèches |
 | Sauter | Espace |
 | S'accroupir | Ctrl ou C |
-| Dash au sabre | Clic gauche (vers la souris) |
+| Coup de katana | L ou clic gauche (vers la souris) |
+| Passer le dialogue | Entrée (Échap pour tout passer) |
 | Trancher une lanterne proche | E |
 | Pause | Échap |
 
@@ -50,7 +51,7 @@ Les allées ont des bordures de pierre et des flaques (`flaque.gdshader`) ; les 
 Le ninja est **riggé** : `scripts/tools/articuler.gd` lui pose un squelette de 14 os (bassin, ventre,
 poitrine, tête, bras, avant-bras, cuisses, tibias, pieds) sans toucher à son apparence (mêmes sommets, même
 texture), puis crée ses animations clés dans `assets/models/ninja_animations.res` : repos, course, marche
-accroupie, accroupi immobile, saut, chute, dash et atterrissage. `anim_chibi.gd` choisit l'animation selon
+accroupie, accroupi immobile, saut, chute, atterrissage, coup de katana et escalade. `anim_chibi.gd` choisit l'animation selon
 le mouvement et fait les fondus entre elles. Pour le refaire (le chemin final exporte aussi un `.glb`
 ouvrable dans Blender) :
 `xvfb-run -a godot --rendering-driver opengl3 --path . --script res://scripts/tools/articuler.gd -- ninja_rig.glb`.
@@ -58,8 +59,10 @@ ouvrable dans Blender) :
 - Marche à 5,5 m/s, accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.
 - En sautant contre un mur ou un toit jusqu'à 2,4 m, il s'accroche et se hisse dessus.
-- Dash au sabre de 5 m vers la souris : 3 charges, une charge revient toutes les 3 s.
-- E près d'une lanterne allumée l'éteint sans dasher.
+- Coup de katana (L) devant lui, vers la souris : il tranche les gardes à moins de 1,7 m. Le sabre est rangé dans le dos et sort pendant le coup.
+- 3 points de vie : chaque coup de garde en retire un (le ninja est repoussé et clignote un instant). À 0, il repart du dernier autel.
+- E près d'une lanterne allumée l'éteint.
+- Les gardes sont riggés eux aussi (`articuler.gd -- garde`) : repos, marche, course et coup de lance.
 - Tous les réglages sont modifiables dans l'inspecteur de Godot.
 
 ![Menu principal](docs/menu.png)
@@ -110,11 +113,14 @@ dans un style doux et coloré ; seuls les rochers viennent d'un pack (Kenney, CC
 
 On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script. Le titre, les textes et le niveau suivant se règlent au début de chaque script.
 
-- **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te **prend en chasse** et appelle les gardes proches : sème-le (il court moins vite que toi), cache-toi ou tranche-le d'un dash. S'il te rattrape, il prend son élan et frappe : tu repars du dernier autel.
+- **Gardes** (`scripts/garde.gd`) : ronde ou faction, cône de vision rouge au sol. Ils voient à 7,3 m si tu es éclairé, à 2 m dans la pénombre. Un garde qui te voit assez longtemps te **prend en chasse** et appelle les gardes proches : sème-le (il court moins vite que toi), cache-toi ou tranche-le au katana. S'il te rattrape, il frappe : tu perds un point de vie.
 - **Planchers rossignol** (`scripts/rossignol.gd`, lattes claires) : ils grincent si tu marches debout, et les gardes proches viennent voir. Accroupi, tu passes sans bruit.
-- **Fils à clochettes** (`scripts/clochettes.gd`, fil rouge et clochettes dorées) : saute par-dessus ou coupe-les avec E. Si tu les traverses, ils sonnent et les gardes accourent.
+- **Guirlandes de lanternes** rouges et blanches (chōchin) au-dessus des allées, à la place des fils à clochettes. Purement décoratives.
+- **Toits japonais** sur les bâtiments du parchemin (maison du chef, donjon à deux étages, salle du seigneur) : ils pâlissent quand le ninja approche et disparaissent quand il entre (`scripts/toit.gd`).
+- **Intro** : le jeu commence dans une cabane, où le maître Kagemaru explique la mission (`scripts/dialogue.gd`).
+- **Esprits bleus** (hitodama) : ils passent près du ninja et s'enfuient quand il approche.
 - **Se cacher** (`scripts/zone.gd`) : ombre des arbres, herbes hautes (accroupi). La lumière des lanternes et le clair de lune te trahissent, comme la lune sur les toits.
-- **Lanternes** : un dash au sabre les éteint, et le garde le plus proche vient voir.
+- **Lanternes** : E les éteint, et le garde le plus proche vient voir.
 - **Lune** : des nuages passent toutes les 14 s et coupent le clair de lune pendant 5 s.
 - **Autels** : points de reprise. **Parchemin** dans le donjon, **sortie** dans le rempart est.
 - Fin de partie : temps, bonus Fantôme (jamais repéré) et Pacifiste (aucun garde tué).
@@ -123,9 +129,9 @@ On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération
 
 D'après les maquettes HUD et les écrans du Figma :
 
-- **HUD** (`scripts/hud.gd`) : œil et jauge de visibilité (CACHÉ, EXPOSÉ, REPÉRÉ, DÉCOUVERT), lune qui pâlit quand les nuages la cachent, parchemin 0 / 1, charges de dash, invite « E · Trancher la lanterne », marqueurs ? et ! au-dessus des gardes méfiants ou alertés, bords rouges quand on est vu.
+- **HUD** (`scripts/hud.gd`) : œil et jauge de visibilité (CACHÉ, EXPOSÉ, REPÉRÉ, DÉCOUVERT), lune qui pâlit quand les nuages la cachent, parchemin 0 / 1, 3 cœurs de vie (flash rouge quand on est touché), invite « E · Trancher la lanterne », marqueurs ? et ! au-dessus des gardes méfiants ou alertés, bords rouges quand on est vu.
 - **Écrans** (`scripts/ecrans_jeu.gd`, parchemins dessinés par `scripts/rouleau.gd`) : tutoriel au départ, pause (Échap : reprendre, recommencer à l'autel, quitter), défaite (R pour repartir de l'autel) et victoire avec le score (temps, Fantôme, Pacifiste ; Entrée pour le menu, R pour rejouer).
-- Il n'y a pas de vies : un garde qui te repère te renvoie au dernier autel, autant de fois qu'il le faut.
+- 3 points de vie : à 0, tu repars du dernier autel, autant de fois qu'il le faut.
 
 ## Captures
 

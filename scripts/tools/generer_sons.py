@@ -294,11 +294,23 @@ def bruit_garde_tombe():
 
 
 def bruit_alerte():
-    """Deux coups de claquoirs secs, comme au théâtre kabuki."""
-    piste = silence(0.5)
-    poser(piste, claquoir(), 0.0)
-    poser(piste, claquoir(), 0.14)
-    return normaliser(piste, 0.8)
+    """Repéré ! Grand coup de taiko, cri de shakuhachi qui monte et cymbale : on sent la menace."""
+    piste = silence(1.6)
+    poser(piste, taiko(1.2, 48.0, 1.2), 0.0)
+    poser(piste, taiko(0.6, 75.0, 0.6), 0.16)
+    # cri de flûte qui glisse vers l'aigu
+    n = int(0.9 * SR)
+    t_ = np.arange(n) / SR
+    f = 440.0 * 2 ** (np.minimum(t_ / 0.25, 1.0) * 7 / 12)
+    phase = 2 * np.pi * np.cumsum(f) / SR
+    cri = (np.sin(phase) + 0.3 * np.sin(2 * phase)) * np.minimum(t_ / 0.04, 1) * np.exp(-t_ * 3.0)
+    cri += passe_bas(hasard.normal(0, 1, n), 3000) * 0.2 * np.exp(-t_ * 6.0)
+    poser(piste, cri * 0.45, 0.05)
+    # petite cymbale (bruit aigu qui s'éteint)
+    m = int(1.2 * SR)
+    tm = np.arange(m) / SR
+    poser(piste, passe_haut(hasard.normal(0, 1, m), 4000) * np.exp(-tm * 4.0) * 0.18, 0.0)
+    return normaliser(reverb(piste, 1.8, 0.3), 0.85)
 
 
 def bruit_frappe():
@@ -345,21 +357,21 @@ def bruit_autel():
 
 
 def bruit_pluie():
-    """Pluie en boucle : bruissement doux, gouttes sur les feuilles et les tuiles."""
+    """Pluie douce en boucle : bruissement feutré et gouttes rares et légères."""
     duree = 12.0
     n = int(duree * SR)
-    piste = passe_bas(passe_haut(hasard.normal(0, 1, n), 400), 5000) * 0.35
-    piste += passe_bas(hasard.normal(0, 1, n), 300) * 0.25
-    goutte_n = int(0.03 * SR)
+    piste = passe_bas(passe_haut(hasard.normal(0, 1, n), 250), 1800) * 0.4
+    piste += passe_bas(hasard.normal(0, 1, n), 220) * 0.3
+    goutte_n = int(0.04 * SR)
     tg = np.arange(goutte_n) / SR
-    for _ in range(int(duree * 70)):
-        f = hasard.uniform(1500, 4500)
-        g = np.sin(2 * np.pi * f * tg * (1 + tg * 8)) * np.exp(-tg * hasard.uniform(120, 260))
-        poser(piste, g * hasard.uniform(0.05, 0.25), hasard.uniform(0, duree - 0.05))
+    for _ in range(int(duree * 18)):
+        f = hasard.uniform(900, 2200)
+        g = np.sin(2 * np.pi * f * tg) * np.exp(-tg * hasard.uniform(90, 160))
+        poser(piste, g * hasard.uniform(0.02, 0.07), hasard.uniform(0, duree - 0.05))
     # fondu enchaîné : la fin se mélange au début pour une boucle sans raccord audible
     f = int(1.0 * SR)
     piste[:f] = piste[:f] * np.linspace(0, 1, f) + piste[-f:] * np.linspace(1, 0, f)
-    return normaliser(piste[:-f], 0.6)
+    return normaliser(piste[:-f], 0.5)
 
 
 def bruit_clic():

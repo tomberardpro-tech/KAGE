@@ -2,9 +2,8 @@
 
 ## Musiques et bruitages
 
-- **Musique du menu : « Yoiyami-core Theme – Deep Blue Ambient Piano », par Yoiyami**
-  ([OpenGameArt](https://opengameart.org/content/yoiyami-core-theme-%E2%80%93-deep-blue-ambient-piano)),
-  licence CC0 (domaine public), raccourcie à 2 min 30.
+- **Musique du menu : « Ninja Theme », par Spring**
+  ([OpenGameArt](https://opengameart.org/content/ninja-theme)), licence CC0 (domaine public).
 - **Musique en jeu : « Hot Springs Town », par Kistol**
   ([OpenGameArt](https://opengameart.org/content/hot-springs-town)), licence CC0 (domaine public).
 
@@ -16,8 +15,8 @@ Ils sont donc libres de droits et appartiennent au projet.
   taiko (tambour grave), hyoshigi (claquoirs en bois), clochettes.
 - Gamme miyako-bushi (ré, mi bémol, sol, la, si bémol).
 - Musiques : chasse (tambours de poursuite), victoire, défaite.
-- Bruitages : pas, saut, escalade, dash, sabre, lanterne, garde à terre, alerte, coup du garde,
-  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, pluie.
+- Bruitages : pas, saut, escalade, coup de katana, sabre, lanterne, garde à terre, alerte (taiko et cri de shakuhachi), coup du garde,
+  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, pluie douce.
 
 ## Modèles 3D
 

@@ -21,6 +21,8 @@ var _vy_avant := 0.0
 var _atterrit := 0.0  # temps restant de l'animation d'atterrissage
 
 @onready var _animations: AnimationPlayer = get_node_or_null("Animations")
+@onready var _katana_main: Node3D = find_child("KatanaMain", true, false)
+@onready var _katana_dos: Node3D = find_child("KatanaDos", true, false)
 
 @onready var _jambes := [get_node_or_null("JambeG"), get_node_or_null("JambeD")]
 @onready var _bras := [get_node_or_null("BrasG"), get_node_or_null("BrasD")]
@@ -139,9 +141,17 @@ func _animer_entier(delta: float, marche: float, dash: bool, lissage: float) -> 
 
 
 
-## Ninja riggé (scripts/tools/articuler.gd) : on joue ses animations clés selon ce qu'il fait,
+## Personnage riggé (scripts/tools/articuler.gd) : on joue ses animations clés selon ce qu'il fait,
 ## avec un fondu entre deux animations. La course accélère avec la vitesse.
 func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
+	if _corps is Garde:
+		_animer_garde(vitesse)
+		return
+	# le katana passe du dos à la main pendant le coup
+	var frappe: bool = _corps.get("attaque") > 0.0
+	if _katana_main:
+		_katana_main.visible = frappe
+		_katana_dos.visible = not frappe
 	var au_sol := _corps.is_on_floor()
 	var vy := _corps.velocity.y
 	var accroupi: bool = _corps.get("accroupi") == true
@@ -153,7 +163,13 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	var nom := "repos"
 	var fondu := 0.18
 	var vitesse_anim := 1.0
-	if dash:
+	if frappe:
+		nom = "frappe"
+		fondu = 0.05
+	elif _corps.get("en_grimpe") == true:
+		nom = "grimpe"
+		fondu = 0.04
+	elif dash:
 		nom = "dash"
 		fondu = 0.06
 	elif not au_sol:
@@ -168,6 +184,25 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	elif vitesse > 0.3:
 		nom = "course"
 		vitesse_anim = clampf(vitesse / 5.5, 0.55, 1.3)
+	if _animations.current_animation != nom:
+		_animations.play(nom, fondu)
+	_animations.speed_scale = vitesse_anim
+
+
+## Garde : ronde au pas, course pendant la chasse, coup de lance quand il frappe.
+func _animer_garde(vitesse: float) -> void:
+	var nom := "repos"
+	var vitesse_anim := 1.0
+	var fondu := 0.2
+	if _corps.get("_frappe") >= 0.0:
+		nom = "frappe"
+		fondu = 0.08
+	elif vitesse > 2.5:
+		nom = "course"
+		vitesse_anim = clampf(vitesse / 3.8, 0.7, 1.3)
+	elif vitesse > 0.2:
+		nom = "marche"
+		vitesse_anim = clampf(vitesse / 1.6, 0.7, 1.4)
 	if _animations.current_animation != nom:
 		_animations.play(nom, fondu)
 	_animations.speed_scale = vitesse_anim

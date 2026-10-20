@@ -66,6 +66,14 @@ void fragment() {
 
 
 func _process(delta: float) -> void:
+	# quand le ninja approche, l'esprit file et s'évanouit
+	if cible:
+		for esprit: Node3D in get_children():
+			if not esprit.get_meta("fuit", false):
+				var ecart := esprit.global_position - cible.global_position
+				ecart.y = 0.0
+				if ecart.length() < 3.5:
+					_fuir(esprit, ecart.normalized())
 	_attente -= delta
 	if _attente <= 0.0 and cible and get_child_count() < MAX:
 		_apparaitre()
@@ -151,7 +159,9 @@ func _apparaitre() -> void:
 	# il passe : apparition, dérive en ondulant, puis disparition
 	var duree := randf_range(5.0, 8.0)
 	var arrivee := depart + cap * randf_range(4.0, 7.0) + Vector3(0, randf_range(-0.3, 0.6), 0)
-	esprit.create_tween().tween_property(esprit, "global_position", arrivee, duree).set_trans(Tween.TRANS_SINE)
+	var trajet := esprit.create_tween()
+	trajet.tween_property(esprit, "global_position", arrivee, duree).set_trans(Tween.TRANS_SINE)
+	esprit.set_meta("trajet", trajet)
 	var flotte := corps.create_tween().set_loops()
 	flotte.tween_property(corps, "position:y", 0.12, 0.9).set_trans(Tween.TRANS_SINE)
 	flotte.tween_property(corps, "position:y", -0.12, 0.9).set_trans(Tween.TRANS_SINE)
@@ -160,8 +170,29 @@ func _apparaitre() -> void:
 			m.set_shader_parameter("opacite", v)
 		lueur.light_energy = v * 2.2
 		trainee.emitting = v > 0.2
+	esprit.set_meta("visible_a", visible_a)
 	var fondu := esprit.create_tween()
 	fondu.tween_method(visible_a, 0.0, 1.0, 1.2)
 	fondu.tween_interval(duree - 2.7)
 	fondu.tween_method(visible_a, 1.0, 0.0, 1.5)
 	fondu.tween_callback(esprit.queue_free)
+	esprit.set_meta("fondu", fondu)
+
+
+## L'esprit s'enfuit loin du ninja en montant, puis disparaît.
+func _fuir(esprit: Node3D, direction: Vector3) -> void:
+	esprit.set_meta("fuit", true)
+	for nom in ["trajet", "fondu"]:
+		var tw: Tween = esprit.get_meta(nom)
+		if tw and tw.is_valid():
+			tw.kill()
+	var visible_a: Callable = esprit.get_meta("visible_a")
+	var depart := 1.0
+	var mat: ShaderMaterial = esprit.get_child(0).get_child(0).material_override
+	if mat:
+		depart = mat.get_shader_parameter("opacite")
+	var fuite := esprit.create_tween().set_parallel(true)
+	fuite.tween_property(esprit, "global_position", esprit.global_position + direction * 5.0 + Vector3(0, 1.5, 0), 0.9) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	fuite.tween_method(visible_a, depart, 0.0, 0.9)
+	fuite.chain().tween_callback(esprit.queue_free)

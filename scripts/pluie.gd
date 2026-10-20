@@ -7,18 +7,19 @@ const HAUTEUR := 11.0  ## hauteur d'où tombent les gouttes au-dessus du ninja
 const VITESSE := 16.0  ## m/s
 
 var cible: Node3D
-var _gouttes: CPUParticles3D
-var _eclats: CPUParticles3D
+var _gouttes: Node3D
+var _eclats: Node3D
 
 
 func _ready() -> void:
-	_gouttes = _creer_gouttes()
-	_eclats = _creer_eclats()
+	# décrites en CPUParticles3D (plus lisible), puis calculées par la carte graphique
+	_gouttes = _sur_gpu(_creer_gouttes())
+	_eclats = _sur_gpu(_creer_eclats())
 	var bruit := AudioStreamPlayer.new()
 	var flux: AudioStreamOggVorbis = load("res://assets/audio/sfx/pluie.ogg").duplicate()
 	flux.loop = true
 	bruit.stream = flux
-	bruit.volume_db = -14.0
+	bruit.volume_db = -24.0
 	add_child(bruit)
 	bruit.play()
 
@@ -29,6 +30,19 @@ func _process(_delta: float) -> void:
 		if not (cible is CharacterBody3D) or cible.is_on_floor():
 			sol = cible.global_position.y  # en saut, les éclaboussures restent au sol
 		global_position = Vector3(cible.global_position.x, sol, cible.global_position.z)
+
+
+## Remplace des particules CPU par leur équivalent GPU : le processeur n'a plus rien à calculer.
+func _sur_gpu(cpu: CPUParticles3D) -> Node3D:
+	var gpu := GPUParticles3D.new()
+	gpu.convert_from_particles(cpu)
+	gpu.position = cpu.position
+	gpu.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	gpu.visibility_aabb = AABB(Vector3(-ZONE.x - 2, -HAUTEUR - 2, -ZONE.z - 2), Vector3(ZONE.x * 2 + 4, HAUTEUR + 4, ZONE.z * 2 + 4))
+	remove_child(cpu)
+	cpu.free()
+	add_child(gpu)
+	return gpu
 
 
 func _creer_gouttes() -> CPUParticles3D:

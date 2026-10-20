@@ -1,15 +1,38 @@
 extends SceneTree
-## Rig du ninja : squelette complet et animations clés, sans changer son apparence
+## Rig du ninja et des gardes : squelette complet et animations clés, sans changer leur apparence
 ## (mêmes sommets, même texture : on ajoute seulement des os et des poids de peau).
 ## Lancer (avec une fenêtre, pour que le maillage soit bien enregistré) :
-## godot --path . --script res://scripts/tools/articuler.gd
-## Écrit assets/models/ninja_articule.res, assets/models/ninja_animations.res,
-## scenes/characters/ninja_modele.tscn et une copie du rig en .glb (pour Blender).
+## godot --path . --script res://scripts/tools/articuler.gd -- [garde] [copie.glb]
+## Écrit assets/models/<perso>_articule.res, <perso>_animations.res,
+## scenes/characters/<perso>_modele.tscn et, si on donne un chemin .glb, une copie pour Blender.
+## Le ninja reçoit aussi son katana (dans le dos, et dans la main pendant le coup).
 
-const CX := -0.03  # milieu du corps (en x, dans le repère du maillage)
+const CX := -0.03  # milieu du corps du ninja (en x, dans le repère du maillage)
 
-## Os : nom, parent, position absolue (repère du maillage).
-const LES_OS := [
+## Os du garde : il tient sa lance dans la main droite (côté -x).
+const OS_GARDE := [
+	["Bassin", "", Vector3(0.0, -0.35, 0.0)],
+	["Ventre", "Bassin", Vector3(0.0, -0.29, 0.0)],
+	["Poitrine", "Ventre", Vector3(0.0, -0.19, 0.0)],
+	["Tete", "Poitrine", Vector3(0.0, -0.08, 0.0)],
+	["BrasG", "Poitrine", Vector3(0.17, -0.13, 0.0)],
+	["AvantBrasG", "BrasG", Vector3(0.21, -0.22, 0.0)],
+	["BrasD", "Poitrine", Vector3(-0.15, -0.13, 0.0)],
+	["AvantBrasD", "BrasD", Vector3(-0.21, -0.17, 0.05)],
+	["CuisseG", "Bassin", Vector3(0.075, -0.37, 0.0)],
+	["TibiaG", "CuisseG", Vector3(0.075, -0.42, 0.0)],
+	["PiedG", "TibiaG", Vector3(0.075, -0.46, 0.0)],
+	["CuisseD", "Bassin", Vector3(-0.065, -0.37, 0.0)],
+	["TibiaD", "CuisseD", Vector3(-0.065, -0.42, 0.0)],
+	["PiedD", "TibiaD", Vector3(-0.065, -0.46, 0.0)],
+]
+const LANCE := Vector2(-0.21, 0.134)  ## axe de la lance du garde (x, z)
+
+var LES_OS: Array
+var garde := false
+
+## Os du ninja : nom, parent, position absolue (repère du maillage).
+const OS_NINJA := [
 	["Bassin", "", Vector3(CX, -0.31, 0.0)],
 	["Ventre", "Bassin", Vector3(CX, -0.26, 0.0)],
 	["Poitrine", "Ventre", Vector3(CX, -0.15, 0.0)],
@@ -35,7 +58,12 @@ const BASE_ACCROUPI := {"Ventre": Vector3(20, 0, 0), "Poitrine": Vector3(12, 0, 
 	"PiedG": Vector3(-25, 0, 0), "CuisseD": Vector3(-45, 0, -8), "TibiaD": Vector3(70, 0, 0), "PiedD": Vector3(-25, 0, 0)}
 
 func _init() -> void:
-	var scene: Node = load("res://assets/models/ninja.glb").instantiate()
+	var args := Array(OS.get_cmdline_user_args())
+	garde = "garde" in args
+	args.erase("garde")
+	LES_OS = OS_GARDE if garde else OS_NINJA
+	var perso := "garde" if garde else "ninja"
+	var scene: Node = load("res://assets/models/%s.glb" % perso).instantiate()
 	var source: MeshInstance3D = scene.find_children("*", "MeshInstance3D", true, false)[0]
 	var mesh: Mesh = source.mesh
 	var materiau := mesh.surface_get_material(0)
@@ -47,7 +75,7 @@ func _init() -> void:
 	# Poids bruts selon la place de chaque sommet dans le corps
 	var poids: Array = []
 	for p in sommets:
-		poids.append(_poids_sommet(p, noms))
+		poids.append(_poids_garde(p, noms) if garde else _poids_sommet(p, noms))
 	# Lissage le long de la surface (sommets soudés par position) pour des plis doux
 	var soude := {}
 	var cle := PackedInt32Array()
@@ -85,6 +113,15 @@ func _init() -> void:
 			suivant[i] = somme
 		w_soude = suivant
 
+	# La lance reste d'un bloc dans la main, même après le lissage
+	if garde:
+		var main := PackedFloat32Array()
+		main.resize(noms.size())
+		main[noms.find("AvantBrasD")] = 1.0
+		for i in sommets.size():
+			if _est_lance(sommets[i]):
+				w_soude[cle[i]] = main
+
 	# 4 os au plus par sommet
 	var os_tab := PackedInt32Array()
 	var w_tab := PackedFloat32Array()
@@ -103,7 +140,7 @@ func _init() -> void:
 	var articule := ArrayMesh.new()
 	articule.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	articule.surface_set_material(0, materiau)
-	ResourceSaver.save(articule, "res://assets/models/ninja_articule.res")
+	ResourceSaver.save(articule, "res://assets/models/%s_articule.res" % perso)
 
 	# Scène : squelette + maillage avec sa peau
 	var modele := Node3D.new()
@@ -111,7 +148,9 @@ func _init() -> void:
 	modele.set_script(load("res://scripts/anim_chibi.gd"))
 	var squelette := Skeleton3D.new()
 	squelette.name = "Squelette"
-	squelette.transform = Transform3D(Basis().scaled(Vector3.ONE * 1.786 * 0.7), Vector3(0, 0.625, 0))
+	# même taille et même place que les anciennes scènes *_modele.tscn
+	squelette.transform = Transform3D(Basis().scaled(Vector3.ONE * 2.03 * 0.7), Vector3(0, 0.71, 0)) if garde \
+		else Transform3D(Basis().scaled(Vector3.ONE * 1.786 * 0.7), Vector3(0, 0.625, 0))
 	modele.add_child(squelette)
 	squelette.owner = modele
 	var skin := Skin.new()
@@ -124,25 +163,27 @@ func _init() -> void:
 		skin.add_named_bind(o[0], Transform3D(Basis(), -o[2]))
 	squelette.reset_bone_poses()
 	var corps := MeshInstance3D.new()
-	corps.name = "Ninja"
-	corps.mesh = load("res://assets/models/ninja_articule.res")
+	corps.name = "Garde" if garde else "Ninja"
+	corps.mesh = load("res://assets/models/%s_articule.res" % perso)
 	corps.skin = skin
 	squelette.add_child(corps)
 	corps.owner = modele
 	corps.skeleton = NodePath("..")
 	var lib := _bibliotheque(squelette)
-	ResourceSaver.save(lib, "res://assets/models/ninja_animations.res")
+	ResourceSaver.save(lib, "res://assets/models/%s_animations.res" % perso)
+	if not garde:
+		_katanas(squelette, modele)
 	var joueur := AnimationPlayer.new()
 	joueur.name = "Animations"
 	modele.add_child(joueur)
 	joueur.owner = modele
-	joueur.add_animation_library("", load("res://assets/models/ninja_animations.res"))
+	joueur.add_animation_library("", load("res://assets/models/%s_animations.res" % perso))
 	var paquet := PackedScene.new()
 	paquet.pack(modele)
-	var err := ResourceSaver.save(paquet, "res://scenes/characters/ninja_modele.tscn")
-	print("ninja articulé -> ", error_string(err), " (", sommets.size(), " sommets)")
+	var err := ResourceSaver.save(paquet, "res://scenes/characters/%s_modele.tscn" % perso)
+	print(perso, " articulé -> ", error_string(err), " (", sommets.size(), " sommets)")
 	# Copie du rig avec ses animations en .glb, pour l'ouvrir dans Blender
-	var sortie := OS.get_cmdline_user_args()
+	var sortie := args
 	if not sortie.is_empty():
 		var gltf := GLTFDocument.new()
 		var etat := GLTFState.new()
@@ -188,6 +229,112 @@ func _poids_sommet(p: Vector3, noms: Array) -> PackedFloat32Array:
 	return w
 
 
+## Poids du garde : jambes courtes sous la jupe d'armure, grand casque, lance dans la main droite.
+func _poids_garde(p: Vector3, noms: Array) -> PackedFloat32Array:
+	var w := PackedFloat32Array()
+	w.resize(noms.size())
+	# La lance suit la main droite d'un bloc
+	if _est_lance(p):
+		w[noms.find("AvantBrasD")] = 1.0
+		return w
+	var cote := "G" if p.x > 0.0 else "D"
+	var jambe := 1.0 - smoothstep(-0.39, -0.35, p.y)
+	if jambe > 0.0:
+		var pied := 1.0 - smoothstep(-0.47, -0.445, p.y)
+		var tibia := (1.0 - smoothstep(-0.435, -0.405, p.y)) * (1.0 - pied)
+		w[noms.find("Pied" + cote)] = jambe * pied
+		w[noms.find("Tibia" + cote)] = jambe * tibia
+		w[noms.find("Cuisse" + cote)] = jambe * (1.0 - pied - tibia)
+	var reste := 1.0 - jambe
+	var tete := smoothstep(-0.1, -0.05, p.y) * reste
+	w[noms.find("Tete")] = tete
+	reste -= tete
+	var bras := smoothstep(0.13, 0.17, absf(p.x)) * (1.0 - smoothstep(-0.11, -0.07, p.y)) * smoothstep(-0.34, -0.3, p.y) * reste
+	var avant := 1.0 - smoothstep(-0.21, -0.17, p.y) if p.x > 0.0 else smoothstep(0.17, 0.2, -p.x)
+	w[noms.find("AvantBras" + cote)] = bras * avant
+	w[noms.find("Bras" + cote)] = bras * (1.0 - avant)
+	reste -= bras
+	var poitrine := smoothstep(-0.24, -0.14, p.y)
+	var ventre := smoothstep(-0.36, -0.28, p.y) * (1.0 - poitrine)
+	w[noms.find("Poitrine")] = reste * poitrine
+	w[noms.find("Ventre")] = reste * ventre
+	w[noms.find("Bassin")] = reste * (1.0 - poitrine - ventre)
+	return w
+
+
+## Sommets de la lance du garde (manche fin, fer plus large en haut).
+func _est_lance(p: Vector3) -> bool:
+	var rayon := 0.085 if p.y > 0.24 else 0.045
+	return p.y > -0.21 and Vector2(p.x - LANCE.x, p.z - LANCE.y).length() < rayon
+
+
+## Katana du ninja : un dans le dos (fourreau), un dans la main droite, montré pendant le coup.
+func _katanas(squelette: Skeleton3D, modele: Node3D) -> void:
+	var main := BoneAttachment3D.new()
+	main.name = "MainD"
+	main.bone_name = "AvantBrasD"
+	squelette.add_child(main)
+	main.owner = modele
+	var lame := _katana(true)
+	lame.name = "KatanaMain"
+	lame.position = Vector3(-0.015, -0.1, 0.0)
+	lame.visible = false
+	main.add_child(lame)
+	_posseder(lame, modele)
+	var dos := BoneAttachment3D.new()
+	dos.name = "Dos"
+	dos.bone_name = "Poitrine"
+	squelette.add_child(dos)
+	dos.owner = modele
+	var fourreau := _katana(false)
+	fourreau.name = "KatanaDos"
+	# en travers du dos, la poignée au-dessus de l'épaule droite
+	fourreau.transform = Transform3D(Basis(Vector3(0, 0, 1), deg_to_rad(-35)) * Basis(Vector3(1, 0, 0), deg_to_rad(-90)), Vector3(CX - 0.02, -0.08, -0.12))
+	dos.add_child(fourreau)
+	_posseder(fourreau, modele)
+
+
+func _posseder(n: Node, modele: Node) -> void:
+	n.owner = modele
+	for e in n.get_children():
+		_posseder(e, modele)
+
+
+## Katana le long de +z (poignée de -0,08 à 0, lame de 0 à 0,4), en unités du maillage.
+func _katana(nu: bool) -> Node3D:
+	var k := Node3D.new()
+	var acier := StandardMaterial3D.new()
+	acier.albedo_color = Color("#d8dde6")
+	acier.metallic = 0.9
+	acier.roughness = 0.2
+	acier.emission_enabled = true
+	acier.emission = Color("#8aa0c0")
+	acier.emission_energy_multiplier = 0.25
+	var noir := StandardMaterial3D.new()
+	noir.albedo_color = Color("#16161c")
+	var or_ := StandardMaterial3D.new()
+	or_.albedo_color = Color("#c9a24a")
+	or_.metallic = 0.7
+	or_.roughness = 0.35
+	var laque := StandardMaterial3D.new()
+	laque.albedo_color = Color("#5a1712")
+	laque.roughness = 0.4
+	var pieces := [
+		[Vector3(0.02, 0.024, 0.12), Vector3(0, 0, -0.06), noir],  # poignée
+		[Vector3(0.055, 0.055, 0.008), Vector3(0, 0, 0.0), or_],  # tsuba
+		[Vector3(0.01, 0.03, 0.52) if nu else Vector3(0.022, 0.034, 0.54), Vector3(0, 0, 0.265), acier if nu else laque],
+	]
+	for pc in pieces:
+		var mi := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = pc[0]
+		mi.mesh = b
+		mi.position = pc[1]
+		mi.material_override = pc[2]
+		k.add_child(mi)
+	return k
+
+
 ## Pose symétrique : la gauche devient la droite (et les rotations de côté s'inversent).
 func _miroir(pose: Dictionary) -> Dictionary:
 	var m := {}
@@ -209,6 +356,58 @@ func _fusion(a: Dictionary, b: Dictionary) -> Dictionary:
 
 
 func _animations() -> Dictionary:
+	return _animations_garde() if garde else _animations_ninja()
+
+
+func _animations_garde() -> Dictionary:
+	var pas := {"CuisseG": Vector3(-26, 0, 0), "TibiaG": Vector3(8, 0, 0), "CuisseD": Vector3(22, 0, 0), "TibiaD": Vector3(25, 0, 0),
+		"BrasG": Vector3(-22, 0, 6), "AvantBrasG": Vector3(-15, 0, 0), "BrasD": Vector3(4, 0, 0),
+		"Poitrine": Vector3(0, -6, 0), "Ventre": Vector3(3, 0, 0), "Bassin": Vector3(0, 5, 0)}
+	var milieu := {"CuisseG": Vector3(0, 0, 0), "TibiaG": Vector3(20, 0, 0), "CuisseD": Vector3(-8, 0, 0), "TibiaD": Vector3(45, 0, 0),
+		"BrasG": Vector3(0, 0, 6), "AvantBrasG": Vector3(-20, 0, 0), "Ventre": Vector3(3, 0, 0)}
+	var cours := {"CuisseG": Vector3(-40, 0, 0), "TibiaG": Vector3(15, 0, 0), "CuisseD": Vector3(35, 0, 0), "TibiaD": Vector3(45, 0, 0),
+		"BrasG": Vector3(-35, 0, 10), "AvantBrasG": Vector3(-40, 0, 0), "BrasD": Vector3(0, 0, 0), "AvantBrasD": Vector3(8, 0, 0),
+		"Poitrine": Vector3(8, -10, 0), "Ventre": Vector3(10, 0, 0), "Tete": Vector3(-8, 0, 0), "Bassin": Vector3(0, 8, 0)}
+	var cours_m := {"CuisseG": Vector3(0, 0, 0), "TibiaG": Vector3(30, 0, 0), "CuisseD": Vector3(-12, 0, 0), "TibiaD": Vector3(70, 0, 0),
+		"BrasG": Vector3(0, 0, 10), "AvantBrasG": Vector3(-40, 0, 0), "BrasD": Vector3(0, 0, 0), "AvantBrasD": Vector3(8, 0, 0),
+		"Poitrine": Vector3(8, 0, 0), "Ventre": Vector3(10, 0, 0), "Tete": Vector3(-8, 0, 0)}
+	var repos_a := {"Poitrine": Vector3(1, 0, 0), "BrasG": Vector3(0, 0, 4), "Tete": Vector3(0, -8, 0)}
+	var repos_b := {"Poitrine": Vector3(-2, 0, 0), "BrasG": Vector3(0, 0, 7), "Tete": Vector3(0, 8, 0)}
+	# Coup de lance : il se ramasse en arrière puis se fend en avant, la lance pointée
+	# (le bras de la lance bouge peu : la lance est d'un seul bloc avec la main)
+	var arme := {"BrasD": Vector3(10, 0, 0), "AvantBrasD": Vector3(0, 0, 0), "Poitrine": Vector3(-10, 12, 0), "Ventre": Vector3(-6, 0, 0),
+		"CuisseG": Vector3(-20, 0, 0), "TibiaG": Vector3(20, 0, 0), "CuisseD": Vector3(15, 0, 0), "TibiaD": Vector3(20, 0, 0), "BrasG": Vector3(-20, 0, 15)}
+	var pique := {"BrasD": Vector3(-12, 0, 0), "AvantBrasD": Vector3(28, 0, 0), "Poitrine": Vector3(22, -12, 0), "Ventre": Vector3(16, 0, 0),
+		"CuisseG": Vector3(-35, 0, 0), "TibiaG": Vector3(30, 0, 0), "CuisseD": Vector3(25, 0, 0), "TibiaD": Vector3(15, 0, 0), "BrasG": Vector3(25, 0, 15)}
+	return {
+		"repos": {"boucle": true, "duree": 3.0, "cles": [[0.0, repos_a, 0.0], [1.5, repos_b, 0.003], [3.0, repos_a, 0.0]]},
+		"marche": {"boucle": true, "duree": 0.9, "cles": [[0.0, pas, -0.006], [0.225, milieu, 0.008],
+			[0.45, _miroir_garde(pas), -0.006], [0.675, _miroir_garde(milieu), 0.008], [0.9, pas, -0.006]]},
+		"course": {"boucle": true, "duree": 0.5, "cles": [[0.0, cours, -0.01], [0.125, cours_m, 0.015],
+			[0.25, _miroir_garde(cours), -0.01], [0.375, _miroir_garde(cours_m), 0.015], [0.5, cours, -0.01]]},
+		"frappe": {"boucle": false, "duree": 0.6, "cles": [[0.0, repos_a, 0.0], [0.32, arme, -0.01], [0.42, pique, -0.015], [0.6, pique, -0.012]]},
+	}
+
+
+## Miroir pour le garde : seules les jambes et le bras gauche changent de côté,
+## le bras droit garde la lance.
+func _miroir_garde(pose: Dictionary) -> Dictionary:
+	var m := {}
+	for nom in pose:
+		var v: Vector3 = pose[nom]
+		if nom in ["BrasD", "AvantBrasD"]:
+			m[nom] = v
+		elif nom.begins_with("Cuisse") or nom.begins_with("Tibia") or nom.begins_with("Pied"):
+			var autre: String = nom.trim_suffix("G") + "D" if nom.ends_with("G") else nom.trim_suffix("D") + "G"
+			m[autre] = Vector3(v.x, -v.y, -v.z)
+		elif nom == "BrasG":
+			m[nom] = Vector3(-v.x, v.y, v.z)
+		else:
+			m[nom] = Vector3(v.x, -v.y, -v.z)
+	return m
+
+
+func _animations_ninja() -> Dictionary:
 	# Course : contact jambe gauche devant, passage, puis la même chose en miroir
 	var contact := {"CuisseG": Vector3(-42, 0, 0), "TibiaG": Vector3(12, 0, 0), "PiedG": Vector3(-12, 0, 0),
 		"CuisseD": Vector3(38, 0, 0), "TibiaD": Vector3(35, 0, 0), "PiedD": Vector3(22, 0, 0),
@@ -236,6 +435,22 @@ func _animations() -> Dictionary:
 		"BrasD": Vector3(3, 0, -6), "AvantBrasD": Vector3(-12, 0, 0), "Tete": Vector3(2, -6, 0)}
 	var repos_b := {"Poitrine": Vector3(-3, 0, 0), "BrasG": Vector3(-3, 0, 10), "AvantBrasG": Vector3(-18, 0, 0),
 		"BrasD": Vector3(-3, 0, -10), "AvantBrasD": Vector3(-18, 0, 0), "Tete": Vector3(-3, 6, 0)}
+	# Coup de katana : il lève le sabre au-dessus de l'épaule et tranche en diagonale
+	var garde_haute := {"BrasD": Vector3(-30, 0, -10), "AvantBrasD": Vector3(-50, 0, 0), "BrasG": Vector3(-10, 0, 15), "AvantBrasG": Vector3(-40, 0, 0),
+		"CuisseG": Vector3(-25, 0, 6), "TibiaG": Vector3(30, 0, 0), "CuisseD": Vector3(18, 0, -6), "TibiaD": Vector3(28, 0, 0),
+		"Ventre": Vector3(8, 0, 0), "Tete": Vector3(-6, 0, 0)}
+	var armer := _fusion(garde_haute, {"BrasD": Vector3(-160, 0, -25), "AvantBrasD": Vector3(-40, 0, 0), "Poitrine": Vector3(-6, 28, 0),
+		"Ventre": Vector3(0, 10, 0), "BrasG": Vector3(-40, 0, 25)})
+	var frappe := _fusion(garde_haute, {"BrasD": Vector3(-35, 0, 15), "AvantBrasD": Vector3(-5, 0, 0), "Poitrine": Vector3(14, -30, 0),
+		"Ventre": Vector3(14, -10, 0), "BrasG": Vector3(20, 0, 30), "CuisseG": Vector3(-45, 0, 6), "TibiaG": Vector3(45, 0, 0), "Tete": Vector3(-14, 0, 0)})
+	var suite := _fusion(frappe, {"BrasD": Vector3(5, 0, 25), "Poitrine": Vector3(16, -38, 0)})
+	# Escalade : bras tendus vers le haut pour s'agripper, puis il se hisse genou en avant
+	var accroche := {"BrasG": Vector3(-165, 0, 12), "AvantBrasG": Vector3(-20, 0, 0), "BrasD": Vector3(-165, 0, -12), "AvantBrasD": Vector3(-20, 0, 0),
+		"CuisseG": Vector3(-35, 0, 0), "TibiaG": Vector3(70, 0, 0), "CuisseD": Vector3(10, 0, 0), "TibiaD": Vector3(40, 0, 0),
+		"Ventre": Vector3(-6, 0, 0), "Tete": Vector3(-20, 0, 0)}
+	var hisse := {"BrasG": Vector3(-70, 0, 20), "AvantBrasG": Vector3(-95, 0, 0), "BrasD": Vector3(-70, 0, -20), "AvantBrasD": Vector3(-95, 0, 0),
+		"CuisseG": Vector3(-90, 0, 0), "TibiaG": Vector3(110, 0, 0), "PiedG": Vector3(-20, 0, 0), "CuisseD": Vector3(-20, 0, 0), "TibiaD": Vector3(80, 0, 0),
+		"Ventre": Vector3(28, 0, 0), "Poitrine": Vector3(15, 0, 0), "Tete": Vector3(-30, 0, 0)}
 	return {
 		"repos": {"boucle": true, "duree": 2.6, "cles": [[0.0, repos_a, 0.0], [1.3, repos_b, 0.004], [2.6, repos_a, 0.0]]},
 		"course": {"boucle": true, "duree": 0.5, "cles": [[0.0, contact, -0.012], [0.125, passage, 0.02],
@@ -247,6 +462,9 @@ func _animations() -> Dictionary:
 		"chute": {"boucle": true, "duree": 0.7, "cles": [[0.0, chute, 0.0],
 			[0.35, _fusion(chute, {"BrasG": Vector3(-25, 0, 62), "BrasD": Vector3(-25, 0, -62)}), 0.0], [0.7, chute, 0.0]]},
 		"dash": {"boucle": false, "duree": 0.12, "cles": [[0.0, dash, -0.01], [0.12, dash, -0.01]]},
+		"frappe": {"boucle": false, "duree": 0.42, "cles": [[0.0, garde_haute, -0.01], [0.1, armer, -0.015],
+			[0.2, frappe, -0.03], [0.3, suite, -0.03], [0.42, garde_haute, -0.01]]},
+		"grimpe": {"boucle": false, "duree": 0.42, "cles": [[0.0, accroche, 0.0], [0.2, hisse, 0.02], [0.42, BASE_ACCROUPI, -0.03]]},
 		"atterrissage": {"boucle": false, "duree": 0.32, "cles": [[0.0, _fusion(BASE_ACCROUPI, {"BrasG": Vector3(-20, 0, 45), "BrasD": Vector3(-20, 0, -45)}), -0.045],
 			[0.32, repos_a, 0.0]]},
 	}

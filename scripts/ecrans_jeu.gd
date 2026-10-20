@@ -143,7 +143,8 @@ func _construire_tutoriel() -> Control:
 
 	var corps := _label("Tant que tu n'es pas éclairé, les gardes ont du mal à te voir. "
 		+ "Accroupis-toi dans les herbes hautes, reste à l'ombre des arbres et tranche "
-		+ "les lanternes (E) ou les gardes (clic gauche, dash) qui te barrent la route.\n"
+		+ "les lanternes (E). Ton katana (L ou clic gauche) tranche les gardes. "
+		+ "Tu as 3 points de vie : chaque coup de garde t'en retire un.\n"
 		+ niveau.objectif,
 		&"TexteParchemin", 24)
 	corps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -224,7 +225,7 @@ func _construire_defaite() -> Control:
 	v.add_child(rouleau)
 	var titre := _label("DÉCOUVERT", &"TitreEcran", 110, Palette.LAQUE)
 	rouleau.add_child(_marge(titre, 0, 70))
-	v.add_child(_consigne("Un garde t'a rattrapé."))
+	v.add_child(_consigne("Les gardes ont eu raison de toi."))
 	v.add_child(_pied([["R", "RECOMMENCER À L'AUTEL"], ["ÉCHAP", "MENU"]], true))
 	return page
 

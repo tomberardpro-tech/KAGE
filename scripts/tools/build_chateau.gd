@@ -76,7 +76,7 @@ func _batiments() -> void:
 
 func _donjon() -> void:
 	var e := 16.0  # épaisseur des murs en px
-	# Pas de toit : on voit l'intérieur d'en haut.
+	# Grand toit à deux étages, qui s'efface quand on entre (on voit alors l'intérieur).
 	boite("DonjonSol", 500, 340, 800, 420, 0.04, "parquet")
 	for i in 5:
 		boite("Tatami%d" % i, 560 + i * 140, 400, 120, 300, 0.06, "tatami")
@@ -93,6 +93,7 @@ func _donjon() -> void:
 	boite("DonjonSocleEst", 1298, 328, 14, 444, 0.6, "pierre")
 	boite("DonjonSocleSudOuest", 488, 758, 334, 14, 0.6, "pierre")
 	boite("DonjonSocleSudEst", 978, 758, 334, 14, 0.6, "pierre")
+	toit_japonais("DonjonToit", 500, 340, 800, 420, H_DONJON, 2)
 
 
 func _douves() -> void:
@@ -138,9 +139,9 @@ func _gardes() -> void:
 
 
 func _objectifs() -> void:
-	# Plancher rossignol dans le donjon, fils à clochettes sur les passages discrets des cours.
+	# Plancher rossignol dans le donjon, guirlandes de lanternes au-dessus des cours et des allées.
 	rossignols([[516, 356, 768, 388]])
-	clochettes([[190, 1250, 560, 1250], [1300, 1180, 1610, 1180], [580, 1000, 580, 1300]])
+	guirlandes([[200, 1250, 560, 1250], [1300, 1180, 1600, 1180], [830, 1480, 970, 1480], [830, 1700, 970, 1700], [830, 2100, 970, 2100]])
 	autels([["Depart", 900, 2290], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280]])
 	parchemin(900, 530)
 	sortie(1650, 510, Vector3(2.0, 2.0, 4.8))
