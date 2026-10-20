@@ -8,6 +8,13 @@ extends "res://scripts/tools/constructeur.gd"
 
 const SHADERS := "res://assets/shaders/"
 const CARRE := 32.0  ## taille des carrés de décor (m) pour que la caméra ignore ceux hors de l'écran
+## Petits détails du sol, dessinés seulement près de la caméra (m) : c'est là que l'essentiel des
+## dizaines de milliers d'objets du décor se trouve.
+const PETITS_DETAILS := ["Gazon", "Touffes", "Fleurs", "FeuillesBambou", "Galets", "Flaques", "PasJaponais", "Lucioles"]
+const PORTEE_DETAILS := 55.0
+## Petits objets qui ne projettent pas d'ombre de lune : on ne la verrait presque pas, et les ombres
+## doublent le travail de dessin de tout ce qui en projette.
+const SANS_OMBRE := ["Galets", "PasJaponais", "Guirlande", "Sanctuaire", "Rochersstone_small", "Poutres", "Bambous", "Touffes"]
 
 var _deco := {}  # nom -> {"mesh": Mesh, "transforms": Array, "ombre": bool, "materiau": Material}
 var _hasard := RandomNumberGenerator.new()
@@ -110,7 +117,7 @@ func _ambiance() -> void:
 	# ombres de la lune seulement près de la caméra : plus nettes et bien moins coûteuses
 	var lune := racine.get_node("Lune") as DirectionalLight3D
 	lune.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	lune.directional_shadow_max_distance = 32.0
+	lune.directional_shadow_max_distance = 26.0
 
 
 # --- Petits objets regroupés ----------------------------------------------
@@ -1025,20 +1032,39 @@ func finir(chemin: String) -> void:
 			if not carres.has(cle):
 				carres[cle] = []
 			carres[cle].append(tr)
+		var portee := 0.0
+		for petit in PETITS_DETAILS:
+			if nom.begins_with(petit):
+				portee = PORTEE_DETAILS
 		for cle in carres:
 			var liste: Array = carres[cle]
+			# le carré est placé en son centre : la distance de vue se mesure depuis là
+			var centre := Vector3.ZERO
+			for tr: Transform3D in liste:
+				centre += tr.origin
+			centre /= float(liste.size())
+			centre.y = 0.0
 			var multi := MultiMesh.new()
 			multi.transform_format = MultiMesh.TRANSFORM_3D
 			multi.mesh = d["mesh"]
 			multi.instance_count = liste.size()
 			for k in multi.instance_count:
-				multi.set_instance_transform(k, liste[k])
+				multi.set_instance_transform(k, (liste[k] as Transform3D).translated(-centre))
 			var rendu := MultiMeshInstance3D.new()
+			rendu.position = centre
+			if portee > 0.0:
+				# herbe, fleurs, galets... : inutile de les dessiner loin, la brume les cache déjà
+				rendu.visibility_range_end = portee
+				rendu.visibility_range_end_margin = 4.0
 			rendu.name = "%s_%d_%d" % [nom, cle.x, cle.y] if carres.size() > 1 else nom
 			rendu.multimesh = multi
 			if d["materiau"]:
 				rendu.material_override = d["materiau"]
-			if not d["ombre"]:
+			var ombre: bool = d["ombre"]
+			for petit in SANS_OMBRE:
+				if nom.begins_with(petit):
+					ombre = false
+			if not ombre:
 				rendu.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 			ajouter(noeud, rendu)
 	super.finir(chemin)

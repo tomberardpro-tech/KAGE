@@ -245,6 +245,21 @@ size_flags_horizontal = 3
 size_flags_vertical = 4
 step = 5.0
 
+[node name="LigneQualite" type="HBoxContainer" parent="PanneauOptions/Centre/Parchemin/V"]
+layout_mode = 2
+theme_override_constants/separation = 24
+
+[node name="L" type="Label" parent="PanneauOptions/Centre/Parchemin/V/LigneQualite"]
+custom_minimum_size = Vector2(170, 0)
+layout_mode = 2
+theme_type_variation = &"TexteParchemin"
+text = "Qualité"
+
+[node name="Qualite" type="OptionButton" parent="PanneauOptions/Centre/Parchemin/V/LigneQualite"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
 [node name="PleinEcran" type="CheckButton" parent="PanneauOptions/Centre/Parchemin/V"]
 unique_name_in_owner = true
 layout_mode = 2

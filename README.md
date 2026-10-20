@@ -28,7 +28,7 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 
 ## Écrans
 
-- **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle les volumes (général, musique, bruitages) et le plein écran, Quitter est masqué dans la version web.
+- **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle les volumes (général, musique, bruitages), la qualité (Rapide, Normale, Haute) et le plein écran, Quitter est masqué dans la version web.
 - **Le niveau** (`scenes/levels/chateau.scn`) : lancé par Nouvelle partie, avec un écran de chargement. Un seul grand niveau :
   - **Cinématique d'ouverture** (Échap pour la passer) : on survole le château, puis le maître Kagemaru parle à Kage dans sa cabane (boîte de dialogue moderne, sans voix).
   - **Le village de la forêt** : cabanes en bois aux toits rouges, chemin de terre, 8 villageois qui vivent leur journée (balayer, porter du bois, pêcher, discuter, jouer) et saluent Kage, avec juste leur nom au-dessus de la tête, chats, ruisseau et pont rouge, étang aux carpes, guirlandes de lanternes 福, lucioles, gros buissons où se cacher.

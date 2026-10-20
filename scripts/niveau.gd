@@ -52,6 +52,7 @@ var est_pret := false
 
 
 func _ready() -> void:
+	Reglages.appliquer_qualite(self)
 	_point_reprise = ninja.global_position
 	for garde in get_tree().get_nodes_in_group("gardes"):
 		garde.joueur_repere.connect(func(_g): ninja_vaincu())
