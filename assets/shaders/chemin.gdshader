@@ -38,7 +38,7 @@ void fragment() {
 	// cailloux
 	vec2 cel = cellules(p * 6.0);
 	// un caillou arrondi au cœur de quelques cellules (pas leur contour)
-	float caillou = smoothstep(0.2, 0.26, cel.x) * step(0.82, cel.y);
+	float caillou = smoothstep(0.2, 0.26, cel.x) * step(0.93, cel.y);
 	c = mix(c, mix(vec3(0.55, 0.53, 0.5), vec3(0.38, 0.36, 0.34), cel.y), caillou * (1.0 - orniere));
 	// l'herbe déborde sur les bords
 	float herbu = smoothstep(0.72, 0.98, bord);

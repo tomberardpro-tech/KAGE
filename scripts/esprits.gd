@@ -3,7 +3,7 @@ extends Node3D
 ## en ondulant puis s'effacent. Purement décoratifs : aucune collision, les gardes les ignorent.
 ## Ajoutés par niveau.gd.
 
-const MAX := 3
+const MAX := 1  ## un seul à la fois : un passage rare, pas un essaim qui distrait
 const COEUR := Color(0.85, 0.97, 1.0)  ## centre presque blanc
 const BLEU := Color(0.16, 0.42, 1.0)  ## bord bleu profond
 const LUEUR := Color(0.3, 0.55, 1.0)
@@ -77,7 +77,7 @@ func _process(delta: float) -> void:
 	_attente -= delta
 	if _attente <= 0.0 and cible and get_child_count() < MAX:
 		_apparaitre()
-		_attente = randf_range(3.0, 8.0)
+		_attente = randf_range(12.0, 22.0)
 
 
 func _apparaitre() -> void:

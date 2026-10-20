@@ -19,6 +19,7 @@ var _invite := 0.0  # opacité de l'invite d'action
 var _action := ""
 var _vie_vue := 3
 var _eclat := 0.0  # flash rouge quand on prend un coup
+var _discretion := 0.0  # opacité de la jauge de discrétion : utile au château, inutile au village
 
 var _anton: Font
 var _plex_bold: Font
@@ -78,6 +79,9 @@ func _process(delta: float) -> void:
 		_etat = Etat.EXPOSE
 		cible = 0.55 if ninja.est_eclaire() else 0.4
 	_jauge = lerpf(_jauge, cible, 1.0 - exp(-10.0 * delta))
+	# au village il n'y a pas de garde : la jauge s'efface pour garder l'écran net
+	var utile := niveau._musique_du_lieu() == "chateau" or _etat >= Etat.REPERE
+	_discretion = move_toward(_discretion, 1.0 if utile else 0.0, delta * 2.0)
 
 	if ninja.vie < _vie_vue:
 		_eclat = 1.0
@@ -112,12 +116,16 @@ func _dessiner() -> void:
 func _dessiner_discretion() -> void:
 	var textes := ["CACHÉ", "EXPOSÉ", "REPÉRÉ", "DÉCOUVERT"]
 	var couleurs := [Palette.WASHI, Palette.WASHI, Palette.OR, Palette.LAQUE]
+	if _discretion < 0.01:
+		return
 	var couleur: Color = couleurs[_etat]
+	couleur.a *= _discretion
+	var gris := Color(GRIS_ARDOISE, GRIS_ARDOISE.a * _discretion)
 	_dessiner_oeil(Rect2(64, 56, 90, 66), _etat == Etat.CACHE, couleur)
 	_texte(_anton, textes[_etat], Vector2(178, 56), 51, couleur)
-	_dessin.draw_rect(Rect2(178, 145, 330, 9), GRIS_ARDOISE)
+	_dessin.draw_rect(Rect2(178, 145, 330, 9), gris)
 	_dessin.draw_rect(Rect2(178, 145, 330 * _jauge, 9), couleur)
-	_texte(_plex, "Visibilité", Vector2(178, 166), 22, Palette.GRIS)
+	_texte(_plex, "Visibilité", Vector2(178, 166), 22, Color(Palette.GRIS, Palette.GRIS.a * _discretion))
 
 
 func _dessiner_oeil(zone: Rect2, ferme: bool, couleur: Color) -> void:
@@ -143,9 +151,9 @@ func _dessiner_oeil(zone: Rect2, ferme: bool, couleur: Color) -> void:
 	bas.reverse()
 	amande.append_array(bas)
 	_dessin.draw_colored_polygon(amande, couleur)
-	_dessin.draw_circle(c, ry * 0.62, Palette.ENCRE)
-	_dessin.draw_circle(c, ry * 0.26, couleur if _etat != Etat.EXPOSE else Palette.LAQUE)
-	_dessin.draw_circle(c + Vector2(-7, -7), 4.0, Palette.WASHI)
+	_dessin.draw_circle(c, ry * 0.62, Color(Palette.ENCRE, Palette.ENCRE.a * couleur.a))
+	_dessin.draw_circle(c, ry * 0.26, couleur if _etat != Etat.EXPOSE else Color(Palette.LAQUE, couleur.a))
+	_dessin.draw_circle(c + Vector2(-7, -7), 4.0, Color(Palette.WASHI, couleur.a))
 
 
 # --- Objectif (en haut à droite) -----------------------------------------

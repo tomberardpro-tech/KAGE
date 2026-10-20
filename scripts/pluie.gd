@@ -53,7 +53,7 @@ func _sur_gpu(cpu: CPUParticles3D) -> Node3D:
 
 func _creer_gouttes() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
-	p.amount = 650
+	p.amount = 320  # une pluie fine : on la sent sans qu'elle encombre l'image
 	p.lifetime = (HAUTEUR + 1.0) / VITESSE
 	p.preprocess = p.lifetime
 	p.local_coords = false
@@ -71,7 +71,7 @@ func _creer_gouttes() -> CPUParticles3D:
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_FIXED_Y
-	m.albedo_color = Color(0.72, 0.82, 1.0, 0.32)
+	m.albedo_color = Color(0.72, 0.82, 1.0, 0.2)
 	m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	goutte.material = m
 	p.mesh = goutte
@@ -83,7 +83,7 @@ func _creer_gouttes() -> CPUParticles3D:
 ## Petits anneaux d'eau qui s'ouvrent au sol là où les gouttes tombent.
 func _creer_eclats() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
-	p.amount = 110
+	p.amount = 45
 	p.lifetime = 0.35
 	p.local_coords = false
 	p.position.y = 0.04

@@ -30,7 +30,7 @@ var _sols_durs := []  # [Rect2 en px, hauteur du dessus] : allées, cours pavée
 func _materiaux() -> void:
 	super._materiaux()
 	materiaux["herbe"] = _matiere(0, "#558a42", "#33612c")
-	materiaux["allee"] = _matiere(1, "#9a968c", "#7a7770", "#26331f")
+	materiaux["allee"] = _matiere(1, "#9a968c", "#827e76", "#4a5440")
 	materiaux["pave"] = _matiere(2, "#8c8378", "#6a645c", "#47423b")
 	materiaux["mur"] = _matiere(3, "#ddd4c2", "#ddd4c2")
 	materiaux["tuiles"] = _matiere(4, "#4b5568", "#1d2230")
@@ -171,7 +171,7 @@ func _gazon() -> void:
 	var touffe := _mesh_touffe()
 	var m := _shader("gazon")
 	_hasard.seed = 2024
-	var pas := 20.0  # px
+	var pas := 30.0  # px (assez espacé pour que la pelouse reste nette)
 	var x := _sol.position.x + pas / 2.0
 	while x < _sol.end.x:
 		var y := _sol.position.y + pas / 2.0
@@ -217,7 +217,7 @@ func _jardinage() -> void:
 	var h := RandomNumberGenerator.new()
 	h.seed = 4545
 	var zone := _sol.grow(-70.0)
-	var essais := int(_sol.size.x * _sol.size.y * ECHELLE * ECHELLE / 30.0)
+	var essais := int(_sol.size.x * _sol.size.y * ECHELLE * ECHELLE / 110.0)
 	for i in essais:
 		var x := h.randf_range(zone.position.x, zone.end.x)
 		var y := h.randf_range(zone.position.y, zone.end.y)
@@ -237,7 +237,7 @@ func _jardinage() -> void:
 			var taille := h.randf_range(1.1, 1.7)  # m
 			buissons([[x, y, taille]])
 			_occupe.append(Rect2(x, y, 0, 0).grow(taille / ECHELLE * 0.6))
-		elif choix < 0.85:
+		elif choix < 0.75:
 			var a := h.randf() * TAU
 			var dir := Vector2(cos(a), sin(a))
 			for k in 6:
@@ -246,9 +246,7 @@ func _jardinage() -> void:
 				var pierre := Basis(Vector3.UP, h.randf() * TAU).scaled(Vector3(s, 0.06, s * h.randf_range(0.75, 1.0)))
 				deco("PasJaponais", _galet(), Transform3D(pierre, P(q.x, q.y, 0.02)), materiaux["pierre"])
 				_occupe.append(Rect2(q, Vector2.ZERO).grow(10))
-		else:
-			_sanctuaire(P(x, y), h.randf() * TAU, 0.75)
-			_occupe.append(Rect2(x, y, 0, 0).grow(30))
+		# (plus de petits sanctuaires semés au hasard : ils encombraient l'herbe)
 
 
 ## Galet plat (cylindre à 10 côtés), rayon 0.5, hauteur 1.
@@ -923,7 +921,8 @@ func _fleurs_sauvages() -> void:
 		while y < _sol.end.y:
 			var px := x + _hasard.randf_range(-pas, pas) * 0.5
 			var py := y + _hasard.randf_range(-pas, pas) * 0.5
-			if taches.get_noise_2d(px, py) > 0.12 or _hasard.randf() < 0.04:
+			# seulement en taches bien groupées : un pré net, pas des points partout
+			if taches.get_noise_2d(px, py) > 0.32:
 				var libre := true
 				for r in _occupe:
 					if r.has_point(Vector2(px, py)):
@@ -1008,7 +1007,7 @@ func carpes(x: float, y: float, w: float, d: float, nombre := 5) -> void:
 
 func finir(chemin: String) -> void:
 	_jardinage()
-	_flaques()
+	# (les flaques des allées et des cours faisaient des taches sombres : retirées)
 	_gazon()
 	_fleurs_sauvages()
 	_alentours()
