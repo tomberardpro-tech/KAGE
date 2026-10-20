@@ -1,11 +1,14 @@
 extends Node3D
-## Pluie autour du ninja : gouttes qui tombent, éclaboussures au sol et bruit de pluie en boucle.
+## Pluie autour du ninja : gouttes qui tombent et éclaboussures au sol.
+## Le bruit de pluie est coupé (demande de Berard) : remettre AVEC_BRUIT à true pour le retrouver.
 ## Ajoutée par niveau.gd ; elle suit le ninja pour ne calculer que ce que la caméra voit.
 
 const ZONE := Vector3(12.0, 0.0, 10.0)  ## demi-taille de la zone couverte (m), juste ce que voit la caméra
 const DEVANT := -3.0  ## la caméra voit plus loin au nord (−Z) qu'au sud
 const HAUTEUR := 11.0  ## hauteur d'où tombent les gouttes au-dessus du ninja
 const VITESSE := 16.0  ## m/s
+
+const AVEC_BRUIT := false
 
 var cible: Node3D
 var _gouttes: Node3D
@@ -16,6 +19,8 @@ func _ready() -> void:
 	# décrites en CPUParticles3D (plus lisible), puis calculées par la carte graphique
 	_gouttes = _sur_gpu(_creer_gouttes())
 	_eclats = _sur_gpu(_creer_eclats())
+	if not AVEC_BRUIT:
+		return
 	var bruit := AudioStreamPlayer.new()
 	var flux: AudioStreamOggVorbis = load("res://assets/audio/sfx/pluie.ogg").duplicate()
 	flux.loop = true
