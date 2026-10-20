@@ -132,24 +132,38 @@ func _construire_tutoriel() -> Control:
 	v.add_theme_constant_override("separation", 14)
 	rouleau.add_child(v)
 
-	v.add_child(_label("NIVEAU %d · %s" % [niveau.numero, niveau.titre], &"Aide", 18, Palette.LAQUE))
 	var titre := HBoxContainer.new()
 	titre.add_theme_constant_override("separation", 22)
 	v.add_child(titre)
 	titre.add_child(_label("影", &"Kanji", 52))
-	var t := _label("Reste dans l'ombre", &"TitreParchemin", 44, Palette.LAQUE)
+	var t := _label("Reprends le parchemin", &"TitreParchemin", 44, Palette.LAQUE)
 	t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	titre.add_child(t)
 
-	var corps := _label("Tant que tu n'es pas éclairé, les gardes ont du mal à te voir. "
-		+ "Accroupis-toi dans les herbes hautes, reste à l'ombre des arbres et tranche "
-		+ "les lanternes (E). Ton katana (L ou clic gauche) tranche les gardes. "
-		+ "Tu as 3 points de vie : chaque coup de garde t'en retire un.\n"
-		+ niveau.objectif,
-		&"TexteParchemin", 24)
-	corps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	corps.custom_minimum_size.x = 860
-	v.add_child(corps)
+	var intro := _label("Le seigneur Oni a volé le parchemin du clan. Traverse le village, entre dans le château "
+		+ "et reprends-le. Reste dans l'ombre : un garde ne te voit que si tu es éclairé.", &"TexteParchemin", 24)
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intro.custom_minimum_size.x = 900
+	v.add_child(intro)
+
+	# Les touches, sur deux colonnes
+	var grille := GridContainer.new()
+	grille.columns = 4
+	grille.add_theme_constant_override("h_separation", 16)
+	grille.add_theme_constant_override("v_separation", 10)
+	v.add_child(grille)
+	for ligne in [["Z Q S D", "Se déplacer"], ["MAJ", "Courir"], ["ESPACE", "Sauter"], ["C", "S'accroupir"],
+			["L", "Attaquer"], ["P", "Sortir ou ranger le katana"], ["E", "Ouvrir une porte, un coffre"], ["ÉCHAP", "Pause"]]:
+		grille.add_child(_touche(ligne[0], true))
+		var l := _label(ligne[1], &"TexteParchemin", 22)
+		l.custom_minimum_size.x = 330
+		grille.add_child(l)
+
+	var autel := _label("Les autels (petits sanctuaires qui s'allument quand tu passes devant) sont tes points de "
+		+ "sauvegarde : si un garde te découvre, tu repars du dernier autel allumé.", &"TexteParchemin", 22, Palette.LAQUE)
+	autel.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	autel.custom_minimum_size.x = 900
+	v.add_child(autel)
 
 	var pied := HBoxContainer.new()
 	pied.add_theme_constant_override("separation", 12)

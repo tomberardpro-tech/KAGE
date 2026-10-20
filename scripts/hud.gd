@@ -16,7 +16,7 @@ var _vignette: TextureRect
 var _etat := Etat.CACHE
 var _jauge := 0.2
 var _invite := 0.0  # opacité de l'invite d'action
-var _action := "TRANCHER LA LANTERNE"
+var _action := ""
 var _vie_vue := 3
 var _eclat := 0.0  # flash rouge quand on prend un coup
 
@@ -56,6 +56,8 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if niveau == null:
 		return
+	# pendant les cinématiques, l'écran reste propre
+	_dessin.visible = not niveau.en_cinematique
 	var ninja := niveau.ninja
 	var soupcon := 0.0
 	for garde: Garde in get_tree().get_nodes_in_group("gardes"):

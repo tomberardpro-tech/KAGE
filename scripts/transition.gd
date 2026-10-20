@@ -67,8 +67,12 @@ func vers(scene: String, duree := 0.5) -> void:
 		get_tree().change_scene_to_packed(paquet)
 	else:
 		get_tree().change_scene_to_file(scene)
-	# Quelques images derrière le voile : les matières se préparent sans saccade visible.
-	for i in 4:
+	# Le niveau prépare ses matières derrière le voile (Niveau.prechauffer) : on attend qu'il soit prêt.
+	for i in 2:
+		await get_tree().process_frame
+	var nouvelle := get_tree().current_scene
+	var limite := Time.get_ticks_msec() + 15000
+	while nouvelle and "est_pret" in nouvelle and not nouvelle.est_pret and Time.get_ticks_msec() < limite:
 		await get_tree().process_frame
 	_chargement.hide()
 	tween = create_tween()

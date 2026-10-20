@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6xm0g7wcma5d"
-path="res://.godot/imported/portrait_oni.png-9418f8ba151c71e3c481f50ea59c3d8f.ctex"
+uid="uid://og7xsbdr3bnp"
+path="res://.godot/imported/feuilles.png-d97f16b584a3554b28894e0b506decf8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/textures/portrait_oni.png"
-dest_files=["res://.godot/imported/portrait_oni.png-9418f8ba151c71e3c481f50ea59c3d8f.ctex"]
+source_file="res://assets/textures/feuilles.png"
+dest_files=["res://.godot/imported/feuilles.png-d97f16b584a3554b28894e0b506decf8.ctex"]
 
 [params]
 

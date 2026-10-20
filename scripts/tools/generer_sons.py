@@ -550,15 +550,15 @@ if __name__ == "__main__":
                    ("boss", musique_boss), ("tresor", stinger_tresor)]:
         if not choix or nom in choix:
             ecrire(nom, f(), "music")
-    for nom, f in [("pas", bruit_pas), ("saut", bruit_saut), ("grimpe", bruit_grimpe), ("dash", bruit_dash),
-                   ("tranche", bruit_tranche), ("lanterne", bruit_lanterne), ("garde_tombe", bruit_garde_tombe),
+    # pas, saut, tranche, pluie, porte et buisson sont de vrais enregistrements CC0 (voir CREDITS.md)
+    for nom, f in [("grimpe", bruit_grimpe), ("dash", bruit_dash),
+                   ("lanterne", bruit_lanterne), ("garde_tombe", bruit_garde_tombe),
                    ("alerte", bruit_alerte), ("frappe", bruit_frappe), ("grincement", bruit_grincement),
                    ("clochettes", bruit_clochettes), ("coupe", bruit_coupe), ("parchemin", bruit_parchemin),
-                   ("autel", bruit_autel), ("clic", bruit_clic), ("pluie", bruit_pluie),
-                   ("porte", bruit_porte), ("herse", bruit_herse), ("coffre", bruit_coffre),
+                   ("autel", bruit_autel), ("clic", bruit_clic),
+                   ("herse", bruit_herse), ("coffre", bruit_coffre),
                    ("coffre_apparait", bruit_coffre_apparait), ("boss_cri", bruit_boss_cri),
                    ("boss_charge", bruit_boss_charge), ("boss_touche", bruit_boss_touche),
-                   ("boss_onde", bruit_boss_onde), ("buisson", bruit_buisson), ("miaou", bruit_miaou),
-                   ("grenouilles", bruit_grenouilles), ("corbeau", bruit_corbeau)]:
+                   ("boss_onde", bruit_boss_onde), ("miaou", bruit_miaou), ("corbeau", bruit_corbeau)]:
         if not choix or nom in choix:
             ecrire(nom, f(), "sfx")

@@ -28,6 +28,11 @@ func _ready() -> void:
 	%Retour.pressed.connect(_fermer_options)
 	_options.hide()
 
+	# pétales rouges qui tombent, devant le décor et derrière les boutons
+	var petales := preload("res://scripts/petales_menu.gd").new()
+	add_child(petales)
+	move_child(petales, 1)
+
 	_nouvelle.grab_focus()
 	Sons.musique("menu")
 

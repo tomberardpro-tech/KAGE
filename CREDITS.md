@@ -2,21 +2,33 @@
 
 ## Musiques et bruitages
 
-- **Musique du menu : « Ninja Theme », par Spring**
-  ([OpenGameArt](https://opengameart.org/content/ninja-theme)), licence CC0 (domaine public).
-- **Musique en jeu : « Hot Springs Town », par Kistol**
-  ([OpenGameArt](https://opengameart.org/content/hot-springs-town)), licence CC0 (domaine public).
+Musiques et sons enregistrés, tous sous **licence CC0** (domaine public) :
 
-Tous les autres sons de KAGE sont **créés par synthèse**, sans aucun enregistrement ni fichier extérieur :
-le script `scripts/tools/generer_sons.py` (Python, numpy et ffmpeg) les fabrique à partir de zéro.
-Ils sont donc libres de droits et appartiennent au projet.
+| Dans le jeu | Œuvre | Auteur |
+| --- | --- | --- |
+| Musique du menu | [Asianoriental1](https://opengameart.org/content/asianoriental1) | Tozan |
+| Musique du village | [Hot Springs Town](https://opengameart.org/content/hot-springs-town) | Kistol |
+| Musique du château | [Deliberate Concealment](https://opengameart.org/content/deliberate-concealment) | northivanastan (Ivan Stanton) |
+| Pluie | [Rain (loopable)](https://opengameart.org/content/rain-loopable) | Ylmir |
+| Saut | [RPG Audio](https://kenney.nl/assets/rpg-audio) (cloth3) | Kenney |
+| Pas | [Impact Sounds](https://kenney.nl/assets/impact-sounds) (footstep_grass) | Kenney |
+| Porte qui claque | [Impact Sounds](https://kenney.nl/assets/impact-sounds) (impactWood_heavy, ralenti avec écho) | Kenney |
+| Buisson | [20 Rustles of dry leaves](https://opengameart.org/content/20-rustles-of-dry-leaves) | qubodup |
+| Sortir et ranger le katana | [Fantasy Weapons and Apparel SFX Library](https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library) | Jan Schupke (vehicle) |
+| Coup de katana | [Swishes Sound Pack](https://opengameart.org/content/swishes-sound-pack) | artisticdude |
+| Grande porte | [Creaky Door Hinge Spooky](https://opengameart.org/content/creaky-door-hinge-spooky) | wforster1 |
+
+Les autres sons de KAGE sont **créés par synthèse**, sans enregistrement : le script
+`scripts/tools/generer_sons.py` (Python, numpy et ffmpeg) les fabrique à partir de zéro.
+Ils sont libres de droits et appartiennent au projet.
 
 - Instruments imités : koto (corde pincée, algorithme de Karplus-Strong), shakuhachi (flûte et souffle),
   taiko (tambour grave), hyoshigi (claquoirs en bois), clochettes.
 - Gamme miyako-bushi (ré, mi bémol, sol, la, si bémol).
-- Musiques : chasse (tambours de poursuite), victoire, défaite.
-- Bruitages : pas, saut, escalade, coup de katana, sabre, lanterne, garde à terre, alerte (taiko et cri de shakuhachi), coup du garde,
-  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, pluie douce.
+- Musiques : chasse (tambours de poursuite), boss, victoire, défaite.
+- Bruitages : escalade, sabre, lanterne, garde à terre, alerte (taiko et cri de shakuhachi), coup du garde,
+  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, jingle du trésor, herse, coffre,
+  cris et charge du seigneur Oni, onde, miaou, corbeaux.
 
 ## Modèles 3D
 
@@ -36,18 +48,9 @@ Ninja et garde générés avec TRELLIS (trellis3d.net) à partir des planches Fi
 ## Polices
 
 Anton, IBM Plex Sans JP et Noto Serif JP (Google Fonts, licence SIL Open Font License).
-La boîte de dialogue utilise un sous-ensemble de Noto Serif CJK (Google, licence SIL Open Font License),
-réduit aux caractères des répliques (`assets/fonts/NotoSerifJP-Bold-dialogues.otf`, `scripts/tools/sous_police.py`).
 
-## Voix japonaises
+## Images faites dans le projet
 
-Répliques synthétisées avec [Open JTalk](https://open-jtalk.sourceforge.net/) (licence BSD) et la voix
-**HTS voice nitech_jp_atr503_m001** (Nagoya Institute of Technology, licence CC BY 3.0),
-retouchées avec ffmpeg (`scripts/tools/generer_voix.py`, fichiers dans `assets/audio/voix/`).
-
-## Sons et images ajoutés (boss, village)
-
-- Sons **faits dans le projet** (`scripts/tools/generer_sons.py`) : pluie légère, musique du boss, jingle du
-  trésor, grande porte, herse, coffre, cris et charge du seigneur Oni, onde, buisson, miaou, grenouilles, corbeaux.
-- Images **faites dans le projet** (`scripts/tools/generer_textures.py`) : papier des lanternes 福 et médaillons
-  des personnages (師, 鬼).
+`scripts/tools/generer_textures.py` dessine le papier des lanternes 福 et la texture des feuilles des buissons.
+Les villageois, le katana, les cabanes en bois et le chemin de terre sont construits par le code
+(`scripts/habitant.gd`, `scripts/tools/articuler.gd`, `scripts/tools/decor.gd`, `assets/shaders/chemin.gdshader`).

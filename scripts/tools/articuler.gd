@@ -268,7 +268,8 @@ func _est_lance(p: Vector3) -> bool:
 	return p.y > -0.21 and Vector2(p.x - LANCE.x, p.z - LANCE.y).length() < rayon
 
 
-## Katana du ninja : un dans le dos (fourreau), un dans la main droite, montré pendant le coup.
+## Katana du ninja : le fourreau (saya) toujours dans le dos ; la poignée dépasse du fourreau
+## quand le sabre est rangé (KatanaDos), le sabre entier est dans la main droite quand il est sorti (KatanaMain).
 func _katanas(squelette: Skeleton3D, modele: Node3D) -> void:
 	var main := BoneAttachment3D.new()
 	main.name = "MainD"
@@ -287,13 +288,20 @@ func _katanas(squelette: Skeleton3D, modele: Node3D) -> void:
 	dos.bone_name = "Poitrine"
 	squelette.add_child(dos)
 	dos.owner = modele
-	var fourreau := _katana(false)
-	fourreau.name = "KatanaDos"
 	# en travers du dos, la poignée au-dessus de l'épaule droite
-	fourreau.transform = Transform3D(Basis(Vector3(0, 0, 1), deg_to_rad(-35)) * Basis(Vector3(1, 0, 0), deg_to_rad(-90)), Vector3(CX - 0.02, -0.08, -0.12))
+	var place := Transform3D(Basis(Vector3(0, 0, 1), deg_to_rad(-35)) * Basis(Vector3(1, 0, 0), deg_to_rad(-90)), Vector3(CX - 0.02, -0.08, -0.12))
+	var fourreau := _saya()
+	fourreau.name = "Fourreau"
+	fourreau.transform = place
 	fourreau.scale = Vector3.ONE * 1.5
 	dos.add_child(fourreau)
 	_posseder(fourreau, modele)
+	var poignee := _katana(false)
+	poignee.name = "KatanaDos"
+	poignee.transform = place
+	poignee.scale = Vector3.ONE * 1.5
+	dos.add_child(poignee)
+	_posseder(poignee, modele)
 
 
 func _posseder(n: Node, modele: Node) -> void:
@@ -302,38 +310,146 @@ func _posseder(n: Node, modele: Node) -> void:
 		_posseder(e, modele)
 
 
-## Katana le long de +z (poignée de -0,08 à 0, lame de 0 à 0,4), en unités du maillage.
+func _mat_katana(couleur: String, metal := 0.0, rugueux := 0.6) -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.albedo_color = Color(couleur)
+	m.metallic = metal
+	m.roughness = rugueux
+	return m
+
+
+## Katana le long de +z : poignée de -0,15 à 0, lame courbe de 0 à 0,5 (en unités du maillage).
+## nu = faux : seulement la poignée, la garde et la bague (le reste est dans le fourreau).
 func _katana(nu: bool) -> Node3D:
 	var k := Node3D.new()
-	var acier := StandardMaterial3D.new()
-	acier.albedo_color = Color("#d8dde6")
-	acier.metallic = 0.9
-	acier.roughness = 0.2
-	acier.emission_enabled = true
-	acier.emission = Color("#8aa0c0")
-	acier.emission_energy_multiplier = 0.25
-	var noir := StandardMaterial3D.new()
-	noir.albedo_color = Color("#16161c")
-	var or_ := StandardMaterial3D.new()
-	or_.albedo_color = Color("#c9a24a")
-	or_.metallic = 0.7
-	or_.roughness = 0.35
-	var laque := StandardMaterial3D.new()
-	laque.albedo_color = Color("#5a1712")
-	laque.roughness = 0.4
-	var pieces := [
-		[Vector3(0.02, 0.024, 0.12), Vector3(0, 0, -0.06), noir],  # poignée
-		[Vector3(0.055, 0.055, 0.008), Vector3(0, 0, 0.0), or_],  # tsuba
-		[Vector3(0.01, 0.03, 0.52) if nu else Vector3(0.022, 0.034, 0.54), Vector3(0, 0, 0.265), acier if nu else laque],
-	]
-	for pc in pieces:
-		var mi := MeshInstance3D.new()
-		var b := BoxMesh.new()
-		b.size = pc[0]
-		mi.mesh = b
-		mi.position = pc[1]
-		mi.material_override = pc[2]
-		k.add_child(mi)
+	# poignée tressée (tsuka) : fond de galuchat clair, losanges de tresse noire
+	var galuchat := _mat_katana("#e8e0cc", 0.0, 0.7)
+	var tresse := _mat_katana("#15151b", 0.0, 0.8)
+	var or_ := _mat_katana("#d4a94e", 0.8, 0.3)
+	var fer := _mat_katana("#26262c", 0.7, 0.45)
+	_cylindre_k(k, 0.017, 0.016, 0.15, Vector3(0, 0, -0.075), galuchat, 12, Vector3(1.0, 1.25, 1.0))
+	for n in 6:
+		for s in [-1.0, 1.0]:
+			var b := MeshInstance3D.new()
+			var bm := BoxMesh.new()
+			bm.size = Vector3(0.037, 0.008, 0.03)
+			b.mesh = bm
+			b.material_override = tresse
+			b.position = Vector3(0, 0, -0.015 - n * 0.023)
+			b.rotation.z = s * 0.7
+			b.scale = Vector3(1.0, 1.0, 1.0)
+			k.add_child(b)
+	_cylindre_k(k, 0.02, 0.02, 0.014, Vector3(0, 0, -0.152), or_, 12, Vector3(1.0, 1.25, 1.0))  # kashira
+	_cylindre_k(k, 0.019, 0.019, 0.01, Vector3(0, 0, -0.004), or_, 12, Vector3(1.0, 1.25, 1.0))  # fuchi
+	# garde ronde en fer, cerclée d'or
+	_cylindre_k(k, 0.042, 0.042, 0.009, Vector3(0, 0, 0.006), fer, 20, Vector3(1.0, 1.08, 1.0))
+	_cylindre_k(k, 0.044, 0.044, 0.005, Vector3(0, 0, 0.006), or_, 20, Vector3(1.0, 1.08, 1.0))
+	_cylindre_k(k, 0.014, 0.016, 0.025, Vector3(0, 0, 0.022), or_, 10, Vector3(0.7, 1.6, 1.0))  # habaki
+	if nu:
+		var lame := MeshInstance3D.new()
+		lame.mesh = _maillage_lame()
+		var acier := StandardMaterial3D.new()
+		acier.vertex_color_use_as_albedo = true
+		acier.metallic = 0.85
+		acier.roughness = 0.18
+		acier.emission_enabled = true
+		acier.emission = Color("#9fb4d4")
+		acier.emission_energy_multiplier = 0.18
+		lame.material_override = acier
+		k.add_child(lame)
+	return k
+
+
+func _cylindre_k(parent: Node3D, haut: float, bas: float, longueur: float, centre: Vector3, m: Material,
+		cotes: int, etire := Vector3.ONE) -> void:
+	var mi := MeshInstance3D.new()
+	var c := CylinderMesh.new()
+	c.top_radius = haut
+	c.bottom_radius = bas
+	c.height = longueur
+	c.radial_segments = cotes
+	c.rings = 1
+	mi.mesh = c
+	mi.material_override = m
+	mi.position = centre
+	mi.rotation.x = PI / 2.0  # le long de z
+	mi.scale = Vector3(etire.x, etire.z, etire.y)
+	parent.add_child(mi)
+
+
+## Lame courbe : dos plat, arête (shinogi), tranchant clair avec une ligne de trempe ondulée (hamon),
+## et une pointe (kissaki) qui remonte vers le dos.
+func _maillage_lame() -> ArrayMesh:
+	var longueur := 0.5
+	var large := 0.036
+	var epais := 0.011
+	var sori := 0.022  # courbure
+	var anneaux := 28
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var sections := []
+	for a in anneaux + 1:
+		var u := float(a) / anneaux
+		var z := 0.03 + u * longueur
+		var y0 := sori * u * u  # le dos remonte vers la pointe
+		var w := large * (1.0 - 0.25 * u)
+		var pointe := smoothstep(0.86, 1.0, u)
+		var bas := -w / 2.0 + pointe * w * 0.95  # le tranchant remonte vers le dos à la pointe
+		var haut := w / 2.0
+		var t := epais * (1.0 - 0.4 * u) * (1.0 - pointe * 0.9)
+		var ondule := 0.32 + 0.08 * sin(u * 48.0) + 0.04 * sin(u * 113.0)
+		var acier := Color("#8f97a3")
+		var trempe := Color("#f2f5fa")
+		# dos (2), arête (2), tranchant (1) ; la couleur passe au blanc sous la ligne de trempe
+		var pts := [Vector2(-t * 0.35, haut), Vector2(t * 0.35, haut), Vector2(t / 2.0, haut - (haut - bas) * 0.3),
+			Vector2(0.0, bas), Vector2(-t / 2.0, haut - (haut - bas) * 0.3)]
+		var cols := [acier, acier, acier.lerp(trempe, 0.2), trempe, acier.lerp(trempe, 0.2)]
+		var anneau := []
+		for i in pts.size():
+			anneau.append([Vector3(pts[i].x, pts[i].y + y0, z), cols[i].lerp(trempe, 0.0 if i < 3 or i == 4 else ondule)])
+		sections.append(anneau)
+	for a in anneaux:
+		var s0: Array = sections[a]
+		var s1: Array = sections[a + 1]
+		for i in 5:
+			var j := (i + 1) % 5
+			for v in [s0[i], s1[i], s1[j], s0[i], s1[j], s0[j]]:
+				st.set_color(v[1])
+				st.add_vertex(v[0])
+	st.generate_normals()
+	return st.commit()
+
+
+## Fourreau laqué noir aux reflets rouges, bague d'or à l'entrée et bout ferré, cordon rouge.
+func _saya() -> Node3D:
+	var k := Node3D.new()
+	var laque := _mat_katana("#14090b", 0.1, 0.22)
+	laque.clearcoat_enabled = true
+	laque.clearcoat = 0.8
+	var or_ := _mat_katana("#d4a94e", 0.8, 0.3)
+	var cordon := _mat_katana("#b3242a", 0.0, 0.8)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var anneaux := 20
+	var cotes := 12
+	var longueur := 0.53
+	for a in anneaux:
+		for c in cotes:
+			for d in [[0, 0], [1, 0], [1, 1], [0, 0], [1, 1], [0, 1]]:
+				var u := float(a + d[0]) / anneaux
+				var ang := float(c + d[1]) / cotes * TAU
+				var z := 0.03 + u * longueur
+				var y0 := 0.022 * u * u
+				st.set_normal(Vector3(cos(ang), sin(ang), 0))
+				st.add_vertex(Vector3(cos(ang) * 0.016, sin(ang) * 0.027 + y0, z))
+	st.generate_normals()
+	var corps := MeshInstance3D.new()
+	corps.mesh = st.commit()
+	corps.material_override = laque
+	k.add_child(corps)
+	_cylindre_k(k, 0.018, 0.018, 0.02, Vector3(0, 0, 0.04), or_, 12, Vector3(1.0, 1.65, 1.0))  # koiguchi
+	_cylindre_k(k, 0.018, 0.016, 0.025, Vector3(0, 0.022, 0.55), or_, 12, Vector3(1.0, 1.6, 1.0))  # kojiri
+	_cylindre_k(k, 0.019, 0.019, 0.012, Vector3(0, 0.001, 0.12), cordon, 12, Vector3(1.05, 1.7, 1.0))  # kurikata
 	return k
 
 
@@ -453,9 +569,10 @@ func _animations_ninja() -> Dictionary:
 	var hisse := {"BrasG": Vector3(-70, 0, 20), "AvantBrasG": Vector3(-95, 0, 0), "BrasD": Vector3(-70, 0, -20), "AvantBrasD": Vector3(-95, 0, 0),
 		"CuisseG": Vector3(-90, 0, 0), "TibiaG": Vector3(110, 0, 0), "PiedG": Vector3(-20, 0, 0), "CuisseD": Vector3(-20, 0, 0), "TibiaD": Vector3(80, 0, 0),
 		"Ventre": Vector3(28, 0, 0), "Poitrine": Vector3(15, 0, 0), "Tete": Vector3(-30, 0, 0)}
-	# Trésor : il brandit l'objet à deux mains au-dessus de la tête, fier, jambes écartées
-	var brandir := {"BrasG": Vector3(-172, 0, 14), "AvantBrasG": Vector3(-18, 0, 0), "BrasD": Vector3(-172, 0, -14), "AvantBrasD": Vector3(-18, 0, 0),
-		"CuisseG": Vector3(-4, 0, 12), "CuisseD": Vector3(-4, 0, -12), "Poitrine": Vector3(-8, 0, 0), "Tete": Vector3(-14, 0, 0)}
+	# Trésor : il brandit l'objet bien haut de la main droite, le poing gauche sur la hanche, fier
+	var brandir := {"BrasD": Vector3(-10, 0, -135), "AvantBrasD": Vector3(-10, 0, 0),
+		"BrasG": Vector3(-10, 0, 48), "AvantBrasG": Vector3(-95, 0, 0),
+		"CuisseG": Vector3(-4, 0, 12), "CuisseD": Vector3(-4, 0, -12), "Poitrine": Vector3(-10, -6, 0), "Tete": Vector3(-16, 8, 0)}
 	# Marche lente (le vieux maître, les villageois)
 	var pas_lent := {"CuisseG": Vector3(-26, 0, 0), "TibiaG": Vector3(8, 0, 0), "CuisseD": Vector3(20, 0, 0), "TibiaD": Vector3(22, 0, 0),
 		"BrasG": Vector3(22, 0, 6), "AvantBrasG": Vector3(-20, 0, 0), "BrasD": Vector3(-22, 0, -6), "AvantBrasD": Vector3(-25, 0, 0),
@@ -464,7 +581,7 @@ func _animations_ninja() -> Dictionary:
 		"BrasG": Vector3(8, 0, 4), "AvantBrasG": Vector3(-30, 0, 0), "BrasD": Vector3(8, 0, -4), "AvantBrasD": Vector3(-30, 0, 0)}
 	return {
 		"repos": {"boucle": true, "duree": 2.6, "cles": [[0.0, repos_a, 0.0], [1.3, repos_b, 0.004], [2.6, repos_a, 0.0]]},
-		"brandir": {"boucle": false, "duree": 0.5, "cles": [[0.0, repos_a, 0.0], [0.25, _fusion(brandir, {"BrasG": Vector3(-150, 0, 20), "BrasD": Vector3(-150, 0, -20)}), 0.01], [0.5, brandir, 0.02]]},
+		"brandir": {"boucle": false, "duree": 0.7, "cles": [[0.0, repos_a, 0.0], [0.3, _fusion(brandir, {"BrasD": Vector3(-20, 0, -95), "AvantBrasD": Vector3(-45, 0, 0)}), -0.01], [0.5, brandir, 0.03], [0.7, brandir, 0.02]]},
 		"marche": {"boucle": true, "duree": 1.1, "cles": [[0.0, pas_lent, -0.005], [0.275, repos_a, 0.008], [0.55, _miroir(pas_lent), -0.005], [0.825, repos_a, 0.008], [1.1, pas_lent, -0.005]]},
 		"salut": {"boucle": false, "duree": 1.4, "cles": [[0.0, repos_a, 0.0], [0.45, salut, -0.01], [0.95, salut, -0.01], [1.4, repos_a, 0.0]]},
 		"course": {"boucle": true, "duree": 0.5, "cles": [[0.0, contact, -0.012], [0.125, passage, 0.02],

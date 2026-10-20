@@ -147,11 +147,12 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	if _corps is Garde:
 		_animer_garde(vitesse)
 		return
-	# le katana passe du dos à la main pendant le coup
+	# le katana est dans la main quand il est sorti (P) ou pendant un coup, sinon dans son fourreau
 	var frappe: bool = _corps.get("attaque") > 0.0
+	var en_main: bool = (frappe or _corps.get("katana_en_main") == true) and _corps.get("pose_forcee") == ""
 	if _katana_main:
-		_katana_main.visible = frappe
-		_katana_dos.visible = not frappe
+		_katana_main.visible = en_main
+		_katana_dos.visible = not en_main
 	var au_sol := _corps.is_on_floor()
 	var vy := _corps.velocity.y
 	var accroupi: bool = _corps.get("accroupi") == true
@@ -187,8 +188,10 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 		vitesse_anim = clampf(vitesse / 2.2, 0.6, 1.4)
 	elif vitesse > 0.3:
 		nom = "course"
-		vitesse_anim = clampf(vitesse / 5.5, 0.55, 1.3)
-	if _animations.current_animation != nom:
+		vitesse_anim = clampf(vitesse / 5.5, 0.55, 1.6)
+	# une pose de cinématique reste figée sur sa dernière clé au lieu de recommencer
+	var deja := _animations.assigned_animation == nom if pose != "" else _animations.current_animation == nom
+	if not deja:
 		_animations.play(nom, fondu)
 	_animations.speed_scale = vitesse_anim
 

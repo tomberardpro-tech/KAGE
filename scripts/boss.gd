@@ -38,6 +38,7 @@ var _fleche: MeshInstance3D
 var _barre: CanvasLayer
 var _barre_vie: Control
 var _vie_affichee := 1.0
+var _aura: OmniLight3D
 
 
 func _ready() -> void:
@@ -66,6 +67,22 @@ func reveiller() -> void:
 		return
 	_barre.visible = true
 	_changer(Etat.POURSUITE)
+
+
+## Cinématique d'arrivée : il se redresse et rugit, ses yeux et son aura s'embrasent.
+func rugir() -> void:
+	Sons.jouer("boss_cri", 0.0, 0.85)
+	_secouer_camera(0.6)
+	var taille := _modele.scale
+	var t := create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	t.tween_property(_aura, "light_energy", 5.0, 0.3)
+	t.parallel().tween_method(_teinte, 0.0, 0.45, 0.3)
+	t.parallel().tween_property(_modele, "scale", taille * 1.1, 0.3)
+	t.tween_interval(0.6)
+	t.set_trans(Tween.TRANS_SINE)
+	t.tween_property(_aura, "light_energy", 0.8, 0.9)
+	t.parallel().tween_method(_teinte, 0.45, 0.0, 0.9)
+	t.parallel().tween_property(_modele, "scale", taille, 0.9)
 
 
 ## Le ninja est reparti de l'autel : le seigneur reprend sa place, en pleine forme.
@@ -355,12 +372,12 @@ func _construire_modele() -> void:
 		oeil.position = Vector3(s * 0.045, 0.14, 0.1)
 		tete.add_child(oeil)
 		_peau.append(oeil)
-	var aura := OmniLight3D.new()
-	aura.light_color = Color(1.0, 0.3, 0.15)
-	aura.omni_range = 4.0
-	aura.light_energy = 0.8
-	aura.position.y = 1.6
-	add_child(aura)
+	_aura = OmniLight3D.new()
+	_aura.light_color = Color(1.0, 0.3, 0.15)
+	_aura.omni_range = 4.0
+	_aura.light_energy = 0.8
+	_aura.position.y = 1.6
+	add_child(_aura)
 	_jouer("repos")
 
 

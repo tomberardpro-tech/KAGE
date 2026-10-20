@@ -16,10 +16,12 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 | --- | --- |
 | Se déplacer | ZQSD (ou WASD) / flèches |
 | Sauter | Espace |
+| Courir | Maj (Shift) |
 | S'accroupir | Ctrl ou C |
 | Coup de katana | L ou clic gauche (vers la souris) |
+| Sortir ou ranger le katana | P |
 | Passer le dialogue | Entrée (Échap pour tout passer) |
-| Trancher une lanterne, ouvrir une porte ou le coffre | E |
+| Ouvrir une porte ou le coffre | E |
 | Pause | Échap |
 
 Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERTY et WASD sur un QWERTY.
@@ -28,11 +30,11 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
 - **Le niveau** (`scenes/levels/chateau.scn`) : lancé par Nouvelle partie, avec un écran de chargement. Un seul grand niveau :
-  - **Cinématique d'ouverture** (Échap pour la passer) : on survole le château, puis le maître Kagemaru parle à Kage dans sa cabane, avec une voix japonaise et la traduction.
-  - **Le village de la forêt** : maisons au toit de chaume, villageois qui saluent et parlent, chats, ruisseau et pont rouge, étang aux carpes, guirlandes de lanternes 福, lucioles, gros buissons où se cacher.
+  - **Cinématique d'ouverture** (Échap pour la passer) : on survole le château, puis le maître Kagemaru parle à Kage dans sa cabane (boîte de dialogue moderne, sans voix).
+  - **Le village de la forêt** : cabanes en bois aux toits rouges, chemin de terre, 8 villageois qui vivent leur journée (balayer, porter du bois, pêcher, discuter, jouer) et saluent Kage, avec juste leur nom au-dessus de la tête, chats, ruisseau et pont rouge, étang aux carpes, guirlandes de lanternes 福, lucioles, gros buissons où se cacher.
   - **Le château** : on ouvre la grande porte (E), puis on traverse les cours. Les gardes portent des lanternes : leur lumière jaune devient orange puis rouge quand ils te repèrent.
-  - **Le boss** : en entrant dans le donjon, la herse se ferme et le seigneur Oni attaque. Il charge (esquive, puis frappe quand il souffle) et frappe le sol (saute par-dessus l'onde). 8 coups pour le vaincre.
-  - **Le coffre** : il apparaît après le combat. On l'ouvre (E) et Kage brandit le parchemin, puis on fuit par le rempart est.
+  - **Le boss** : en entrant dans le donjon, la porte du donjon claque derrière Kage, le seigneur Oni se dresse et rugit, puis attaque. Il charge (esquive, puis frappe quand il souffle) et frappe le sol (saute par-dessus l'onde). 8 coups pour le vaincre.
+  - **Le coffre** : il apparaît après le combat. On l'ouvre (E) et Kage brandit le parchemin bien haut de la main droite, puis on fuit par le rempart est.
 - **Terrain d'essai** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
 
 ## Le ninja
@@ -58,12 +60,12 @@ le mouvement et fait les fondus entre elles. Pour le refaire (le chemin final ex
 ouvrable dans Blender) :
 `xvfb-run -a godot --rendering-driver opengl3 --path . --script res://scripts/tools/articuler.gd -- ninja_rig.glb`.
 
-- Marche à 5,5 m/s, accroupi à 2,2 m/s.
+- Marche à 5,5 m/s, course à 8,5 m/s (Maj), accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.
 - En sautant contre un mur ou un toit jusqu'à 2,4 m, il s'accroche et se hisse dessus.
-- Coup de katana (L) devant lui, vers la souris : il tranche les gardes à moins de 1,7 m. Le sabre est rangé dans le dos et sort pendant le coup.
+- Coup de katana (L) devant lui, vers la souris : il tranche les gardes à moins de 1,7 m. Le sabre est rangé dans son fourreau, dans le dos : P le sort ou le range, et L le sort tout seul s'il est rangé.
 - 3 points de vie : chaque coup de garde en retire un (le ninja est repoussé et clignote un instant). À 0, il repart du dernier autel.
-- E près d'une lanterne allumée l'éteint.
+- Un coup de katana (L) sur une lanterne allumée l'éteint.
 - Les gardes sont riggés eux aussi (`articuler.gd -- garde`) : repos, marche, course et coup de lance.
 - Tous les réglages sont modifiables dans l'inspecteur de Godot.
 

@@ -11,6 +11,7 @@ signal blesse(vie: int)
 @export_group("Déplacement")
 @export var vitesse := 5.5
 @export var vitesse_accroupi := 2.2
+@export var vitesse_sprint := 8.5  ## en tenant Maj
 @export var acceleration := 45.0
 @export var vitesse_rotation := 14.0
 
@@ -33,11 +34,13 @@ var vie := 3
 var attaque := 0.0  ## > 0 : coup de katana en cours (temps restant)
 var en_grimpe := false
 var pose_forcee := ""  ## animation imposée pendant une cinématique (ex. « brandir »)
+var katana_en_main := false  ## P sort le katana ou le range dans son fourreau
+var sprinte := false
 
 ## Portée du katana, devant le ninja (gardes et lanternes).
 const PORTEE_SABRE := 1.7
 const ANGLE_SABRE := 80.0  ## demi-angle devant lui, en degrés
-## Distance à laquelle on peut trancher une lanterne avec E.
+## Distance à laquelle on peut ouvrir une porte ou un coffre avec E.
 const PORTEE_INTERACTION := 1.8
 ## Au-dessus de cette hauteur, on est sur un toit : la lune peut nous éclairer.
 const HAUTEUR_TOIT := 1.4
@@ -125,13 +128,14 @@ func _physics_process(delta: float) -> void:
 		_saut_demande = 0.0
 		_sol_recent = 0.0
 		a_saute.emit()
-		Sons.jouer("saut", -6.0)
+		Sons.jouer("saut", -16.0, randf_range(0.95, 1.08))
 	if not is_on_floor():
 		velocity.y -= gravite * delta
 	elif Input.is_action_just_released("jump") and velocity.y > 0.0:
 		velocity.y *= 0.5
 
-	var cible := direction * (vitesse_accroupi if accroupi else vitesse)
+	sprinte = Input.is_action_pressed("sprint") and not accroupi and direction.length() > 0.1
+	var cible := direction * (vitesse_accroupi if accroupi else (vitesse_sprint if sprinte else vitesse))
 	if attaque > 0.0:
 		cible *= 0.25  # on se plante pour frapper
 	var horizontal := Vector2(velocity.x, velocity.z).move_toward(
@@ -148,7 +152,11 @@ func _physics_process(delta: float) -> void:
 	if not is_on_floor() and direction.length() > 0.1 and velocity.y < 2.5:
 		_essayer_grimper(direction.normalized())
 
+	if Input.is_action_just_pressed("katana"):
+		ranger_katana(katana_en_main)
 	if Input.is_action_just_pressed("frapper") and attaque <= 0.0:
+		if not katana_en_main:
+			ranger_katana(false)  # L sort le katana s'il était rangé
 		_frapper()
 
 	if Input.is_action_just_pressed("interact"):
@@ -168,8 +176,8 @@ func _bruit_de_pas(delta: float) -> void:
 		return
 	_pas -= delta
 	if _pas <= 0.0:
-		_pas = 0.3
-		Sons.jouer("pas", -14.0, randf_range(0.85, 1.15))
+		_pas = 0.22 if sprinte else 0.3
+		Sons.jouer("pas", -16.0 if not sprinte else -12.0, randf_range(0.85, 1.15))
 
 
 func reapparaitre(position_depart := _point_depart) -> void:
@@ -246,10 +254,18 @@ func _frapper() -> void:
 	attaque = duree_coup
 	_a_touche = false
 	a_frappe.emit()
-	Sons.jouer("dash", -4.0, randf_range(0.95, 1.1))
+	Sons.jouer("tranche", -5.0, randf_range(0.95, 1.08))
 
 
-## Lanterne allumée ou fil à clochettes assez proche pour être tranché avec E.
+## Sort le katana (ranger = faux) ou le remet dans son fourreau.
+func ranger_katana(ranger: bool) -> void:
+	if katana_en_main == not ranger:
+		return
+	katana_en_main = not ranger
+	Sons.jouer("rengainer" if ranger else "degainer", -6.0, randf_range(0.95, 1.05))
+
+
+## Porte, coffre ou fil à clochettes assez proche pour qu'on s'en serve avec E.
 func objet_proche() -> Node3D:
 	var meilleur: Node3D = null
 	var distance := PORTEE_INTERACTION

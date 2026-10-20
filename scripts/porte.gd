@@ -1,8 +1,9 @@
 class_name Porte
 extends Node3D
 ## Porte animée, construite au chargement :
-## - « battants » : la grande porte du château, deux lourds vantaux qui s'ouvrent vers le nord (E).
-## - « herse » : la grille du donjon, levée au départ, qui tombe derrière le ninja pour le combat.
+## - « battants » : deux lourds vantaux qui s'ouvrent vers le nord (E) : la grande porte du château
+##   et la porte du donjon, qui se referme en claquant derrière le ninja pour le combat.
+## - « herse » : une grille qui tombe (plus utilisée dans le niveau, gardée pour plus tard).
 ## Les vantaux et la grille ont une vraie collision qui suit l'animation.
 
 signal ouverture  ## la grande porte commence à s'ouvrir (le niveau lance sa petite cinématique)
@@ -13,6 +14,7 @@ enum Genre { BATTANTS, HERSE }
 @export var largeur := 4.8  ## m
 @export var hauteur := 4.2
 @export var epaisseur := 0.3
+@export var texte := "Ouvrir la grande porte"
 
 var ouverte := false
 var _pieces: Array[AnimatableBody3D] = []
@@ -33,7 +35,7 @@ func _ready() -> void:
 # --- Interaction (grande porte) ------------------------------------------
 
 func texte_action() -> String:
-	return "Ouvrir la grande porte"
+	return texte
 
 
 func peut_interagir() -> bool:
@@ -60,6 +62,13 @@ func fermer() -> void:
 	if not ouverte:
 		return
 	ouverte = false
+	if genre == Genre.BATTANTS:
+		# les deux vantaux claquent derrière le ninja
+		for battant in _pieces:
+			var tb := create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+			tb.tween_property(battant, "rotation:y", 0.0, 0.45)
+		get_tree().create_timer(0.45).timeout.connect(func(): Sons.jouer("porte_claque"))
+		return
 	var grille := _pieces[0]
 	grille.visible = true
 	grille.get_child(0).set_deferred("disabled", false)
@@ -72,6 +81,12 @@ func ouvrir() -> void:
 	if ouverte:
 		return
 	ouverte = true
+	if genre == Genre.BATTANTS:
+		Sons.jouer("porte", -3.0)
+		for i in _pieces.size():
+			var tb := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+			tb.tween_property(_pieces[i], "rotation:y", (1.0 if i == 0 else -1.0) * deg_to_rad(100.0), 2.0)
+		return
 	var grille := _pieces[0]
 	Sons.jouer("herse", -6.0, 0.8)
 	var t := create_tween().set_trans(Tween.TRANS_SINE)
@@ -84,6 +99,11 @@ func ouvrir() -> void:
 ## Remise à zéro quand le ninja repart de l'autel (herse levée).
 func relever() -> void:
 	ouverte = true
+	if genre == Genre.BATTANTS:
+		remove_from_group("interactifs")
+		for i in _pieces.size():
+			_pieces[i].rotation.y = (1.0 if i == 0 else -1.0) * deg_to_rad(100.0)
+		return
 	var grille := _pieces[0]
 	grille.position.y = hauteur + 0.2
 	grille.visible = false

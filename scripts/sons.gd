@@ -5,7 +5,7 @@ extends Node
 
 const MUSIQUES := "res://assets/audio/music/%s.ogg"
 const BRUITAGES := "res://assets/audio/sfx/%s.ogg"
-const VOLUME_MUSIQUE := -8.0  ## dB : la musique reste en fond
+const VOLUME_MUSIQUE := -14.0  ## dB : la musique reste en fond, on entend bien la pluie
 const NB_VOIX := 10
 
 var _musique: AudioStreamPlayer
@@ -41,6 +41,18 @@ func _charger(modele: String, nom: String, en_boucle := false) -> AudioStream:
 			flux.loop = en_boucle
 		_cache[chemin] = flux
 	return _cache[chemin]
+
+
+## Charge d'avance tous les bruitages (pendant l'écran de chargement) : pas de petit gel
+## la première fois qu'on entend un son.
+func precharger() -> void:
+	var dossier := DirAccess.open(BRUITAGES.get_base_dir())
+	if dossier == null:
+		return
+	for fichier in dossier.get_files():
+		fichier = fichier.trim_suffix(".remap").trim_suffix(".import")
+		if fichier.ends_with(".ogg"):
+			_charger(BRUITAGES, fichier.get_basename())
 
 
 ## Bruitage. `volume` en dB, `hauteur` change un peu le ton pour éviter la répétition.

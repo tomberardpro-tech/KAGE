@@ -7,6 +7,7 @@ extends Node3D
 signal parchemin_pris
 signal victoire(temps: float)
 signal mort
+signal pret  ## le niveau est préparé : l'écran de chargement peut s'effacer
 
 @export var numero := 1
 @export var titre := ""  ## ex. « LE CHÂTEAU », affiché au tutoriel
@@ -34,6 +35,7 @@ var _horloge_lune := 0.0
 var _cinema: Cinema
 var _camera_cine: Camera3D
 var _tween_cine: Tween
+var est_pret := false
 
 @onready var ninja: Ninja = $Ninja
 @onready var _camera: Camera3D = $Camera
@@ -42,7 +44,7 @@ var _tween_cine: Tween
 @onready var _lune: DirectionalLight3D = $Lune
 @onready var _seigneur: Boss = get_node_or_null("Seigneur")
 @onready var _coffre: Coffre = get_node_or_null("Coffre")
-@onready var _herse: Porte = get_node_or_null("HerseDonjon")
+@onready var _porte_donjon: Porte = get_node_or_null("PorteDonjon")
 
 
 func _ready() -> void:
@@ -80,7 +82,46 @@ func _ready() -> void:
 		var effet = script.new()
 		effet.cible = ninja
 		add_child(effet)
+	await prechauffer()
+	est_pret = true
+	pret.emit()
 	_debut()
+
+
+## Pendant l'écran de chargement, on montre une fois tout le niveau à une caméra très haute,
+## objets encore cachés compris (coffre, onde du boss, katana en main…). Le moteur prépare
+## ainsi toutes ses matières d'un coup, au lieu de geler le jeu la première fois qu'on les voit.
+func prechauffer() -> void:
+	Sons.precharger()
+	var caches: Array[Node3D] = []
+	for n in find_children("*", "Node3D", true, false):
+		var n3 := n as Node3D
+		if not n3.visible and not n3 is Light3D:
+			caches.append(n3)
+			n3.visible = true
+	var rouleau := _rouleau_brandi(true)
+	add_child(rouleau)
+	rouleau.global_position = ninja.global_position + Vector3(0, 1, 0)
+	# vues : tout le niveau d'en haut, puis quelques vues proches (avec les ombres de la lune)
+	var vues := [[Vector3(0, 170, 17), Vector3(0, 0, 16.9)],
+		[ninja.global_position + Vector3(0, 14, 9), ninja.global_position],
+		[Vector3(0, 14, 66), Vector3(0, 0, 58)], [Vector3(0, 12, 32), Vector3(0, 0, 22)],
+		[Vector3(0, 14, -2), Vector3(0, 0, -10)], [Vector3(0, 14, -20), Vector3(0, 0, -29)]]
+	# les grands titres préparent leurs lettres (sous l'écran de chargement, qui les cache)
+	_cinema.titre("KAGE 影 PARCHEMIN DU CLAN SEIGNEUR ONI", "Le parchemin du clan, gardien", 0.1)
+	_camera_cine.current = true
+	for vue in vues:
+		_camera_cine.global_position = vue[0]
+		_camera_cine.look_at(vue[1], Vector3.UP)
+		_camera_cine.fov = 75.0
+		for i in 3:
+			await get_tree().process_frame
+	_camera_cine.fov = 40.0
+	_cinema.cacher_titre()
+	rouleau.queue_free()
+	for n3 in caches:
+		n3.visible = false
+	_camera.current = true
 
 
 func _process(delta: float) -> void:
@@ -158,37 +199,33 @@ func _debut() -> void:
 	if maitre == null:
 		_ecrans.tutoriel()
 		return
-	var anim := maitre.get_node_or_null("Animations") as AnimationPlayer
-	if anim:
-		anim.play("repos")
 	ninja.bloque = true
 	en_cinematique = true
 	_cinema.entrer()
 	var donjon := _centre_de("DonjonToit", Vector3(0, 0, -30))
 	var porte := _centre_de("GrandePorte", Vector3(0, 0, 20))
 	var cabane := _centre_de("CabaneToit", maitre.global_position)
-	# 1. le château dans la nuit, puis la grande porte
-	_glisser(donjon + Vector3(-14, 24, 30), donjon + Vector3(0, 3, 0), porte + Vector3(6, 13, 18), porte + Vector3(0, 2, 0), 5.0)
-	_cinema.titre("KAGE  影", "Le parchemin du clan", 3.0)
-	var passe := await _cinema.attendre(5.0)
-	# 2. on survole la forêt jusqu'à la cabane du maître
+	var village := (porte + cabane) / 2.0
+	# par-dessus l'épaule de Kage, face au maître
+	var dos := (ninja.global_position - maitre.global_position).normalized()
+	var cote := dos.cross(Vector3.UP)
+	var oeil := ninja.global_position + dos * 1.5 - cote * 1.9 + Vector3(0, 1.45, 0)
+	var visage := maitre.global_position + Vector3(0, 0.85, 0)
+	# Un seul long travelling : le château dans la nuit, la grande porte, la forêt et le village,
+	# puis on descend en douceur jusqu'à la cabane du maître.
+	_travelling([
+		[donjon + Vector3(-12, 26, 24), donjon + Vector3(0, 2, 0)],
+		[porte + Vector3(7, 12, 12), porte + Vector3(0, 2, 2)],
+		[village + Vector3(6, 11, 6), village + Vector3(0, 0, 4)],
+		[cabane + Vector3(-4, 6, 7), cabane + Vector3(0, 0.6, 0)],
+		[oeil, visage],
+	], 14.0)
+	_cinema.titre("KAGE  影", "Le parchemin du clan", 3.5)
+	var passe := await _cinema.attendre(14.2)
 	if not passe:
-		_glisser(porte + Vector3(6, 13, 18), porte + Vector3(0, 2, 0), cabane + Vector3(-5, 9, 11), cabane, 4.5)
-		passe = await _cinema.attendre(4.5)
-	# 3. dans la cabane, le maître salue Kage et lui parle
-	if not passe:
-		# par-dessus l'épaule de Kage, face au maître
-		var dos := (ninja.global_position - maitre.global_position).normalized()
-		var cote := dos.cross(Vector3.UP)
-		var oeil := ninja.global_position + dos * 1.3 - cote * 1.1 + Vector3(0, 1.6, 0)
-		var visage := maitre.global_position + Vector3(0, 0.85, 0)
-		_glisser(cabane + Vector3(-5, 9, 11), cabane, oeil, visage, 1.8)
-		passe = await _cinema.attendre(1.8)
-	if not passe:
-		if anim and anim.has_animation("salut"):
-			anim.play("salut", 0.3)
-			anim.queue("repos")
-		passe = await _cinema.attendre(0.8)
+		if maitre.has_method("saluer"):
+			maitre.saluer()
+		passe = await _cinema.attendre(1.2)
 	if not passe:
 		var dialogue := Dialogue.new()
 		add_child(dialogue)
@@ -196,9 +233,42 @@ func _debut() -> void:
 		dialogue.queue_free()
 		if passe:
 			_cinema.passe = true
-	await _retour_camera(1.2)
+	await _retour_camera(1.4)
 	_pret_a_jouer()
 	_ecrans.tutoriel()
+
+
+## Mouvement de caméra continu qui passe par plusieurs plans [position, point visé] :
+## une courbe douce, parcourue à vitesse régulière (pas d'à-coups entre les plans).
+func _travelling(cles: Array, duree: float) -> void:
+	var points: Array[Vector3] = []
+	var cibles: Array[Vector3] = []
+	var n := cles.size()
+	for i in n - 1:
+		var a := maxi(i - 1, 0)
+		var d := mini(i + 2, n - 1)
+		for k in 40:
+			var t := k / 40.0
+			points.append((cles[i][0] as Vector3).cubic_interpolate(cles[i + 1][0], cles[a][0], cles[d][0], t))
+			cibles.append((cles[i][1] as Vector3).cubic_interpolate(cles[i + 1][1], cles[a][1], cles[d][1], t))
+	points.append(cles[n - 1][0])
+	cibles.append(cles[n - 1][1])
+	var longueurs := PackedFloat32Array([0.0])
+	for k in range(1, points.size()):
+		longueurs.append(longueurs[k - 1] + points[k].distance_to(points[k - 1]))
+	var total := longueurs[longueurs.size() - 1]
+	_couper_cine()
+	_camera_cine.current = true
+	var t := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	_tween_cine = t
+	t.tween_method(func(v: float):
+		var dist := v * total
+		var k := clampi(longueurs.bsearch(dist), 1, points.size() - 1)
+		var f := clampf((dist - longueurs[k - 1]) / maxf(longueurs[k] - longueurs[k - 1], 0.0001), 0.0, 1.0)
+		_camera_cine.global_position = points[k - 1].lerp(points[k], f)
+		_camera_cine.look_at(cibles[k - 1].lerp(cibles[k], f), Vector3.UP), 0.0, 1.0, duree)
+	if not _cinema.passee.is_connected(_couper_cine):
+		_cinema.passee.connect(_couper_cine)
 
 
 func _centre_de(nom: String, defaut: Vector3) -> Vector3:
@@ -222,6 +292,7 @@ func _sur_grande_porte() -> void:
 	await get_tree().create_timer(2.7).timeout
 	_camera.secouer(0.5)
 	_pret_a_jouer()
+	Sons.musique("chateau")
 	_messages.afficher("LE CHÂTEAU DU SEIGNEUR ONI", "Le parchemin est au cœur du donjon.", 2.5)
 
 
@@ -233,22 +304,45 @@ func _combat() -> void:
 	combat_en_cours = true
 	ninja.bloque = true
 	en_cinematique = true
-	_herse.fermer()
-	_camera.secouer(0.4)
-	Sons.musique("boss")
-	_cinema.entrer(false)
-	await get_tree().create_timer(0.6).timeout
+	# la porte claque derrière le ninja, la musique se tait
+	_porte_donjon.fermer()
+	Sons.musique("")
+	await get_tree().create_timer(0.45).timeout
+	_camera.secouer(0.5)
+	_cinema.entrer()
 	var boss := _seigneur.global_position
-	var devant := boss + Vector3(0, 0, 1.0)
-	_glisser(_camera.global_position, ninja.global_position, devant + Vector3(1.6, 2.4, 5.0), boss + Vector3(0, 2.2, 0), 1.4)
-	await get_tree().create_timer(1.5).timeout
-	Sons.jouer("boss_cri", 0.0, 0.85)
-	var dialogue := Dialogue.new()
-	add_child(dialogue)
-	await dialogue.jouer("oni_debut")
-	dialogue.queue_free()
-	_cinema.passe = false
-	await _retour_camera(0.9)
+	var vers_ninja := ninja.global_position - boss
+	vers_ninja.y = 0.0
+	vers_ninja = vers_ninja.normalized()
+	var cote := vers_ninja.cross(Vector3.UP)
+	# 1. derrière Kage : la grande salle sombre, et tout au fond, une silhouette
+	var passe := await _cinema.attendre(0.6)
+	if not passe:
+		_glisser(ninja.global_position + vers_ninja * 2.6 + cote * 0.9 + Vector3(0, 1.5, 0), boss + Vector3(0, 1.6, 0),
+			boss + vers_ninja * 6.5 + cote * 0.6 + Vector3(0, 1.4, 0), boss + Vector3(0, 1.9, 0), 3.2)
+		passe = await _cinema.attendre(3.2)
+	# 2. contre-plongée sur le seigneur, qui se dresse et rugit
+	if not passe:
+		_plan(boss + vers_ninja * 6.0 + cote * 1.8 + Vector3(0, 0.9, 0), boss + Vector3(0, 2.0, 0))
+		_glisser(boss + vers_ninja * 6.0 + cote * 1.8 + Vector3(0, 0.9, 0), boss + Vector3(0, 2.0, 0),
+			boss + vers_ninja * 5.2 + cote * 1.4 + Vector3(0, 1.0, 0), boss + Vector3(0, 2.2, 0), 2.6)
+		_seigneur.rugir()
+		Sons.musique("boss")
+		_cinema.titre("SEIGNEUR ONI", "Le gardien du parchemin", 1.8, 0.74)
+		passe = await _cinema.attendre(2.6)
+	# 3. les deux face à face, de profil, pendant qu'il parle
+	if not passe:
+		var milieu := (boss + ninja.global_position) / 2.0
+		_cinema.cacher_titre()
+		_plan(milieu + cote * 8.0 + Vector3(0, 3.0, 0), milieu + Vector3(0, 1.2, 0))
+		var dialogue := Dialogue.new()
+		add_child(dialogue)
+		passe = await dialogue.jouer("oni_debut")
+		dialogue.queue_free()
+	Sons.musique("boss")
+	_cinema.cacher_titre()
+	ninja.ranger_katana(false)
+	await _retour_camera(0.0 if passe else 0.9)
 	_pret_a_jouer()
 	_seigneur.reveiller()
 	_messages.afficher("ESQUIVE SA CHARGE", "Frappe-le quand il reprend son souffle. Saute par-dessus l'onde.", 3.0)
@@ -278,10 +372,10 @@ func _sur_seigneur_vaincu() -> void:
 	combat_en_cours = false
 	ninja.bloque = false
 	en_cinematique = false
-	_herse.ouvrir()
+	_porte_donjon.ouvrir()
 	_coffre.apparaitre()
-	Sons.musique("jeu")
-	_messages.afficher("LE SEIGNEUR ONI EST VAINCU", "Un coffre est apparu. Ouvre-le (E).", 3.0)
+	Sons.musique("chateau")
+	_messages.afficher("LE SEIGNEUR ONI EST VAINCU", "Un coffre est apparu. Ouvre-le avec E.", 3.0)
 
 
 # --- Le coffre et le parchemin --------------------------------------------
@@ -303,16 +397,26 @@ func _cinematique_coffre() -> void:
 	await _coffre.ouvrir_couvercle(1.2)
 	# il se retourne vers nous et brandit le parchemin
 	visuel.rotation.y = 0.0
-	_plan(ninja.global_position + Vector3(0.5, 1.5, 4.4), ninja.global_position + Vector3(0, 1.3, 0))
 	ninja.pose_forcee = "brandir"
-	var rouleau := _rouleau_brandi()
-	ninja.add_child(rouleau)
-	rouleau.position = Vector3(0, 1.7, 0.05)
+	# le parchemin dans la main droite, levée bien haut
+	var rouleau := _rouleau_brandi(true)
+	add_child(rouleau)
+	var main := ninja.find_child("KatanaMain", true, false) as Node3D
+	var suivre := func(_v: float):
+		var poing := main.global_position if main else ninja.global_position + Vector3(0.3, 1.8, 0)
+		rouleau.global_position = poing + Vector3(-0.03, 0.24, 0.06)
+	suivre.call(0.0)
 	rouleau.scale = Vector3.ONE * 0.01
-	create_tween().tween_property(rouleau, "scale", Vector3.ONE, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	create_tween().tween_property(rouleau, "scale", Vector3.ONE * 0.8, 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	var suivi := create_tween()
+	suivi.tween_method(suivre, 0.0, 1.0, 3.8)
 	Sons.jingle("tresor")
-	_cinema.titre("PARCHEMIN DU CLAN", "Tu as repris le parchemin volé par le seigneur Oni !", 2.6, 0.72)
+	_cinema.titre("PARCHEMIN DU CLAN", "Tu as repris le parchemin volé par le seigneur Oni !", 2.4, 0.86)
+	# la caméra recule doucement pendant qu'il le brandit, un peu en contre-plongée
+	_glisser(ninja.global_position + Vector3(0.5, 0.6, 3.2), ninja.global_position + Vector3(0, 0.8, 0),
+		ninja.global_position + Vector3(0.8, 0.75, 4.2), ninja.global_position + Vector3(0, 0.85, 0), 3.8)
 	await get_tree().create_timer(3.8).timeout
+	suivi.kill()
 	rouleau.queue_free()
 	ninja.pose_forcee = ""
 	_coffre.eteindre_rayon()
@@ -321,11 +425,11 @@ func _cinematique_coffre() -> void:
 	_camera.recaler()
 	_camera.current = true
 	_pret_a_jouer()
-	Sons.musique("jeu")
+	Sons.musique("chateau")
 
 
 ## Rouleau de papier washi aux embouts laqués, avec un halo et des rayons dorés derrière lui.
-func _rouleau_brandi() -> Node3D:
+func _rouleau_brandi(debout := false) -> Node3D:
 	var n := Node3D.new()
 	var papier := StandardMaterial3D.new()
 	papier.albedo_color = Palette.WASHI
@@ -341,7 +445,7 @@ func _rouleau_brandi() -> Node3D:
 	cyl.height = 0.62
 	corps.mesh = cyl
 	corps.material_override = papier
-	corps.rotation.z = PI / 2.0
+	corps.rotation.z = 0.0 if debout else PI / 2.0
 	n.add_child(corps)
 	for s in [-1.0, 1.0]:
 		var bout := MeshInstance3D.new()
@@ -351,8 +455,11 @@ func _rouleau_brandi() -> Node3D:
 		b.height = 0.06
 		bout.mesh = b
 		bout.material_override = laque
-		bout.rotation.z = PI / 2.0
-		bout.position.x = s * 0.33
+		if debout:
+			bout.position.y = s * 0.33
+		else:
+			bout.rotation.z = PI / 2.0
+			bout.position.x = s * 0.33
 		n.add_child(bout)
 	var rayons := MeshInstance3D.new()
 	var q := QuadMesh.new()
@@ -471,12 +578,20 @@ func recommencer_a_l_autel() -> void:
 		# le combat reprend depuis le début : herse levée, seigneur en pleine forme
 		combat_en_cours = false
 		_seigneur.reinitialiser()
-		_herse.relever()
+		_porte_donjon.relever()
 		get_node("ArriveeDonjon").rearmer()
 	ninja.reapparaitre(_point_reprise)
 	ninja.bloque = false
 	decouvert = false
-	Sons.musique("jeu")
+	Sons.musique(_musique_du_lieu())
+
+
+## Musique du village dehors, plus tendue une fois dans le château.
+func _musique_du_lieu() -> String:
+	var porte := get_node_or_null("GrandePorte") as Node3D
+	if porte and ninja.global_position.z < porte.global_position.z + 1.0:
+		return "chateau"
+	return "jeu"
 
 
 func compter_garde_tue() -> void:

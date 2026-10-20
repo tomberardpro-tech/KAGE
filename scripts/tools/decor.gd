@@ -7,7 +7,7 @@ extends "res://scripts/tools/constructeur.gd"
 ## Les petits objets répétés sont regroupés en MultiMesh pour rester léger dans le navigateur.
 
 const SHADERS := "res://assets/shaders/"
-const CARRE := 16.0  ## taille des carrés de décor (m) pour que la caméra ignore ceux hors de l'écran
+const CARRE := 32.0  ## taille des carrés de décor (m) pour que la caméra ignore ceux hors de l'écran
 
 var _deco := {}  # nom -> {"mesh": Mesh, "transforms": Array, "ombre": bool, "materiau": Material}
 var _hasard := RandomNumberGenerator.new()
@@ -34,6 +34,9 @@ func _materiaux() -> void:
 	materiaux["terre"] = _matiere(8, "#93765a", "#6f5741", "#4a3a2c")
 	materiaux["rocher"] = _matiere(9, "#a3a39d", "#6d6d6a")
 	materiaux["chaume"] = _matiere(10, "#c2a868", "#806c42")
+	materiaux["tuiles_rouges"] = _matiere(4, "#9c3426", "#47120d")
+	materiaux["planches"] = _matiere(5, "#a87850", "#6e4a2e")
+	materiaux["bois_sombre"] = _matiere(5, "#4a3020", "#2c1c13")
 	materiaux["tatami"] = _matiere(11, "#b3aa6c", "#8e8652")
 	materiaux["laque"] = mat("#b8321e", {"roughness": 0.45})
 	materiaux["rouge"] = mat("#c23b22", {"roughness": 0.5})
@@ -396,105 +399,135 @@ func _pan_de_toit(parent: Node3D, base: Vector3, lx: float, lz: float, coupe: fl
 		ajouter(parent, orne)
 
 
-## Le vieux maître du clan, qui parle au ninja au début du jeu : le modèle du ninja,
-## teinté plus clair, avec un chapeau de paille, une barbe blanche et un bâton. Sans collision.
-func maitre(x: float, y: float, regard := 0.0) -> void:
-	var m := _personnage(racine, "Maitre", P(x, y), regard, Color(0.8, 0.74, 0.62), "#c9a35a")
-	m.scale = Vector3.ONE * 0.95
-	var barbe := MeshInstance3D.new()
-	var b := CylinderMesh.new()
-	b.top_radius = 0.1
-	b.bottom_radius = 0.01
-	b.height = 0.26
-	barbe.mesh = b
-	barbe.material_override = mat("#eeeae0")
-	barbe.position = Vector3(0, 0.82, 0.2)
-	barbe.rotation.x = 0.25
-	ajouter(m, barbe)
-	var baton := MeshInstance3D.new()
-	var bb := CylinderMesh.new()
-	bb.top_radius = 0.025
-	bb.bottom_radius = 0.03
-	bb.height = 1.3
-	baton.mesh = bb
-	baton.material_override = materiaux["bois"]
-	baton.position = Vector3(-0.32, 0.65, 0.12)
-	baton.rotation.z = 0.08
-	ajouter(m, baton)
-
-
-## Le modèle du ninja, teint d'un habit d'une autre couleur (la texture noire est éclaircie),
-## avec un chapeau de paille conique. Sert au maître et aux villageois.
-func _personnage(parent: Node, nom: String, position: Vector3, regard: float, couleur: Color, paille_couleur := "") -> Node3D:
-	var m: Node3D = load("res://scenes/characters/ninja_modele.tscn").instantiate()
-	m.name = nom
-	m.position = position
-	m.rotation.y = regard
-	ajouter(parent, m)
-	var corps: MeshInstance3D = m.find_child("Ninja", true, false)
-	var tissu := (corps.mesh.surface_get_material(0) as BaseMaterial3D).albedo_texture
-	var habit := ShaderMaterial.new()
-	habit.shader = _shader_habit()
-	habit.set_shader_parameter("tissu", tissu)
-	habit.set_shader_parameter("couleur", couleur)
-	corps.material_override = habit
-	# pas de katana pour eux
-	for k in ["KatanaDos", "KatanaMain"]:
-		var katana: Node3D = m.find_child(k, true, false)
-		if katana:
-			katana.visible = false
-	racine.set_editable_instance(m, true)  # pour que la scène garde cet habit
-	if paille_couleur != "":
-		var chapeau := MeshInstance3D.new()
-		var cone := CylinderMesh.new()
-		cone.top_radius = 0.02
-		cone.bottom_radius = 0.42
-		cone.height = 0.2
-		cone.radial_segments = 14
-		chapeau.mesh = cone
-		chapeau.material_override = mat(paille_couleur, {"roughness": 0.9})
-		chapeau.position = Vector3(0, 1.36, 0.0)
-		ajouter(m, chapeau)
-	return m
-
-
-func _shader_habit() -> Shader:
-	if _meshes.has("shader_habit"):
-		return _meshes["shader_habit"]
-	var sh := Shader.new()
-	sh.code = """
-shader_type spatial;
-uniform sampler2D tissu : source_color, filter_linear_mipmap;
-uniform vec3 couleur : source_color = vec3(0.8, 0.74, 0.62);
-void fragment() {
-	vec3 t = texture(tissu, UV).rgb;
-	float l = dot(t, vec3(0.333));
-	ALBEDO = couleur * (0.45 + 0.9 * l);
-	ROUGHNESS = 0.9;
-}
-"""
-	_meshes["shader_habit"] = sh
-	return sh
-
-
-## Villageois : [x, y, regard (deg), couleur, réplique japonaise, traduction, (x2, y2 : il fait des allers-retours)].
-## Ils saluent le ninja quand il passe et lui disent un mot (scripts/villageois.gd).
-func villageois(liste: Array) -> void:
-	var script := load("res://scripts/villageois.gd")
-	for i in liste.size():
-		var v: Array = liste[i]
+## Habitants du village (scripts/habitant.gd) : une liste de dictionnaires
+## {nom, x, y, regard (deg), allure, kimono, obi, cheveux, chapeau, chignon, barbe, baton, noeud,
+##  journee: [[x, y, activite, duree, (regard deg)]...]}.
+func habitants(liste: Array) -> void:
+	var script := load("res://scripts/habitant.gd")
+	for h: Dictionary in liste:
 		var n := Node3D.new()
-		n.name = "Villageois%d" % i
+		n.name = h.get("noeud", "Habitant_" + String(h["nom"]).replace(" ", ""))
 		n.set_script(script)
-		n.position = P(v[0], v[1])
+		n.position = P(h["x"], h["y"])
+		n.rotation.y = deg_to_rad(h.get("regard", 0.0))
 		ajouter(racine, n)
-		n.set("replique_jp", v[4])
-		n.set("replique", v[5])
-		n.set("voix", "villageois%d" % i)
-		if v.size() > 7:
-			n.set("aller", P(v[6], v[7]))
-		_personnage(n, "Modele", Vector3.ZERO, deg_to_rad(v[2]), Color(v[3]), "#b8954e" if i % 2 == 0 else "")
-		_occupe.append(Rect2(v[0], v[1], 0, 0).grow(20))
+		n.set("nom_affiche", h["nom"])
+		for cle in ["allure", "chapeau", "chignon", "barbe", "baton", "vitesse"]:
+			if h.has(cle):
+				n.set(cle, h[cle])
+		for cle in ["kimono", "obi", "cheveux"]:
+			if h.has(cle):
+				n.set(cle, Color(h[cle]))
+		var journee := []
+		for e in h.get("journee", []):
+			var etape := [P(e[0], e[1]), e[2], e[3]]
+			if e.size() > 4:
+				etape.append(e[4])
+			journee.append(etape)
+		n.set("journee", journee)
+
+
+## Maison du village en bois : murs de planches, poteaux et poutres sombres, fenêtres de papier
+## éclairées, porte, petite véranda (engawa) devant, et toit de tuiles rouges. Toit escaladable.
+## `face` : côté de la porte (0 sud, 1 nord, 2 est, 3 ouest).
+func maison_bois(nom: String, x: float, y: float, w: float, d: float, h := 1.9, face := 0, toit := "tuiles_rouges") -> void:
+	boite(nom, x, y, w, d, h, "planches")
+	boite(nom + "Socle", x - 4, y - 4, w + 8, d + 8, 0.22, "pierre")
+	toit_japonais(nom + "Toit", x, y, w, d, h - 0.4, 1, toit)
+	var c := P(x + w / 2.0, y + d / 2.0)
+	var lx := w * ECHELLE
+	var lz := d * ECHELLE
+	for sx in [-1.0, 1.0]:
+		for sz in [-1.0, 1.0]:
+			plaque("Poteaux", c + Vector3(sx * lx / 2.0, h / 2.0, sz * lz / 2.0), Vector3(0.2, h, 0.2), "bois_sombre")
+	plaque("Poutres", c + Vector3(0, h - 0.12, 0), Vector3(lx + 0.08, 0.18, lz + 0.08), "bois_sombre")
+	plaque("Poutres", c + Vector3(0, 0.32, 0), Vector3(lx + 0.06, 0.12, lz + 0.06), "bois_sombre")
+	# les quatre faces : fenêtres de papier, et la porte avec sa véranda sur la face choisie
+	var faces := [[Vector3(0, 0, lz / 2.0 + 0.03), lx, true], [Vector3(0, 0, -lz / 2.0 - 0.03), lx, true],
+		[Vector3(lx / 2.0 + 0.03, 0, 0), lz, false], [Vector3(-lx / 2.0 - 0.03, 0, 0), lz, false]]
+	for k in 4:
+		var f: Array = faces[k]
+		var le_long_x: bool = f[2]
+		var largeur: float = f[1]
+		var n := maxi(int(largeur / 2.4), 1)
+		for i in n:
+			var t := ((i + 0.5) / n - 0.5) * largeur
+			var pos: Vector3 = c + f[0] + (Vector3(t, h * 0.55, 0) if le_long_x else Vector3(0, h * 0.55, t))
+			var porte := k == face and i == n / 2
+			if porte:
+				var taille_porte := Vector3(0.9, 1.35, 0.05) if le_long_x else Vector3(0.05, 1.35, 0.9)
+				plaque("PortesMaison", pos + Vector3(0, -h * 0.55 + 0.68 + 0.2, 0), taille_porte, "shoji", false)
+				plaque("Croisillons", pos + Vector3(0, -h * 0.55 + 0.9, 0), Vector3(0.05, 1.35, 0.07) if le_long_x else Vector3(0.07, 1.35, 0.05), "bois_sombre", false)
+				continue
+			var taille := Vector3(0.7, 0.5, 0.04) if le_long_x else Vector3(0.04, 0.5, 0.7)
+			plaque("Shoji", pos, taille, "shoji", false)
+			var montant := Vector3(0.04, 0.5, 0.06) if le_long_x else Vector3(0.06, 0.5, 0.04)
+			var traverse := Vector3(0.7, 0.04, 0.06) if le_long_x else Vector3(0.06, 0.04, 0.7)
+			for m in [-0.17, 0.17]:
+				plaque("Croisillons", pos + (Vector3(m, 0, 0) if le_long_x else Vector3(0, 0, m)), montant, "bois_sombre", false)
+			plaque("Croisillons", pos, traverse, "bois_sombre", false)
+		if k == face:
+			# véranda en planches et marche de pierre devant la porte
+			var dehors: Vector3 = (f[0] as Vector3).normalized()
+			var veranda := Vector3(largeur * 0.8, 0.12, 0.9) if le_long_x else Vector3(0.9, 0.12, largeur * 0.8)
+			plaque("Verandas", c + f[0] + dehors * 0.45 + Vector3(0, 0.3, 0), veranda, "parquet")
+			plaque("Marches", c + f[0] + dehors * 1.15 + Vector3(0, 0.1, 0), Vector3(0.9, 0.2, 0.5) if le_long_x else Vector3(0.5, 0.2, 0.9), "pierre")
+
+
+## Chemin de terre qui serpente par les points donnés (px) : un ruban posé sur l'herbe, avec deux
+## ornières, des cailloux et un bord irrégulier où l'herbe mord (assets/shaders/chemin.gdshader).
+func chemin_terre(nom: String, points: Array, largeur: float) -> void:
+	var pts: Array[Vector3] = []
+	for p in points:
+		pts.append(P(p[0], p[1], 0.022))
+	var courbe: Array[Vector3] = []
+	for i in pts.size() - 1:
+		var a := pts[maxi(i - 1, 0)]
+		var d := pts[mini(i + 2, pts.size() - 1)]
+		var n := maxi(int(pts[i].distance_to(pts[i + 1]) / 0.6), 2)
+		for k in n:
+			courbe.append(pts[i].cubic_interpolate(pts[i + 1], a, d, float(k) / n))
+	courbe.append(pts[pts.size() - 1])
+	var demi := largeur * ECHELLE / 2.0
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var v := 0.0
+	var bords := []
+	for k in courbe.size():
+		var dir := (courbe[mini(k + 1, courbe.size() - 1)] - courbe[maxi(k - 1, 0)]).normalized()
+		var cote := dir.cross(Vector3.UP).normalized()
+		if k > 0:
+			v += courbe[k].distance_to(courbe[k - 1])
+		bords.append([courbe[k] - cote * demi * 1.25, courbe[k] + cote * demi * 1.25, v])
+		var r := Rect2(courbe[k].x / ECHELLE + origine.x, courbe[k].z / ECHELLE + origine.y, 0, 0).grow(largeur * 0.55)
+		_occupe.append(r)
+	for k in bords.size() - 1:
+		var a: Array = bords[k]
+		var b: Array = bords[k + 1]
+		var quad := [[a[0], Vector2(0, a[2])], [b[0], Vector2(0, b[2])], [b[1], Vector2(1, b[2])],
+			[a[0], Vector2(0, a[2])], [b[1], Vector2(1, b[2])], [a[1], Vector2(1, a[2])]]
+		for q in quad:
+			st.set_normal(Vector3.UP)
+			st.set_uv(q[1])
+			st.add_vertex(q[0])
+	var mi := MeshInstance3D.new()
+	mi.name = nom
+	mi.mesh = st.commit()
+	mi.material_override = _shader("chemin")
+	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	ajouter(racine, mi)
+	# touffes d'herbe et petites pierres le long des bords
+	_hasard.seed = int(largeur * 7)
+	for k in range(0, courbe.size(), 2):
+		var dir := (courbe[mini(k + 1, courbe.size() - 1)] - courbe[maxi(k - 1, 0)]).normalized()
+		var cote := dir.cross(Vector3.UP).normalized()
+		for s in [-1.0, 1.0]:
+			if _hasard.randf() < 0.55:
+				touffes(courbe[k] + cote * s * demi * _hasard.randf_range(0.95, 1.2), 0.15, 1)
+			if _hasard.randf() < 0.18:
+				var t := _hasard.randf_range(0.08, 0.2)
+				var p: Vector3 = courbe[k] + cote * s * demi * _hasard.randf_range(0.85, 1.15)
+				deco("Galets", _sphere(), Transform3D(Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(t * 1.3, t * 0.5, t)), Vector3(p.x, 0.02, p.z)), materiaux["rocher"])
 
 
 ## Chats qui dorment ou se lèchent la patte : [x, y, regard (deg)]. Ils miaulent quand on passe.
@@ -537,10 +570,11 @@ func torii(x: float, y: float, largeur := 4.0, h := 3.6) -> void:
 
 
 ## Grande porte du château : deux vantaux qui s'ouvrent avec E, entre x et x + w (px), à la ligne y.
-func grande_porte(x: float, y: float, w: float, h := 4.2) -> void:
+func grande_porte(x: float, y: float, w: float, h := 4.2, nom := "GrandePorte", texte := "Ouvrir la grande porte") -> void:
 	var porte := Node3D.new()
 	porte.set_script(load("res://scripts/porte.gd"))
-	porte.name = "GrandePorte"
+	porte.name = nom
+	porte.set("texte", texte)
 	porte.position = P(x + w / 2.0, y)
 	porte.set("genre", 0)
 	porte.set("largeur", w * ECHELLE)
@@ -587,21 +621,6 @@ func declencheur(nom: String, x: float, y: float, w: float, d: float) -> void:
 	b.size = Vector3(w * ECHELLE, 2.0, d * ECHELLE)
 	forme.shape = b
 	ajouter(z, forme)
-
-
-## Coassements de grenouilles près de l'eau : [x, y] en px (son 3D en boucle, discret).
-func grenouilles(points: Array) -> void:
-	for i in points.size():
-		var son := AudioStreamPlayer3D.new()
-		son.name = "Grenouilles%d" % i
-		son.position = P(points[i][0], points[i][1], 0.3)
-		son.stream = load("res://assets/audio/sfx/grenouilles.ogg")
-		son.autoplay = true
-		son.volume_db = -14.0
-		son.unit_size = 4.0
-		son.max_distance = 22.0
-		son.bus = &"Master"
-		ajouter(racine, son)
 
 
 ## Guirlandes de lanternes en papier (chōchin) rouges, peintes du kanji 福 (bonheur), avec bagues
@@ -1089,20 +1108,19 @@ func batiment(nom: String, x: float, y: float, w: float, d: float, h: float, toi
 
 # --- Végétation -------------------------------------------------------------
 
-## Buissons taillés en boule : [x, y, diamètre en m].
+## Buissons touffus (cartes de feuilles, scripts/touffu.gd) : [x, y, diamètre en m].
 func buissons(liste: Array) -> void:
 	_hasard.seed = 4404
 	for b in liste:
 		var r: float = b[2] / 2.0
 		var c := P(b[0], b[1])
-		var nombre := 5 + int(r * 4.0)
-		deco("Buissons", _sphere(), Transform3D(Basis().scaled(Vector3(r * 1.9, r * 1.5, r * 1.9)), c + Vector3(0, r * 0.65, 0)), materiaux["feuillage"])
-		for k in nombre:
+		for k in 2:
+			var s := r if k == 0 else r * _hasard.randf_range(0.5, 0.65)
 			var a := _hasard.randf() * TAU
-			var dist := _hasard.randf_range(0.35, 0.75) * r
-			var s := r * _hasard.randf_range(0.7, 1.05)
-			var pos := c + Vector3(cos(a) * dist, s * 0.55 + _hasard.randf_range(0.0, r * 0.45), sin(a) * dist)
-			deco("Buissons", _sphere(), Transform3D(Basis().scaled(Vector3(s, s * 0.85, s)), pos), materiaux["feuillage"])
+			var pos := c if k == 0 else c + Vector3(cos(a), 0, sin(a)) * r * 0.7
+			var base := Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(s, s * 0.9, s))
+			var variante := _hasard.randi_range(0, 3)
+			deco("Buissons%d" % variante, Touffu.maillage(variante), Transform3D(base, pos + Vector3(0, s * 0.5, 0)), Touffu.materiau())
 		touffes(c, r + 0.5, 4)
 
 

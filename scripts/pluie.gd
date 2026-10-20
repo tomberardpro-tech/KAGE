@@ -20,7 +20,7 @@ func _ready() -> void:
 	var flux: AudioStreamOggVorbis = load("res://assets/audio/sfx/pluie.ogg").duplicate()
 	flux.loop = true
 	bruit.stream = flux
-	bruit.volume_db = -27.0
+	bruit.volume_db = -5.0
 	add_child(bruit)
 	bruit.play()
 

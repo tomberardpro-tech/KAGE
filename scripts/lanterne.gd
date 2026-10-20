@@ -16,7 +16,6 @@ var _t := randf() * 10.0
 
 func _ready() -> void:
 	add_to_group("lanternes")
-	add_to_group("interactifs")
 	(_zone.get_node("Forme") as CollisionShape3D).shape.radius = rayon
 	_lumiere.omni_range = rayon + 1.0
 	_energie = _lumiere.light_energy

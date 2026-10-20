@@ -3,6 +3,7 @@
 Lancer : python3 scripts/tools/generer_textures.py
 """
 import os
+import random
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 ICI = os.path.dirname(os.path.abspath(__file__))
@@ -65,7 +66,44 @@ def portrait(nom, kanji, fond, encre, anneau):
     print("portrait_%s.png" % nom)
 
 
+def feuilles():
+    """Touffe de feuilles en niveaux de gris sur fond transparent, pour les buissons (teintée par le shader)."""
+    import math
+    taille = 512
+    img = Image.new("RGBA", (taille, taille), (0, 0, 0, 0))
+    hasard = random.Random(44)
+    c = taille / 2
+    for k in range(260):
+        # plus de feuilles vers le centre : la touffe a un contour arrondi et irrégulier
+        r = (hasard.random() ** 0.7) * taille * 0.44
+        a = hasard.random() * math.tau
+        x, y = c + math.cos(a) * r, c + math.sin(a) * r
+        long_ = hasard.uniform(34, 58)
+        large = long_ * hasard.uniform(0.38, 0.5)
+        angle = a + hasard.uniform(-0.9, 0.9)
+        clair = hasard.uniform(0.55, 1.0) * (1.0 - 0.35 * r / (taille * 0.44))
+        feuille = Image.new("RGBA", (int(long_ * 2.2), int(long_ * 2.2)), (0, 0, 0, 0))
+        d = ImageDraw.Draw(feuille)
+        fx, fy = feuille.size[0] / 2, feuille.size[1] / 2
+        pts = []
+        for t in range(21):
+            u = t / 20
+            pts.append((fx - long_ / 2 + u * long_, fy - math.sin(u * math.pi) ** 0.8 * large / 2))
+        for t in range(20, -1, -1):
+            u = t / 20
+            pts.append((fx - long_ / 2 + u * long_, fy + math.sin(u * math.pi) ** 0.8 * large / 2))
+        g = int(255 * clair)
+        d.polygon(pts, fill=(g, g, g, 255))
+        # moitié éclairée, moitié ombrée, et la nervure
+        g2 = int(g * 0.78)
+        d.polygon(pts[21:], fill=(g2, g2, g2, 255))
+        d.line([(fx - long_ / 2, fy), (fx + long_ / 2, fy)], fill=(int(g * 0.6),) * 3 + (255,), width=2)
+        feuille = feuille.rotate(math.degrees(-angle), resample=Image.BICUBIC, expand=False)
+        img.alpha_composite(feuille, (int(x - feuille.size[0] / 2), int(y - feuille.size[1] / 2)))
+    img.save(os.path.join(RACINE, "assets", "textures", "feuilles.png"))
+    print("feuilles.png")
+
+
 if __name__ == "__main__":
     chochin()
-    portrait("maitre", "師", (32, 38, 58, 255), (234, 227, 214, 255), (217, 154, 78, 255))
-    portrait("oni", "鬼", (150, 30, 20, 255), (20, 12, 10, 255), (217, 154, 78, 255))
+    feuilles()
