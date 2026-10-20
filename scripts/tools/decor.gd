@@ -22,11 +22,11 @@ var _sols_durs := []  # [Rect2 en px, hauteur du dessus] : allées, cours pavée
 
 func _materiaux() -> void:
 	super._materiaux()
-	materiaux["herbe"] = _matiere(0, "#4d7a3f", "#2f5629")
+	materiaux["herbe"] = _matiere(0, "#558a42", "#33612c")
 	materiaux["allee"] = _matiere(1, "#9a968c", "#7a7770", "#26331f")
-	materiaux["pave"] = _matiere(2, "#857f76", "#67635d", "#2e2c29")
-	materiaux["mur"] = _matiere(3, "#ebe5d8", "#ebe5d8")
-	materiaux["tuiles"] = _matiere(4, "#4a505c", "#1b1e26")
+	materiaux["pave"] = _matiere(2, "#8c8378", "#6a645c", "#47423b")
+	materiaux["mur"] = _matiere(3, "#ddd4c2", "#ddd4c2")
+	materiaux["tuiles"] = _matiere(4, "#4b5568", "#1d2230")
 	materiaux["bois"] = _matiere(5, "#8c5c3b", "#5c3a25")
 	materiaux["parquet"] = _matiere(5, "#b08254", "#7f5636")
 	materiaux["pierre"] = _matiere(6, "#a19c92", "#78746c", "#3b3a37")
@@ -73,18 +73,35 @@ func _shader(nom: String) -> ShaderMaterial:
 func _ambiance() -> void:
 	super._ambiance()
 	var env: Environment = (racine.get_node("Ambiance") as WorldEnvironment).environment
-	env.ambient_light_color = Color("#4f5f86")
-	env.ambient_light_energy = 0.42
-	(racine.get_node("Lune") as DirectionalLight3D).light_energy = 0.75
-	env.fog_light_color = Color("#2c3448")
-	env.fog_density = 0.012
+	# Nuit douce façon jeu cosy : ambiance bleu lavande assez claire pour bien lire les formes,
+	# lune légèrement plus présente, ombres adoucies, et un halo chaud autour des lanternes.
+	env.ambient_light_color = Color("#6272a8")
+	env.ambient_light_energy = 0.55
+	var lune_douce := racine.get_node("Lune") as DirectionalLight3D
+	lune_douce.light_color = Color("#d4dcff")
+	lune_douce.light_energy = 0.85
+	lune_douce.shadow_blur = 1.6
+	lune_douce.shadow_opacity = 0.72
+	env.fog_light_color = Color("#34395a")
+	env.fog_density = 0.011
+	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	env.tonemap_exposure = 1.08
+	env.tonemap_white = 6.0
 	env.adjustment_enabled = true
-	env.adjustment_saturation = 1.05
-	env.adjustment_contrast = 1.06
+	env.adjustment_brightness = 1.02
+	env.adjustment_saturation = 1.14
+	env.adjustment_contrast = 1.04
 	env.glow_enabled = true
-	env.glow_intensity = 0.6
-	env.glow_bloom = 0.05
-	env.glow_hdr_threshold = 0.9
+	env.glow_intensity = 0.7
+	env.glow_strength = 1.05
+	env.glow_bloom = 0.04
+	env.glow_hdr_threshold = 0.85
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SOFTLIGHT
+	env.set_glow_level(1, 0.0)
+	env.set_glow_level(2, 0.6)
+	env.set_glow_level(3, 1.0)
+	env.set_glow_level(4, 0.6)
+	env.set_glow_level(5, 0.3)
 	# ciel de nuit dessiné : étoiles, lune et nuages (la brume ne le recouvre presque pas)
 	var ciel := ShaderMaterial.new()
 	ciel.shader = load(SHADERS + "ciel.gdshader")
@@ -802,7 +819,7 @@ func _alentours() -> void:
 
 	# montagnes bleutées au loin, que la brume estompe
 	var mont := _mesh_montagne()
-	var m_mont := mat("#27304a", {"roughness": 1.0, "cull_mode": BaseMaterial3D.CULL_DISABLED})
+	var m_mont := _shader("montagne")
 	var centre := _sol.get_center()
 	var rayon := maxf(_sol.size.x, _sol.size.y) * 0.5 + 90.0 / ECHELLE
 	for i in 14:
@@ -996,8 +1013,15 @@ func finir(chemin: String) -> void:
 	for nom in _deco:
 		var d: Dictionary = _deco[nom]
 		var carres := {}
+		# Les montagnes et les petits groupes restent d'un seul tenant (un découpage n'y gagne rien),
+		# la forêt du pourtour, loin de la caméra, en plus grands carrés : moins d'appels de dessin.
+		var taille := CARRE
+		if nom.begins_with("Montagnes") or d["transforms"].size() <= 8:
+			taille = 100000.0
+		elif nom.begins_with("Foret"):
+			taille = CARRE * 2.0
 		for tr: Transform3D in d["transforms"]:
-			var cle := Vector2i(floori(tr.origin.x / CARRE), floori(tr.origin.z / CARRE))
+			var cle := Vector2i(floori(tr.origin.x / taille), floori(tr.origin.z / taille))
 			if not carres.has(cle):
 				carres[cle] = []
 			carres[cle].append(tr)
