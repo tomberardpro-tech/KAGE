@@ -357,21 +357,183 @@ def bruit_autel():
 
 
 def bruit_pluie():
-    """Pluie douce en boucle : bruissement feutré et gouttes rares et légères."""
+    """Pluie fine et légère en boucle : un souffle aigu très doux et de minuscules gouttes."""
     duree = 12.0
     n = int(duree * SR)
-    piste = passe_bas(passe_haut(hasard.normal(0, 1, n), 250), 1800) * 0.4
-    piste += passe_bas(hasard.normal(0, 1, n), 220) * 0.3
-    goutte_n = int(0.04 * SR)
+    piste = passe_bas(passe_haut(hasard.normal(0, 1, n), 2600), 7000) * 0.22
+    # le souffle respire lentement, comme une averse qui va et vient
+    piste *= 0.8 + 0.2 * np.sin(np.arange(n) / SR * 2 * np.pi / 6.0)
+    goutte_n = int(0.015 * SR)
     tg = np.arange(goutte_n) / SR
-    for _ in range(int(duree * 18)):
-        f = hasard.uniform(900, 2200)
-        g = np.sin(2 * np.pi * f * tg) * np.exp(-tg * hasard.uniform(90, 160))
-        poser(piste, g * hasard.uniform(0.02, 0.07), hasard.uniform(0, duree - 0.05))
+    for _ in range(int(duree * 26)):
+        f = hasard.uniform(3000, 6500)
+        g = np.sin(2 * np.pi * f * tg) * np.exp(-tg * hasard.uniform(300, 500))
+        poser(piste, g * hasard.uniform(0.01, 0.035), hasard.uniform(0, duree - 0.05))
     # fondu enchaîné : la fin se mélange au début pour une boucle sans raccord audible
     f = int(1.0 * SR)
     piste[:f] = piste[:f] * np.linspace(0, 1, f) + piste[-f:] * np.linspace(1, 0, f)
+    return normaliser(piste[:-f], 0.3)
+
+
+def musique_boss():
+    """Combat contre le seigneur Oni : gros taiko à 132 battements, koto grave et menaçant, cri de flûte."""
+    temps = 60 / 132
+    mesures = 8
+    piste = silence(mesures * 4 * temps)
+    for i in range(mesures * 4):
+        poser(piste, taiko(0.7, 48 if i % 2 == 0 else 62, 1.0 if i % 4 == 0 else 0.7), i * temps)
+        poser(piste, taiko(0.25, 120, 0.3), i * temps + temps / 2)
+        if i % 8 == 7:
+            for k in range(3):
+                poser(piste, taiko(0.3, 90, 0.5), i * temps + temps * (0.25 + k * 0.25))
+    motif = [0, 0, 1, 0, 3, 2, 1, -1]
+    for i in range(mesures * 8):
+        d = motif[i % 8] + (2 if (i // 16) % 2 else 0)
+        poser(piste, koto(note(d, 0), 0.7) * 0.5, i * temps / 2)
+    for debut, d in [(0, 4), (8, 5), (16, 4), (24, 7)]:
+        poser(piste, flute(note(d, 1), temps * 6, 0.25), debut * temps)
+    for i in range(mesures):
+        poser(piste, claquoir(0.5), (i * 4 + 3) * temps)
+    return boucle(normaliser(reverb(piste, 1.2, 0.2), 0.82), 0.01)
+
+
+def stinger_tresor():
+    """Le parchemin est retrouvé : montée de koto, accord tenu et grande cloche (fanfare originale)."""
+    piste = silence(4.5)
+    for i, d in enumerate([0, 2, 4, 5]):
+        poser(piste, koto(note(d, 1), 2.0) * 0.6, i * 0.16)
+    for d in [5, 7, 9]:
+        poser(piste, koto(note(d, 1), 3.5) * 0.45, 0.8)
+        poser(piste, flute(note(d, 1), 2.6, 0.18), 0.8)
+    poser(piste, cloche(note(7, 2), 3.5, 0.5), 0.8)
+    poser(piste, taiko(1.4, 52, 0.9), 0.78)
+    return normaliser(reverb(piste, 2.2, 0.35), 0.85)
+
+
+def bruit_porte():
+    """Grande porte : grincement grave du bois et des gonds, puis un coup sourd."""
+    duree = 3.0
+    n = int(duree * SR)
+    t = np.arange(n) / SR
+    f = 70 + 25 * np.sin(2 * np.pi * 0.7 * t) + 8 * hasard.normal(0, 1, n).cumsum() / np.sqrt(n)
+    grince = np.sin(2 * np.pi * np.cumsum(f) / SR) * (0.5 + 0.5 * np.abs(np.sin(2 * np.pi * 9 * t)))
+    grince = passe_bas(grince + hasard.normal(0, 0.3, n), 900) * np.minimum(t / 0.3, 1) * np.clip((2.6 - t) / 0.4, 0, 1)
+    piste = grince * 0.8
+    poser(piste, taiko(1.2, 38, 1.2), 2.55)
+    return normaliser(reverb(piste, 2.0, 0.3), 0.8)
+
+
+def bruit_herse():
+    """Herse qui tombe : chaînes qui cliquettent puis choc lourd de bois et de fer."""
+    piste = silence(1.6)
+    for k in range(10):
+        poser(piste, cloche(hasard.uniform(1800, 3200), 0.15, 0.15), k * 0.025)
+    poser(piste, taiko(1.0, 42, 1.3), 0.3)
+    choc = passe_bas(hasard.normal(0, 1, int(0.3 * SR)), 2500) * np.exp(-np.arange(int(0.3 * SR)) / SR * 25)
+    poser(piste, choc * 0.8, 0.3)
+    return normaliser(reverb(piste, 1.8, 0.3), 0.85)
+
+
+def bruit_coffre():
+    """Couvercle du coffre : craquement de bois, puis scintillement doré qui monte."""
+    piste = silence(2.4)
+    poser(piste, passe_bas(hasard.normal(0, 1, int(0.5 * SR)), 700) * np.linspace(0.6, 0, int(0.5 * SR)), 0.0)
+    for i, d in enumerate([4, 5, 7, 9, 10, 12]):
+        poser(piste, cloche(note(d, 2), 1.6, 0.25), 0.5 + i * 0.12)
+    return normaliser(reverb(piste, 2.0, 0.35), 0.75)
+
+
+def bruit_coffre_apparait():
+    piste = silence(2.0)
+    souffle = passe_haut(hasard.normal(0, 1, int(1.2 * SR)), 2000) * np.linspace(0, 1, int(1.2 * SR)) ** 2 * 0.3
+    poser(piste, souffle, 0.0)
+    poser(piste, cloche(note(7, 2), 1.8, 0.5), 1.15)
+    poser(piste, cloche(note(9, 2), 1.6, 0.3), 1.2)
+    return normaliser(reverb(piste, 2.0, 0.3), 0.75)
+
+
+def bruit_boss_cri():
+    """Grondement du seigneur Oni avant de charger."""
+    duree = 0.9
+    n = int(duree * SR)
+    t = np.arange(n) / SR
+    f = 85 + 30 * np.sin(np.pi * t / duree)
+    voix = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * 0.5 + np.sin(2 * np.pi * np.cumsum(f * 2) / SR) * 0.3
+    voix = passe_bas(voix + hasard.normal(0, 0.4, n), 1100) * np.minimum(t / 0.08, 1) * np.clip((duree - t) / 0.25, 0, 1)
+    return normaliser(reverb(voix, 1.4, 0.25), 0.8)
+
+
+def bruit_boss_charge():
+    n = int(0.5 * SR)
+    t = np.arange(n) / SR
+    souffle = passe_bas(hasard.normal(0, 1, n), 1500) * np.exp(-t * 5)
+    piste = souffle * 0.7
+    poser(piste, taiko(0.5, 70, 0.6), 0.0)
+    return normaliser(piste, 0.75)
+
+
+def bruit_boss_touche():
+    piste = silence(0.6)
+    poser(piste, taiko(0.5, 95, 0.8), 0.0)
+    poser(piste, cloche(620, 0.4, 0.35), 0.0)
+    return normaliser(piste, 0.75)
+
+
+def bruit_boss_onde():
+    piste = silence(1.6)
+    poser(piste, taiko(1.5, 34, 1.4), 0.0)
+    gronde = passe_bas(hasard.normal(0, 1, int(1.2 * SR)), 180) * np.exp(-np.arange(int(1.2 * SR)) / SR * 3)
+    poser(piste, gronde * 1.2, 0.02)
+    return normaliser(reverb(piste, 1.6, 0.25), 0.9)
+
+
+def bruit_buisson():
+    """Bruissement de feuilles quand on entre dans un buisson."""
+    n = int(0.45 * SR)
+    t = np.arange(n) / SR
+    feuilles = passe_haut(hasard.normal(0, 1, n), 1500) * (0.5 + 0.5 * np.abs(np.sin(2 * np.pi * 18 * t)))
+    return normaliser(passe_bas(feuilles, 6000) * np.minimum(t / 0.03, 1) * np.exp(-t * 6), 0.5)
+
+
+def bruit_miaou():
+    duree = 0.7
+    n = int(duree * SR)
+    t = np.arange(n) / SR
+    f = 520 + 280 * np.sin(np.pi * np.minimum(t / 0.45, 1)) - 120 * t
+    ton = np.sin(2 * np.pi * np.cumsum(f) / SR) + 0.4 * np.sin(4 * np.pi * np.cumsum(f) / SR)
+    # « mi-a-ou » : la bouche s'ouvre puis se ferme
+    ouvert = np.sin(np.pi * np.clip(t / duree, 0, 1)) ** 0.7
+    return normaliser(passe_bas(ton, 1200 + 2400 * ouvert[len(ouvert) // 2]) * ouvert, 0.5)
+
+
+def bruit_grenouilles():
+    """Coassements de grenouilles au bord de l'eau, en boucle."""
+    duree = 9.0
+    piste = silence(duree)
+    for _ in range(26):
+        debut = hasard.uniform(0, duree - 0.5)
+        f = hasard.uniform(180, 320)
+        for k in range(hasard.integers(2, 5)):
+            n = int(0.07 * SR)
+            t = np.arange(n) / SR
+            c = np.sign(np.sin(2 * np.pi * f * t)) * np.sin(np.pi * t / 0.07) * hasard.uniform(0.2, 0.5)
+            poser(piste, passe_bas(c, 1400), debut + k * 0.11)
+    f = int(0.5 * SR)
+    piste[:f] = piste[:f] * np.linspace(0, 1, f) + piste[-f:] * np.linspace(1, 0, f)
     return normaliser(piste[:-f], 0.5)
+
+
+def bruit_corbeau():
+    """Croassement lointain de corbeau (deux ou trois « kaa »)."""
+    piste = silence(1.6)
+    for k in range(3):
+        n = int(0.28 * SR)
+        t = np.arange(n) / SR
+        f = 420 - 120 * t / 0.28
+        ton = np.sign(np.sin(2 * np.pi * np.cumsum(f) / SR)) * 0.4 + np.sin(2 * np.pi * np.cumsum(f * 3) / SR) * 0.2
+        ton = passe_bas(ton + hasard.normal(0, 0.35, n), 1800) * np.sin(np.pi * t / 0.28) ** 0.5
+        poser(piste, ton * (1.0 - k * 0.2), k * 0.42)
+    return normaliser(reverb(piste, 2.4, 0.4), 0.45)
 
 
 def bruit_clic():
@@ -384,13 +546,19 @@ def bruit_clic():
 if __name__ == "__main__":
     import sys
     choix = set(sys.argv[1:])
-    for nom, f in [("chasse", musique_chasse), ("victoire", stinger_victoire), ("defaite", stinger_defaite)]:
+    for nom, f in [("chasse", musique_chasse), ("victoire", stinger_victoire), ("defaite", stinger_defaite),
+                   ("boss", musique_boss), ("tresor", stinger_tresor)]:
         if not choix or nom in choix:
             ecrire(nom, f(), "music")
     for nom, f in [("pas", bruit_pas), ("saut", bruit_saut), ("grimpe", bruit_grimpe), ("dash", bruit_dash),
                    ("tranche", bruit_tranche), ("lanterne", bruit_lanterne), ("garde_tombe", bruit_garde_tombe),
                    ("alerte", bruit_alerte), ("frappe", bruit_frappe), ("grincement", bruit_grincement),
                    ("clochettes", bruit_clochettes), ("coupe", bruit_coupe), ("parchemin", bruit_parchemin),
-                   ("autel", bruit_autel), ("clic", bruit_clic), ("pluie", bruit_pluie)]:
+                   ("autel", bruit_autel), ("clic", bruit_clic), ("pluie", bruit_pluie),
+                   ("porte", bruit_porte), ("herse", bruit_herse), ("coffre", bruit_coffre),
+                   ("coffre_apparait", bruit_coffre_apparait), ("boss_cri", bruit_boss_cri),
+                   ("boss_charge", bruit_boss_charge), ("boss_touche", bruit_boss_touche),
+                   ("boss_onde", bruit_boss_onde), ("buisson", bruit_buisson), ("miaou", bruit_miaou),
+                   ("grenouilles", bruit_grenouilles), ("corbeau", bruit_corbeau)]:
         if not choix or nom in choix:
             ecrire(nom, f(), "sfx")

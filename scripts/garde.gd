@@ -34,8 +34,12 @@ var _cible := 0
 var _attente := 0.0
 var _point_enquete: Vector3
 var _balayage := 0.0
-var _cone: MeshInstance3D
-var _cone_materiau: StandardMaterial3D
+var _cone: Node3D  ## tourne avec le regard : faisceau au sol et lanterne
+var _cone_materiau: ShaderMaterial
+var _faisceau: SpotLight3D
+var _lueur_lanterne: StandardMaterial3D
+var _teinte := Color(1.0, 0.78, 0.38)
+var _t := randf() * 10.0
 var _frappe := -1.0  ## > 0 : élan du coup en cours
 var _perdu := 0.0
 var _souffle := 0.0  ## après un coup, il reprend son souffle avant de recommencer
@@ -82,6 +86,7 @@ func tuer() -> void:
 		niveau.compter_garde_tue()
 	collision_layer = 0
 	_cone.visible = false
+	set_process(false)
 	var tween := create_tween()
 	tween.tween_property(_visuel, "rotation:x", -PI / 2.0, 0.3)
 	tween.tween_property(_visuel, "scale", Vector3(1, 0.2, 1), 0.4)
@@ -228,7 +233,7 @@ func _surveiller(delta: float) -> void:
 			_perdu = 0.0
 		else:
 			_perdu += delta
-		_cone_materiau.albedo_color = Color(Palette.LAQUE, 0.6)
+		_teindre(COULEUR_CHASSE, 1.0)
 		return
 	if voit:
 		var vitesse_soupcon := 3.0 if ninja.est_eclaire() else 1.2
@@ -244,7 +249,7 @@ func _surveiller(delta: float) -> void:
 		soupcon = maxf(soupcon - 0.5 * delta, 0.0)
 		if etat == Etat.ALERTE and soupcon <= 0.0:
 			etat = Etat.RONDE
-	_cone_materiau.albedo_color = Color(Palette.LAQUE, 0.18 + soupcon * 0.4)
+	_teindre(COULEUR_CALME.lerp(COULEUR_SOUPCON, soupcon), soupcon)
 
 
 func _voit(ninja: Ninja) -> bool:
@@ -280,26 +285,132 @@ func _tourner_vers(direction: Vector3, poids: float) -> void:
 		_cone.rotation.y = _visuel.rotation.y
 
 
-## Cône de vision dessiné au sol, comme sur le plan Figma.
+const COULEUR_CALME := Color(1.0, 0.8, 0.42)  ## flamme de bougie
+const COULEUR_SOUPCON := Color(1.0, 0.5, 0.15)
+const COULEUR_CHASSE := Color(1.0, 0.16, 0.1)
+
+
+func _process(delta: float) -> void:
+	# la flamme de la lanterne tremble un peu
+	_t += delta
+	var vacille := 0.92 + 0.05 * sin(_t * 7.7) + 0.03 * sin(_t * 13.1)
+	_faisceau.light_energy = (1.5 + 1.2 * _alerte_visuelle) * vacille
+	_cone_materiau.set_shader_parameter("vacille", vacille)
+
+
+var _alerte_visuelle := 0.0
+
+
+func _teindre(couleur: Color, alerte: float) -> void:
+	_teinte = _teinte.lerp(couleur, 0.15)
+	_alerte_visuelle = lerpf(_alerte_visuelle, alerte, 0.15)
+	_faisceau.light_color = _teinte
+	_cone_materiau.set_shader_parameter("couleur", _teinte)
+	_cone_materiau.set_shader_parameter("force", 0.22 + 0.34 * _alerte_visuelle)
+	_lueur_lanterne.emission = _teinte
+
+
+## Le garde tient une gandō (lanterne de ronde qui éclaire devant elle) : un faisceau chaud
+## éclaire vraiment le sol devant lui, et une lueur douce au sol montre jusqu'où il voit.
+## Jaune quand il est calme, orange quand il a un doute, rouge quand il nous poursuit.
 func _creer_cone() -> void:
+	_cone = Node3D.new()
+	add_child(_cone)
+	# lueur au sol : éventail aux bords flous, plus fort près du garde, fin liseré au bout
 	var outil := SurfaceTool.new()
 	outil.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var pas := 12
+	var pas := 16
+	var bord := demi_angle + 6.0
 	for i in pas:
-		var a0 := deg_to_rad(-demi_angle + 2.0 * demi_angle * i / pas)
-		var a1 := deg_to_rad(-demi_angle + 2.0 * demi_angle * (i + 1) / pas)
-		outil.add_vertex(Vector3.ZERO)
-		outil.add_vertex(Vector3(sin(a1), 0, cos(a1)) * portee)
-		outil.add_vertex(Vector3(sin(a0), 0, cos(a0)) * portee)
-	_cone_materiau = StandardMaterial3D.new()
-	_cone_materiau.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	_cone_materiau.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	_cone_materiau.cull_mode = BaseMaterial3D.CULL_DISABLED
-	_cone_materiau.albedo_color = Color(Palette.LAQUE, 0.18)
-	_cone = MeshInstance3D.new()
-	_cone.mesh = outil.commit()
-	_cone.material_override = _cone_materiau
-	_cone.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_cone.position.y = 0.04
-	add_child(_cone)
+		var a0 := deg_to_rad(-bord + 2.0 * bord * i / pas)
+		var a1 := deg_to_rad(-bord + 2.0 * bord * (i + 1) / pas)
+		for v in [[Vector3.ZERO, Vector2(0.5, 0)], [Vector3(sin(a1), 0, cos(a1)) * portee, Vector2(float(i + 1) / pas, 1)],
+				[Vector3(sin(a0), 0, cos(a0)) * portee, Vector2(float(i) / pas, 1)]]:
+			outil.set_uv(v[1])
+			outil.add_vertex(v[0])
+	_cone_materiau = ShaderMaterial.new()
+	_cone_materiau.shader = _shader_lueur()
+	var sol := MeshInstance3D.new()
+	sol.mesh = outil.commit()
+	sol.material_override = _cone_materiau
+	sol.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	sol.position.y = 0.05
+	_cone.add_child(sol)
+	# la lanterne, tenue à bout de bras devant lui
+	var lanterne := Node3D.new()
+	lanterne.position = Vector3(0.3, 1.0, 0.42)
+	_cone.add_child(lanterne)
+	var corps := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.09
+	cyl.bottom_radius = 0.1
+	cyl.height = 0.24
+	cyl.radial_segments = 10
+	corps.mesh = cyl
+	var cuivre := StandardMaterial3D.new()
+	cuivre.albedo_color = Color("#3a2a1e")
+	cuivre.metallic = 0.5
+	corps.material_override = cuivre
+	corps.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	lanterne.add_child(corps)
+	var vitre := MeshInstance3D.new()
+	var disque := CylinderMesh.new()
+	disque.top_radius = 0.075
+	disque.bottom_radius = 0.075
+	disque.height = 0.02
+	vitre.mesh = disque
+	vitre.rotation.x = PI / 2.0
+	vitre.position.z = 0.1
+	_lueur_lanterne = StandardMaterial3D.new()
+	_lueur_lanterne.albedo_color = Color.WHITE
+	_lueur_lanterne.emission_enabled = true
+	_lueur_lanterne.emission = COULEUR_CALME
+	_lueur_lanterne.emission_energy_multiplier = 4.0
+	vitre.material_override = _lueur_lanterne
+	lanterne.add_child(vitre)
+	var anse := MeshInstance3D.new()
+	var tige := BoxMesh.new()
+	tige.size = Vector3(0.02, 0.22, 0.02)
+	anse.mesh = tige
+	anse.position = Vector3(0, 0.2, -0.04)
+	anse.material_override = cuivre
+	lanterne.add_child(anse)
+	_faisceau = SpotLight3D.new()
+	_faisceau.position = Vector3(0, 0, 0.1)
+	_faisceau.rotation.x = deg_to_rad(-14.0)
+	_faisceau.rotation.y = PI  # un SpotLight éclaire vers −Z ; le garde regarde vers +Z
+	_faisceau.spot_range = portee + 1.5
+	_faisceau.spot_angle = demi_angle + 4.0
+	_faisceau.spot_attenuation = 0.8
+	_faisceau.set("spot_angle_attenuation", 2.0)  # bord du faisceau adouci
+	_faisceau.light_color = COULEUR_CALME
+	_faisceau.shadow_enabled = false
+	lanterne.add_child(_faisceau)
+	_teindre(COULEUR_CALME, 0.0)
 	_cone.rotation.y = _visuel.rotation.y
+
+
+static var _shader_partage: Shader
+
+
+static func _shader_lueur() -> Shader:
+	if _shader_partage:
+		return _shader_partage
+	_shader_partage = Shader.new()
+	_shader_partage.code = """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+uniform vec3 couleur : source_color = vec3(1.0, 0.8, 0.42);
+uniform float force = 0.35;
+uniform float vacille = 1.0;
+void fragment() {
+	float d = UV.y;  // 0 au garde, 1 au bout de sa vue
+	float cote = abs(UV.x - 0.5) * 2.0;
+	float bords = smoothstep(1.0, 0.45, cote);
+	float lueur = (1.0 - d * 0.75) * smoothstep(1.0, 0.86, d) * bords;
+	float rim = smoothstep(0.86, 0.95, d) * smoothstep(1.0, 0.95, d) * bords * 0.9;
+	float grain = 0.9 + 0.1 * sin(d * 40.0 - TIME * 3.0);
+	ALBEDO = couleur * (lueur * grain + rim) * force * vacille;
+}
+"""
+	return _shader_partage

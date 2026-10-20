@@ -1,6 +1,6 @@
 shader_type spatial;
 // Flamme de brasero, toujours tournée vers la caméra.
-render_mode unshaded, cull_disabled, depth_draw_never, blend_add, shadows_disabled;
+render_mode unshaded, cull_disabled, depth_draw_never, blend_add, shadows_disabled, fog_disabled;
 #include "res://assets/shaders/bruit.gdshaderinc"
 
 uniform vec4 couleur : source_color = vec4(1.0, 0.55, 0.18, 1.0);

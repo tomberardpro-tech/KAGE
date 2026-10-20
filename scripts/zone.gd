@@ -1,9 +1,9 @@
 @tool
 class_name Zone
 extends Area3D
-## Zone qui change la visibilité du ninja : ombre, herbes hautes, lumière ou clair de lune.
+## Zone qui change la visibilité du ninja : ombre, herbes hautes, lumière, clair de lune ou gros buisson.
 
-enum Type { OMBRE, HERBE, LUMIERE, LUNE }
+enum Type { OMBRE, HERBE, LUMIERE, LUNE, BUISSON }
 
 @export var type := Type.OMBRE
 @export var active := true:

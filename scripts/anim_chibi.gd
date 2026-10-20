@@ -163,7 +163,11 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	var nom := "repos"
 	var fondu := 0.18
 	var vitesse_anim := 1.0
-	if frappe:
+	var pose: String = _corps.get("pose_forcee") if _corps.get("pose_forcee") != null else ""
+	if pose != "":
+		nom = pose
+		fondu = 0.12
+	elif frappe:
 		nom = "frappe"
 		fondu = 0.05
 	elif _corps.get("en_grimpe") == true:

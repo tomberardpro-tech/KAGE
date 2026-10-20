@@ -399,41 +399,8 @@ func _pan_de_toit(parent: Node3D, base: Vector3, lx: float, lz: float, coupe: fl
 ## Le vieux maître du clan, qui parle au ninja au début du jeu : le modèle du ninja,
 ## teinté plus clair, avec un chapeau de paille, une barbe blanche et un bâton. Sans collision.
 func maitre(x: float, y: float, regard := 0.0) -> void:
-	var m: Node3D = load("res://scenes/characters/ninja_modele.tscn").instantiate()
-	m.name = "Maitre"
-	m.position = P(x, y)
-	m.rotation.y = regard
+	var m := _personnage(racine, "Maitre", P(x, y), regard, Color(0.8, 0.74, 0.62), "#c9a35a")
 	m.scale = Vector3.ONE * 0.95
-	ajouter(racine, m)
-	var corps: MeshInstance3D = m.find_child("Ninja", true, false)
-	# même modèle que le ninja, mais habit clair de vieux maître (la texture noire est éclaircie)
-	var tissu := (corps.mesh.surface_get_material(0) as BaseMaterial3D).albedo_texture
-	var habit := ShaderMaterial.new()
-	habit.shader = Shader.new()
-	habit.shader.code = """
-shader_type spatial;
-uniform sampler2D tissu : source_color, filter_linear_mipmap;
-void fragment() {
-	vec3 t = texture(tissu, UV).rgb;
-	float l = dot(t, vec3(0.333));
-	ALBEDO = vec3(0.8, 0.74, 0.62) * (0.45 + 0.9 * l);
-	ROUGHNESS = 0.9;
-}
-"""
-	habit.set_shader_parameter("tissu", tissu)
-	corps.material_override = habit
-	racine.set_editable_instance(m, true)  # pour que la scène garde cet habit
-	var paille := mat("#c9a35a", {"roughness": 0.9})
-	var chapeau := MeshInstance3D.new()
-	var cone := CylinderMesh.new()
-	cone.top_radius = 0.02
-	cone.bottom_radius = 0.42
-	cone.height = 0.2
-	cone.radial_segments = 14
-	chapeau.mesh = cone
-	chapeau.material_override = paille
-	chapeau.position = Vector3(0, 1.36, 0.0)
-	ajouter(m, chapeau)
 	var barbe := MeshInstance3D.new()
 	var b := CylinderMesh.new()
 	b.top_radius = 0.1
@@ -456,8 +423,190 @@ void fragment() {
 	ajouter(m, baton)
 
 
-## Guirlandes de lanternes en papier (chōchin) rouges et blanches, tendues entre deux poteaux :
-## [x1, y1, x2, y2] en px. Purement décoratives : pas de collision, pas de vraie lumière (léger).
+## Le modèle du ninja, teint d'un habit d'une autre couleur (la texture noire est éclaircie),
+## avec un chapeau de paille conique. Sert au maître et aux villageois.
+func _personnage(parent: Node, nom: String, position: Vector3, regard: float, couleur: Color, paille_couleur := "") -> Node3D:
+	var m: Node3D = load("res://scenes/characters/ninja_modele.tscn").instantiate()
+	m.name = nom
+	m.position = position
+	m.rotation.y = regard
+	ajouter(parent, m)
+	var corps: MeshInstance3D = m.find_child("Ninja", true, false)
+	var tissu := (corps.mesh.surface_get_material(0) as BaseMaterial3D).albedo_texture
+	var habit := ShaderMaterial.new()
+	habit.shader = _shader_habit()
+	habit.set_shader_parameter("tissu", tissu)
+	habit.set_shader_parameter("couleur", couleur)
+	corps.material_override = habit
+	# pas de katana pour eux
+	for k in ["KatanaDos", "KatanaMain"]:
+		var katana: Node3D = m.find_child(k, true, false)
+		if katana:
+			katana.visible = false
+	racine.set_editable_instance(m, true)  # pour que la scène garde cet habit
+	if paille_couleur != "":
+		var chapeau := MeshInstance3D.new()
+		var cone := CylinderMesh.new()
+		cone.top_radius = 0.02
+		cone.bottom_radius = 0.42
+		cone.height = 0.2
+		cone.radial_segments = 14
+		chapeau.mesh = cone
+		chapeau.material_override = mat(paille_couleur, {"roughness": 0.9})
+		chapeau.position = Vector3(0, 1.36, 0.0)
+		ajouter(m, chapeau)
+	return m
+
+
+func _shader_habit() -> Shader:
+	if _meshes.has("shader_habit"):
+		return _meshes["shader_habit"]
+	var sh := Shader.new()
+	sh.code = """
+shader_type spatial;
+uniform sampler2D tissu : source_color, filter_linear_mipmap;
+uniform vec3 couleur : source_color = vec3(0.8, 0.74, 0.62);
+void fragment() {
+	vec3 t = texture(tissu, UV).rgb;
+	float l = dot(t, vec3(0.333));
+	ALBEDO = couleur * (0.45 + 0.9 * l);
+	ROUGHNESS = 0.9;
+}
+"""
+	_meshes["shader_habit"] = sh
+	return sh
+
+
+## Villageois : [x, y, regard (deg), couleur, réplique japonaise, traduction, (x2, y2 : il fait des allers-retours)].
+## Ils saluent le ninja quand il passe et lui disent un mot (scripts/villageois.gd).
+func villageois(liste: Array) -> void:
+	var script := load("res://scripts/villageois.gd")
+	for i in liste.size():
+		var v: Array = liste[i]
+		var n := Node3D.new()
+		n.name = "Villageois%d" % i
+		n.set_script(script)
+		n.position = P(v[0], v[1])
+		ajouter(racine, n)
+		n.set("replique_jp", v[4])
+		n.set("replique", v[5])
+		n.set("voix", "villageois%d" % i)
+		if v.size() > 7:
+			n.set("aller", P(v[6], v[7]))
+		_personnage(n, "Modele", Vector3.ZERO, deg_to_rad(v[2]), Color(v[3]), "#b8954e" if i % 2 == 0 else "")
+		_occupe.append(Rect2(v[0], v[1], 0, 0).grow(20))
+
+
+## Chats qui dorment ou se lèchent la patte : [x, y, regard (deg)]. Ils miaulent quand on passe.
+func chats(liste: Array) -> void:
+	var script := load("res://scripts/chat.gd")
+	for i in liste.size():
+		var c := Node3D.new()
+		c.name = "Chat%d" % i
+		c.set_script(script)
+		c.position = P(liste[i][0], liste[i][1])
+		c.rotation.y = deg_to_rad(liste[i][2])
+		c.set("pelage", i % 3)
+		ajouter(racine, c)
+
+
+## Gros buissons où l'on peut se cacher même debout : [x, y, diamètre en m].
+func cachettes(liste: Array) -> void:
+	var script := load("res://scripts/buisson.gd")
+	for i in liste.size():
+		var b: Array = liste[i]
+		var z := Area3D.new()
+		z.set_script(script)
+		z.name = "Cachette%d" % i
+		z.position = P(b[0], b[1])
+		z.set("diametre", b[2])
+		ajouter(racine, z)
+		_occupe.append(Rect2(b[0], b[1], 0, 0).grow(b[2] / ECHELLE * 0.5))
+
+
+## Torii rouge au-dessus d'un chemin : centre (x, y) en px, largeur en m.
+func torii(x: float, y: float, largeur := 4.0, h := 3.6) -> void:
+	var c := P(x, y)
+	for s in [-1.0, 1.0]:
+		plaque("ToriiPiliers", c + Vector3(s * largeur / 2.0, h / 2.0, 0), Vector3(0.28, h, 0.28), "laque_vive")
+		plaque("ToriiSocles", c + Vector3(s * largeur / 2.0, 0.15, 0), Vector3(0.4, 0.3, 0.4), "noir")
+	plaque("ToriiNuki", c + Vector3(0, h - 0.7, 0), Vector3(largeur + 0.6, 0.2, 0.18), "laque_vive")
+	plaque("ToriiKasagi", c + Vector3(0, h + 0.05, 0), Vector3(largeur + 1.4, 0.26, 0.34), "noir")
+	plaque("ToriiShimaki", c + Vector3(0, h - 0.18, 0), Vector3(largeur + 1.0, 0.22, 0.26), "laque_vive")
+	plaque("ToriiGakuzuka", c + Vector3(0, h - 0.4, 0), Vector3(0.18, 0.4, 0.16), "laque_vive")
+
+
+## Grande porte du château : deux vantaux qui s'ouvrent avec E, entre x et x + w (px), à la ligne y.
+func grande_porte(x: float, y: float, w: float, h := 4.2) -> void:
+	var porte := Node3D.new()
+	porte.set_script(load("res://scripts/porte.gd"))
+	porte.name = "GrandePorte"
+	porte.position = P(x + w / 2.0, y)
+	porte.set("genre", 0)
+	porte.set("largeur", w * ECHELLE)
+	porte.set("hauteur", h)
+	ajouter(racine, porte)
+
+
+## Herse levée au-dessus d'une ouverture (x à x + w, ligne y) ; elle tombe quand le combat commence.
+func herse(nom: String, x: float, y: float, w: float, h: float) -> void:
+	var porte := Node3D.new()
+	porte.set_script(load("res://scripts/porte.gd"))
+	porte.name = nom
+	porte.position = P(x + w / 2.0, y)
+	porte.set("genre", 1)
+	porte.set("largeur", w * ECHELLE)
+	porte.set("hauteur", h)
+	porte.set("epaisseur", 0.2)
+	ajouter(racine, porte)
+
+
+## Le seigneur Oni (scripts/boss.gd), qui attend au fond du donjon, et le coffre caché au centre.
+func seigneur(x: float, y: float, coffre_x: float, coffre_y: float) -> void:
+	var boss := CharacterBody3D.new()
+	boss.set_script(load("res://scripts/boss.gd"))
+	boss.name = "Seigneur"
+	boss.position = P(x, y)
+	ajouter(racine, boss)
+	var coffre := Node3D.new()
+	coffre.set_script(load("res://scripts/coffre.gd"))
+	coffre.name = "Coffre"
+	coffre.position = P(coffre_x, coffre_y)
+	ajouter(racine, coffre)
+
+
+## Zone qui déclenche un événement quand le ninja y entre (scripts/declencheur.gd) : rectangle en px.
+func declencheur(nom: String, x: float, y: float, w: float, d: float) -> void:
+	var z := Area3D.new()
+	z.set_script(load("res://scripts/declencheur.gd"))
+	z.name = nom
+	z.position = P(x + w / 2.0, y + d / 2.0, 1.0)
+	ajouter(racine, z)
+	var forme := CollisionShape3D.new()
+	var b := BoxShape3D.new()
+	b.size = Vector3(w * ECHELLE, 2.0, d * ECHELLE)
+	forme.shape = b
+	ajouter(z, forme)
+
+
+## Coassements de grenouilles près de l'eau : [x, y] en px (son 3D en boucle, discret).
+func grenouilles(points: Array) -> void:
+	for i in points.size():
+		var son := AudioStreamPlayer3D.new()
+		son.name = "Grenouilles%d" % i
+		son.position = P(points[i][0], points[i][1], 0.3)
+		son.stream = load("res://assets/audio/sfx/grenouilles.ogg")
+		son.autoplay = true
+		son.volume_db = -14.0
+		son.unit_size = 4.0
+		son.max_distance = 22.0
+		son.bus = &"Master"
+		ajouter(racine, son)
+
+
+## Guirlandes de lanternes en papier (chōchin) rouges, peintes du kanji 福 (bonheur), avec bagues
+## dorées et pompon rouge, tendues entre deux poteaux : [x1, y1, x2, y2] en px.
+## Purement décoratives : pas de collision, pas de vraie lumière (elles brillent par elles-mêmes).
 func guirlandes(liste: Array) -> void:
 	var poteau := CylinderMesh.new()
 	poteau.top_radius = 0.06
@@ -465,20 +614,35 @@ func guirlandes(liste: Array) -> void:
 	poteau.height = 1.0
 	poteau.radial_segments = 6
 	poteau.rings = 1
-	var lanterne := SphereMesh.new()
-	lanterne.radius = 0.5
-	lanterne.height = 1.0
-	lanterne.radial_segments = 10
-	lanterne.rings = 6
 	var corde := CylinderMesh.new()
 	corde.top_radius = 0.012
 	corde.bottom_radius = 0.012
 	corde.height = 1.0
 	corde.radial_segments = 4
 	corde.rings = 1
-	var rouge := mat("#d2321f", {"emission_enabled": true, "emission": Color("#ff5a2a"), "emission_energy_multiplier": 1.6})
-	var blanc := mat("#f3e6c8", {"emission_enabled": true, "emission": Color("#ffd28a"), "emission_energy_multiplier": 1.3})
+	var bague := CylinderMesh.new()
+	bague.top_radius = 0.5
+	bague.bottom_radius = 0.5
+	bague.height = 1.0
+	bague.radial_segments = 10
+	bague.rings = 1
+	var pompon := CylinderMesh.new()
+	pompon.top_radius = 0.012
+	pompon.bottom_radius = 0.045
+	pompon.height = 1.0
+	pompon.radial_segments = 6
+	pompon.rings = 1
+	var papier := StandardMaterial3D.new()
+	var texture: Texture2D = load("res://assets/textures/chochin.png")
+	papier.albedo_texture = texture
+	papier.emission_enabled = true
+	papier.emission_texture = texture
+	papier.emission_energy_multiplier = 1.5
+	papier.roughness = 0.8
+	var dore := mat("#c9a24a", {"metallic": 0.6, "roughness": 0.4})
+	var rouge := mat("#b3201a", {"emission_enabled": true, "emission": Color("#7a1008"), "emission_energy_multiplier": 0.6})
 	var noir: Material = materiaux["noir"]
+	var lanterne := _mesh_chochin()
 	var h := 3.3
 	for g in liste:
 		var a := P(g[0], g[1])
@@ -487,7 +651,7 @@ func guirlandes(liste: Array) -> void:
 			deco("GuirlandePoteaux", poteau, Transform3D(Basis().scaled(Vector3(1, h, 1)), bout + Vector3(0, h / 2.0, 0)), materiaux["bois"])
 			deco("GuirlandeChapeaux", _boite_unite(), Transform3D(Basis().scaled(Vector3(0.22, 0.06, 0.22)), bout + Vector3(0, h + 0.03, 0)), noir)
 		var longueur := a.distance_to(b)
-		var n := maxi(int(longueur / 0.75), 3)
+		var n := maxi(int(longueur / 0.62), 3)
 		var fleche := 0.12 * longueur + 0.2  # la corde pend au milieu
 		var precedent := a + Vector3(0, h - 0.1, 0)
 		for k in range(1, n + 1):
@@ -499,12 +663,50 @@ func guirlandes(liste: Array) -> void:
 			var base := Basis.looking_at(dir.normalized(), Vector3.UP) * Basis(Vector3(1, 0, 0), PI / 2.0)
 			deco("GuirlandeCordes", corde, Transform3D(base.scaled(Vector3(1, dir.length(), 1)), milieu), noir, false)
 			precedent = p
-			if k < n:
-				var couleur: Material = rouge if k % 2 == 0 else blanc
-				var pos := p + Vector3(0, -0.22, 0)
-				deco("GuirlandeLanternes%d" % (k % 2), lanterne, Transform3D(Basis().scaled(Vector3(0.26, 0.34, 0.26)), pos), couleur, false)
-				for dy in [0.18, -0.18]:
-					deco("GuirlandeBagues", _boite_unite(), Transform3D(Basis().scaled(Vector3(0.16, 0.035, 0.16)), pos + Vector3(0, dy, 0)), noir, false)
+			if k >= n:
+				continue
+			# une lanterne sur deux pend plus bas, comme sur les vraies guirlandes
+			var attache := 0.1 if k % 2 == 0 else 0.32
+			deco("GuirlandeCordes", corde, Transform3D(Basis().scaled(Vector3(1, attache, 1)), p + Vector3(0, -attache / 2.0, 0)), noir, false)
+			var haut := p + Vector3(0, -attache, 0)
+			var tourne := Basis(Vector3.UP, _hasard.randf_range(-0.6, 0.6))
+			var corps := haut + Vector3(0, -0.04 - 0.21, 0)
+			deco("GuirlandeLanternes", lanterne, Transform3D(tourne, corps), papier, false)
+			for dy in [0.215, -0.215]:
+				deco("GuirlandeBagues", bague, Transform3D(Basis().scaled(Vector3(0.2, 0.035, 0.2)), corps + Vector3(0, dy, 0)), dore, false)
+			deco("GuirlandeBagues", bague, Transform3D(Basis().scaled(Vector3(0.08, 0.04, 0.08)), corps + Vector3(0, -0.255, 0)), dore, false)
+			deco("GuirlandePompons", pompon, Transform3D(Basis().scaled(Vector3(1, 0.3, 1)), corps + Vector3(0, -0.43, 0)), rouge, false)
+
+
+## Lanterne chōchin en tonneau (0,42 m de haut), UV tout autour pour le papier peint de 福.
+func _mesh_chochin() -> ArrayMesh:
+	if _meshes.has("chochin"):
+		return _meshes["chochin"]
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var cotes := 14
+	var etages := 8
+	var hauteur := 0.42
+	var points := []
+	for j in etages + 1:
+		var v := float(j) / etages
+		var y := (0.5 - v) * hauteur
+		var r := 0.1 + 0.055 * sin(v * PI)
+		var ligne := []
+		for i in cotes + 1:
+			var a := float(i) / cotes * TAU
+			ligne.append([Vector3(cos(a) * r, y, sin(a) * r), Vector2(float(i) / cotes, v)])
+		points.append(ligne)
+	for j in etages:
+		for i in cotes:
+			var quad := [points[j][i], points[j + 1][i], points[j + 1][i + 1], points[j][i], points[j + 1][i + 1], points[j][i + 1]]
+			for q in quad:
+				st.set_uv(q[1])
+				st.add_vertex(q[0])
+	st.generate_normals()
+	var m := st.commit()
+	_meshes["chochin"] = m
+	return m
 
 
 ## Autour du niveau : sol de forêt, ceinture de cèdres, pins et bambous, montagnes au loin.

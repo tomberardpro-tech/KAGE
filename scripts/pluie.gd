@@ -2,7 +2,8 @@ extends Node3D
 ## Pluie autour du ninja : gouttes qui tombent, éclaboussures au sol et bruit de pluie en boucle.
 ## Ajoutée par niveau.gd ; elle suit le ninja pour ne calculer que ce que la caméra voit.
 
-const ZONE := Vector3(15.0, 0.0, 15.0)  ## demi-taille de la zone couverte (m)
+const ZONE := Vector3(12.0, 0.0, 10.0)  ## demi-taille de la zone couverte (m), juste ce que voit la caméra
+const DEVANT := -3.0  ## la caméra voit plus loin au nord (−Z) qu'au sud
 const HAUTEUR := 11.0  ## hauteur d'où tombent les gouttes au-dessus du ninja
 const VITESSE := 16.0  ## m/s
 
@@ -19,7 +20,7 @@ func _ready() -> void:
 	var flux: AudioStreamOggVorbis = load("res://assets/audio/sfx/pluie.ogg").duplicate()
 	flux.loop = true
 	bruit.stream = flux
-	bruit.volume_db = -24.0
+	bruit.volume_db = -27.0
 	add_child(bruit)
 	bruit.play()
 
@@ -36,7 +37,7 @@ func _process(_delta: float) -> void:
 func _sur_gpu(cpu: CPUParticles3D) -> Node3D:
 	var gpu := GPUParticles3D.new()
 	gpu.convert_from_particles(cpu)
-	gpu.position = cpu.position
+	gpu.position = cpu.position + Vector3(0, 0, DEVANT)
 	gpu.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	gpu.visibility_aabb = AABB(Vector3(-ZONE.x - 2, -HAUTEUR - 2, -ZONE.z - 2), Vector3(ZONE.x * 2 + 4, HAUTEUR + 4, ZONE.z * 2 + 4))
 	remove_child(cpu)
@@ -47,7 +48,7 @@ func _sur_gpu(cpu: CPUParticles3D) -> Node3D:
 
 func _creer_gouttes() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
-	p.amount = 1400
+	p.amount = 650
 	p.lifetime = (HAUTEUR + 1.0) / VITESSE
 	p.preprocess = p.lifetime
 	p.local_coords = false
@@ -60,7 +61,7 @@ func _creer_gouttes() -> CPUParticles3D:
 	p.initial_velocity_min = VITESSE * 0.9
 	p.initial_velocity_max = VITESSE * 1.1
 	var goutte := QuadMesh.new()
-	goutte.size = Vector2(0.018, 0.55)
+	goutte.size = Vector2(0.016, 0.8)  # plus longues : autant d'effet avec moitié moins de gouttes
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -77,7 +78,7 @@ func _creer_gouttes() -> CPUParticles3D:
 ## Petits anneaux d'eau qui s'ouvrent au sol là où les gouttes tombent.
 func _creer_eclats() -> CPUParticles3D:
 	var p := CPUParticles3D.new()
-	p.amount = 260
+	p.amount = 110
 	p.lifetime = 0.35
 	p.local_coords = false
 	p.position.y = 0.04
@@ -93,7 +94,7 @@ func _creer_eclats() -> CPUParticles3D:
 	var s := Shader.new()
 	s.code = """
 shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, cull_disabled;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 varying float vie;
 void vertex() { vie = INSTANCE_CUSTOM.y; }
 void fragment() {

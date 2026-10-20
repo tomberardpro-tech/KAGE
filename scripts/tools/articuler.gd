@@ -278,6 +278,7 @@ func _katanas(squelette: Skeleton3D, modele: Node3D) -> void:
 	var lame := _katana(true)
 	lame.name = "KatanaMain"
 	lame.position = Vector3(-0.015, -0.1, 0.0)
+	lame.scale = Vector3.ONE * 1.5  # un grand sabre, bien visible
 	lame.visible = false
 	main.add_child(lame)
 	_posseder(lame, modele)
@@ -290,6 +291,7 @@ func _katanas(squelette: Skeleton3D, modele: Node3D) -> void:
 	fourreau.name = "KatanaDos"
 	# en travers du dos, la poignée au-dessus de l'épaule droite
 	fourreau.transform = Transform3D(Basis(Vector3(0, 0, 1), deg_to_rad(-35)) * Basis(Vector3(1, 0, 0), deg_to_rad(-90)), Vector3(CX - 0.02, -0.08, -0.12))
+	fourreau.scale = Vector3.ONE * 1.5
 	dos.add_child(fourreau)
 	_posseder(fourreau, modele)
 
@@ -451,8 +453,20 @@ func _animations_ninja() -> Dictionary:
 	var hisse := {"BrasG": Vector3(-70, 0, 20), "AvantBrasG": Vector3(-95, 0, 0), "BrasD": Vector3(-70, 0, -20), "AvantBrasD": Vector3(-95, 0, 0),
 		"CuisseG": Vector3(-90, 0, 0), "TibiaG": Vector3(110, 0, 0), "PiedG": Vector3(-20, 0, 0), "CuisseD": Vector3(-20, 0, 0), "TibiaD": Vector3(80, 0, 0),
 		"Ventre": Vector3(28, 0, 0), "Poitrine": Vector3(15, 0, 0), "Tete": Vector3(-30, 0, 0)}
+	# Trésor : il brandit l'objet à deux mains au-dessus de la tête, fier, jambes écartées
+	var brandir := {"BrasG": Vector3(-172, 0, 14), "AvantBrasG": Vector3(-18, 0, 0), "BrasD": Vector3(-172, 0, -14), "AvantBrasD": Vector3(-18, 0, 0),
+		"CuisseG": Vector3(-4, 0, 12), "CuisseD": Vector3(-4, 0, -12), "Poitrine": Vector3(-8, 0, 0), "Tete": Vector3(-14, 0, 0)}
+	# Marche lente (le vieux maître, les villageois)
+	var pas_lent := {"CuisseG": Vector3(-26, 0, 0), "TibiaG": Vector3(8, 0, 0), "CuisseD": Vector3(20, 0, 0), "TibiaD": Vector3(22, 0, 0),
+		"BrasG": Vector3(22, 0, 6), "AvantBrasG": Vector3(-20, 0, 0), "BrasD": Vector3(-22, 0, -6), "AvantBrasD": Vector3(-25, 0, 0),
+		"Ventre": Vector3(6, 0, 0), "Poitrine": Vector3(6, 0, 0)}
+	var salut := {"Ventre": Vector3(18, 0, 0), "Poitrine": Vector3(26, 0, 0), "Tete": Vector3(14, 0, 0),
+		"BrasG": Vector3(8, 0, 4), "AvantBrasG": Vector3(-30, 0, 0), "BrasD": Vector3(8, 0, -4), "AvantBrasD": Vector3(-30, 0, 0)}
 	return {
 		"repos": {"boucle": true, "duree": 2.6, "cles": [[0.0, repos_a, 0.0], [1.3, repos_b, 0.004], [2.6, repos_a, 0.0]]},
+		"brandir": {"boucle": false, "duree": 0.5, "cles": [[0.0, repos_a, 0.0], [0.25, _fusion(brandir, {"BrasG": Vector3(-150, 0, 20), "BrasD": Vector3(-150, 0, -20)}), 0.01], [0.5, brandir, 0.02]]},
+		"marche": {"boucle": true, "duree": 1.1, "cles": [[0.0, pas_lent, -0.005], [0.275, repos_a, 0.008], [0.55, _miroir(pas_lent), -0.005], [0.825, repos_a, 0.008], [1.1, pas_lent, -0.005]]},
+		"salut": {"boucle": false, "duree": 1.4, "cles": [[0.0, repos_a, 0.0], [0.45, salut, -0.01], [0.95, salut, -0.01], [1.4, repos_a, 0.0]]},
 		"course": {"boucle": true, "duree": 0.5, "cles": [[0.0, contact, -0.012], [0.125, passage, 0.02],
 			[0.25, _miroir(contact), -0.012], [0.375, _miroir(passage), 0.02], [0.5, contact, -0.012]]},
 		"accroupi": {"boucle": true, "duree": 0.9, "cles": [[0.0, pas_g, -0.035], [0.45, _miroir(pas_g), -0.03], [0.9, pas_g, -0.035]]},

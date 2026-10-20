@@ -20,7 +20,7 @@ func _ready() -> void:
 	_shader = Shader.new()
 	_shader.code = """
 shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, cull_disabled;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 uniform vec3 coeur : source_color;
 uniform vec3 bleu : source_color;
 uniform float opacite = 1.0;

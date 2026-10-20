@@ -36,7 +36,12 @@ func finir(chemin: String) -> void:
 	racine.free()
 	if err == OK and not reglages_niveau.is_empty():
 		_ecrire_reglages(chemin)
-	print(chemin.get_file(), " -> ", error_string(err))
+	# Le jeu charge une version binaire (.scn) : bien plus rapide à lire qu'un gros .tscn texte.
+	if err == OK:
+		var paquet := ResourceLoader.load(chemin, "", ResourceLoader.CACHE_MODE_IGNORE)
+		err = ResourceSaver.save(paquet, chemin.get_basename() + ".scn", ResourceSaver.FLAG_COMPRESS)
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(chemin))
+	print(chemin.get_basename().get_file() + ".scn", " -> ", error_string(err))
 	# Lancé par l'outil Capture (--construire), ce script n'est pas la boucle principale.
 	var boucle := Engine.get_main_loop() as SceneTree
 	boucle.quit(err)

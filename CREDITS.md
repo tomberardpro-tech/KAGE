@@ -36,3 +36,18 @@ Ninja et garde générés avec TRELLIS (trellis3d.net) à partir des planches Fi
 ## Polices
 
 Anton, IBM Plex Sans JP et Noto Serif JP (Google Fonts, licence SIL Open Font License).
+La boîte de dialogue utilise un sous-ensemble de Noto Serif CJK (Google, licence SIL Open Font License),
+réduit aux caractères des répliques (`assets/fonts/NotoSerifJP-Bold-dialogues.otf`, `scripts/tools/sous_police.py`).
+
+## Voix japonaises
+
+Répliques synthétisées avec [Open JTalk](https://open-jtalk.sourceforge.net/) (licence BSD) et la voix
+**HTS voice nitech_jp_atr503_m001** (Nagoya Institute of Technology, licence CC BY 3.0),
+retouchées avec ffmpeg (`scripts/tools/generer_voix.py`, fichiers dans `assets/audio/voix/`).
+
+## Sons et images ajoutés (boss, village)
+
+- Sons **faits dans le projet** (`scripts/tools/generer_sons.py`) : pluie légère, musique du boss, jingle du
+  trésor, grande porte, herse, coffre, cris et charge du seigneur Oni, onde, buisson, miaou, grenouilles, corbeaux.
+- Images **faites dans le projet** (`scripts/tools/generer_textures.py`) : papier des lanternes 福 et médaillons
+  des personnages (師, 鬼).

@@ -1,0 +1,34 @@
+{
+	"intro": {
+		"nom": "MAÎTRE KAGEMARU",
+		"portrait": "maitre",
+		"lignes": [
+			{"id": "intro_1", "jp": "来たか、影よ。近う寄れ。声を潜めよ、壁に耳ありだ。", "fr": "Te voilà enfin, Kage. Approche, et parle bas : les murs ont des oreilles."},
+			{"id": "intro_2", "jp": "鬼の殿が、我らが一族の巻物を奪った。天守の奥に隠しておる。", "fr": "Le seigneur Oni a volé le parchemin de notre clan. Il le garde au cœur de son donjon."},
+			{"id": "intro_3", "jp": "森を抜け、城の大門を開けよ。見張りは提灯を持っておる。影に潜み、茂みに隠れよ。", "fr": "Traverse la forêt et ouvre la grande porte du château. Les gardes portent des lanternes : reste dans l'ombre, ou cache-toi dans les buissons."},
+			{"id": "intro_4", "jp": "行く手を阻む者あらば、刀で斬れ。だが、三度斬られれば、命はない。", "fr": "Si l'un d'eux te barre la route, ton katana fera le reste. Mais trois coups, et c'en est fini de toi."},
+			{"id": "intro_5", "jp": "鬼の殿は手強い。牛のように突進してくる。かわして、息をつく隙に斬れ。", "fr": "Le seigneur Oni est redoutable. Il charge comme un taureau : esquive, puis frappe quand il reprend son souffle."},
+			{"id": "intro_6", "jp": "行け。誰にも気づかれるな。", "fr": "Va. Et que personne ne sache que tu étais là."}
+		]
+	},
+	"oni_debut": {
+		"nom": "SEIGNEUR ONI",
+		"portrait": "oni",
+		"lignes": [
+			{"id": "oni_1", "jp": "何者だ！この城から、生きて帰れると思うな！", "fr": "Qui ose entrer ici ? Tu ne sortiras pas vivant de mon château !"}
+		]
+	},
+	"oni_fin": {
+		"nom": "SEIGNEUR ONI",
+		"portrait": "oni",
+		"lignes": [
+			{"id": "oni_2", "jp": "ぐぬぬ…見事…だ…", "fr": "Grr… bien joué… petite ombre…"}
+		]
+	},
+	"villageois": [
+		{"id": "villageois0", "jp": "こんばんは、影様。", "fr": "Bonsoir, Kage."},
+		{"id": "villageois1", "jp": "鬼の殿には気をつけて…", "fr": "Méfie-toi du seigneur Oni…"},
+		{"id": "villageois2", "jp": "雨の夜は静かでいいね。", "fr": "Les nuits de pluie sont si calmes."},
+		{"id": "villageois3", "jp": "がんばって、影様！", "fr": "Bonne chance, Kage !"}
+	]
+}

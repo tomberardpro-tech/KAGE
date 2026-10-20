@@ -19,7 +19,7 @@ Projet scolaire, réalisé avec Godot 4 et publié en version web sur itch.io.
 | S'accroupir | Ctrl ou C |
 | Coup de katana | L ou clic gauche (vers la souris) |
 | Passer le dialogue | Entrée (Échap pour tout passer) |
-| Trancher une lanterne proche | E |
+| Trancher une lanterne, ouvrir une porte ou le coffre | E |
 | Pause | Échap |
 
 Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERTY et WASD sur un QWERTY.
@@ -27,10 +27,12 @@ Les touches sont réglées par position physique, donc ZQSD sur un clavier AZERT
 ## Écrans
 
 - **Menu principal** (`scenes/ui/menu.tscn`, scène de départ) : Nouvelle partie lance le jeu avec un fondu, Continuer s'active quand une sauvegarde existe, Options règle le volume et le plein écran, Quitter est masqué dans la version web.
-- **Niveau 1 · Le village** (`scenes/levels/village.tscn`) : lancé par Nouvelle partie. On traverse les rizières et le village, on vole le plan du château chez le chef et on sort par le portail nord-est. 4 gardes lents et myopes.
-- **Niveau 2 · Le château** (`scenes/levels/chateau.tscn`) : on part devant le château, on traverse la cour extérieure et la cour intérieure, on prend le parchemin dans le donjon et on sort par le rempart est. 7 gardes.
-- **Niveau 3 · Le palais** (`scenes/levels/palais.tscn`) : jardin zen, jardin du bassin et cour, parchemin dans la salle du seigneur, sortie par la brèche ouest. 10 gardes plus rapides qui voient plus loin, beaucoup de lanternes, un seul autel.
-- Après une victoire, Entrée passe au niveau suivant et Continuer (menu) reprend au dernier niveau débloqué.
+- **Le niveau** (`scenes/levels/chateau.scn`) : lancé par Nouvelle partie, avec un écran de chargement. Un seul grand niveau :
+  - **Cinématique d'ouverture** (Échap pour la passer) : on survole le château, puis le maître Kagemaru parle à Kage dans sa cabane, avec une voix japonaise et la traduction.
+  - **Le village de la forêt** : maisons au toit de chaume, villageois qui saluent et parlent, chats, ruisseau et pont rouge, étang aux carpes, guirlandes de lanternes 福, lucioles, gros buissons où se cacher.
+  - **Le château** : on ouvre la grande porte (E), puis on traverse les cours. Les gardes portent des lanternes : leur lumière jaune devient orange puis rouge quand ils te repèrent.
+  - **Le boss** : en entrant dans le donjon, la herse se ferme et le seigneur Oni attaque. Il charge (esquive, puis frappe quand il souffle) et frappe le sol (saute par-dessus l'onde). 8 coups pour le vaincre.
+  - **Le coffre** : il apparaît après le combat. On l'ouvre (E) et Kage brandit le parchemin, puis on fuit par le rempart est.
 - **Terrain d'essai** (`scenes/jeu.tscn`) : terrain de test à l'échelle chibi : muret (0,9 m), caisse, maison (1,9 m) et rempart (2,2 m). Échap ramène au menu.
 
 ## Le ninja
@@ -92,12 +94,10 @@ ouvrable dans Blender) :
 
 ## Les niveaux
 
-Chaque niveau est généré par un script (1 px du plan = 4 cm). Le château suit le plan Figma « Le château » ; le village et le palais ont été dessinés directement dans leur script. Les outils communs sont dans `scripts/tools/constructeur.gd`, le décor d'ambiance dans `scripts/tools/decor.gd`.
+Chaque niveau est généré par un script (1 px du plan = 4 cm). Le château suit le plan Figma « Le château » ; le village de la forêt est dessiné directement dans le script. Les outils communs sont dans `scripts/tools/constructeur.gd`, le décor d'ambiance dans `scripts/tools/decor.gd`.
 
 ```
-godot --path . -- --construire=res://scripts/tools/build_village.gd
 godot --path . -- --construire=res://scripts/tools/build_chateau.gd
-godot --path . -- --construire=res://scripts/tools/build_palais.gd
 ```
 
 (Lancé ainsi, avec une fenêtre, pour que les scripts globaux et les MultiMesh du décor soient bien enregistrés.)

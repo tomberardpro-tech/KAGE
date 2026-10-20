@@ -3,7 +3,7 @@ extends Node
 ## Le bouton Continuer n'est actif que s'il existe une partie.
 
 const FICHIER := "user://sauvegarde.cfg"
-const PREMIER_NIVEAU := "res://scenes/levels/village.tscn"
+const PREMIER_NIVEAU := "res://scenes/levels/chateau.scn"
 
 
 func existe() -> bool:

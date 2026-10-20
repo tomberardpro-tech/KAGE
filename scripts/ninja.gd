@@ -32,6 +32,7 @@ var bloque := false  ## pendant une mort ou une victoire
 var vie := 3
 var attaque := 0.0  ## > 0 : coup de katana en cours (temps restant)
 var en_grimpe := false
+var pose_forcee := ""  ## animation imposée pendant une cinématique (ex. « brandir »)
 
 ## Portée du katana, devant le ninja (gardes et lanternes).
 const PORTEE_SABRE := 1.7
@@ -86,8 +87,10 @@ func est_eclaire() -> bool:
 	return global_position.y > HAUTEUR_TOIT and niveau.get("lune_visible") == true
 
 
-## Invisible : dans l'ombre (sans lumière), ou accroupi dans les herbes hautes.
+## Invisible : dans l'ombre (sans lumière), accroupi dans les herbes hautes, ou dans un gros buisson.
 func est_cache() -> bool:
+	if _dans(Zone.Type.BUISSON):
+		return true
 	if _dans(Zone.Type.HERBE) and accroupi:
 		return true
 	return _dans(Zone.Type.OMBRE) and not est_eclaire()
@@ -96,11 +99,11 @@ func est_cache() -> bool:
 func _physics_process(delta: float) -> void:
 	if _grimpe:
 		return
+	_clignoter(delta)  # même bloqué, sinon il pourrait rester invisible pendant une cinématique
 	if bloque:
 		velocity = Vector3(0.0, velocity.y - gravite * delta, 0.0)
 		move_and_slide()
 		return
-	_clignoter(delta)
 	if attaque > 0.0:
 		attaque -= delta
 		if not _a_touche and attaque <= duree_coup - instant_touche:
@@ -267,18 +270,22 @@ func _distance_a(objet: Node3D) -> float:
 	return local.length()
 
 
-## Le katana touche les gardes et les lanternes devant le ninja.
+## Le katana touche les gardes, les lanternes et le seigneur Oni devant le ninja.
 func _trancher() -> void:
 	var devant := Vector3(sin(_visuel.rotation.y), 0.0, cos(_visuel.rotation.y))
-	for cible in get_tree().get_nodes_in_group("gardes") + get_tree().get_nodes_in_group("lanternes"):
+	for cible in get_tree().get_nodes_in_group("gardes") + get_tree().get_nodes_in_group("lanternes") + get_tree().get_nodes_in_group("boss"):
 		var ecart: Vector3 = cible.global_position - global_position
 		ecart.y = 0.0
 		var face := ecart.length() < 0.5 or rad_to_deg(devant.angle_to(ecart)) < ANGLE_SABRE
-		if ecart.length() < PORTEE_SABRE and face:
+		# le seigneur Oni est un géant : on le touche d'un peu plus loin
+		var portee := PORTEE_SABRE + (0.9 if cible is Boss else 0.0)
+		if ecart.length() < portee and face:
 			if cible is Garde:
 				cible.tuer()
 			elif cible is Lanterne:
 				cible.eteindre()
+			elif cible is Boss:
+				cible.recevoir_coup(global_position)
 
 
 ## Direction au sol entre le ninja et le curseur de la souris.

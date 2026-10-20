@@ -97,6 +97,8 @@ size = Vector3(0.022, 0.034, 0.54)
 
 [node name="Modele" type="Node3D"]
 script = ExtResource("1_aj3ut")
+amplitude = 38.0
+cadence = 11.0
 
 [node name="Squelette" type="Skeleton3D" parent="."]
 transform = Transform3D(1.2502, 0, 0, 0, 1.2502, 0, 0, 0, 1.2502, 0, 0.625, 0)
@@ -207,7 +209,7 @@ skin = SubResource("Skin_lapdn")
 bone_name = "AvantBrasD"
 
 [node name="KatanaMain" type="Node3D" parent="Squelette/MainD"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.015, -0.1, 0)
+transform = Transform3D(1.5, 0, 0, 0, 1.5, 0, 0, 0, 1.5, -0.015, -0.1, 0)
 visible = false
 
 [node name="@MeshInstance3D@2" type="MeshInstance3D" parent="Squelette/MainD/KatanaMain"]
@@ -228,7 +230,7 @@ mesh = SubResource("BoxMesh_ui2kr")
 bone_name = "Poitrine"
 
 [node name="KatanaDos" type="Node3D" parent="Squelette/Dos"]
-transform = Transform3D(0.819152, -2.50718e-08, 0.573576, -0.573576, -3.58063e-08, 0.819152, 0, -1, -4.37114e-08, -0.05, -0.08, -0.12)
+transform = Transform3D(1.22873, -1.18577e-08, 0.860365, -0.860365, -3.76077e-08, 1.22873, 1.18577e-08, -1.5, -3.76077e-08, -0.05, -0.08, -0.12)
 
 [node name="@MeshInstance3D@5" type="MeshInstance3D" parent="Squelette/Dos/KatanaDos"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.06)
