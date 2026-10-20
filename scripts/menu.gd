@@ -23,6 +23,10 @@ func _ready() -> void:
 
 	_volume.value = Reglages.volume * 100.0
 	_volume.value_changed.connect(func(v: float): Reglages.volume = v / 100.0)
+	%VolumeMusique.value = Reglages.volume_musique * 100.0
+	%VolumeMusique.value_changed.connect(func(v: float): Reglages.volume_musique = v / 100.0)
+	%VolumeBruitages.value = Reglages.volume_bruitages * 100.0
+	%VolumeBruitages.value_changed.connect(func(v: float): Reglages.volume_bruitages = v / 100.0)
 	_plein_ecran.button_pressed = Reglages.plein_ecran
 	_plein_ecran.toggled.connect(func(on: bool): Reglages.plein_ecran = on)
 	%Retour.pressed.connect(_fermer_options)

@@ -59,7 +59,8 @@ func _ready() -> void:
 	if ResourceLoader.exists("res://assets/audio/sfx/miaou.ogg"):
 		_son.stream = load("res://assets/audio/sfx/miaou.ogg")
 	_son.unit_size = 4.0
-	_son.volume_db = -6.0
+	_son.volume_db = -10.0
+	_son.bus = "Bruitages"
 	add_child(_son)
 
 

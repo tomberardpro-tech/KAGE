@@ -1,5 +1,6 @@
 extends Node
-## Musiques et bruitages. Tous les sons sont créés par synthèse avec scripts/tools/generer_sons.py.
+## Musiques et bruitages (sons enregistrés CC0 et sons de scripts/tools/generer_sons.py, voir CREDITS.md).
+## La musique passe par le bus « Musique », le reste par « Bruitages » : réglables dans Options.
 ## Sons.jouer("dash") pour un bruitage, Sons.musique("jeu") pour changer de musique,
 ## Sons.chasse(true) pour passer en musique de poursuite (fondu).
 
@@ -7,6 +8,10 @@ const MUSIQUES := "res://assets/audio/music/%s.ogg"
 const BRUITAGES := "res://assets/audio/sfx/%s.ogg"
 const VOLUME_MUSIQUE := -14.0  ## dB : la musique reste en fond, on entend bien la pluie
 const NB_VOIX := 10
+## Les fichiers les plus forts sont baissés (dB) pour que tous les bruitages aient à peu près
+## le même niveau (mesuré en LUFS : cri du boss, clochettes, coffre... étaient bien plus forts).
+const CORRECTION := {"boss_cri": -9.0, "clochettes": -5.0, "coffre": -4.0, "frappe": -4.0, "coffre_apparait": -3.0,
+	"alerte": -2.0, "boss_touche": -2.0, "herse": -2.0, "tresor": -3.0, "parchemin": -2.0}
 
 var _musique: AudioStreamPlayer
 var _poursuite: AudioStreamPlayer
@@ -19,15 +24,16 @@ var _cache := {}
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	_musique = _lecteur()
-	_poursuite = _lecteur()
+	_musique = _lecteur("Musique")
+	_poursuite = _lecteur("Musique")
 	_poursuite.volume_db = -80.0
 	for i in NB_VOIX:
-		_voix.append(_lecteur())
+		_voix.append(_lecteur("Bruitages"))
 
 
-func _lecteur() -> AudioStreamPlayer:
+func _lecteur(bus: String) -> AudioStreamPlayer:
 	var l := AudioStreamPlayer.new()
+	l.bus = bus
 	add_child(l)
 	return l
 
@@ -63,7 +69,7 @@ func jouer(nom: String, volume := 0.0, hauteur := 1.0) -> void:
 	var voix := _voix[_suivante]
 	_suivante = (_suivante + 1) % NB_VOIX
 	voix.stream = flux
-	voix.volume_db = volume
+	voix.volume_db = volume + CORRECTION.get(nom, 0.0)
 	voix.pitch_scale = hauteur
 	voix.play()
 
