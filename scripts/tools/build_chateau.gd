@@ -116,7 +116,7 @@ func _vegetation() -> void:
 	])
 	arbres([[1380, 1380, 110, true], [220, 1400, 90, true], [640, 1020, 140], [1030, 960, 150]])
 	clair_de_lune("ClairDeLune", 900, 950, 400, 300)
-	higanbanas(260, 1350, 100, 1700, 2030, 2340, 900)
+	higanbanas(440, 1350, 100, 1700, 2030, 2340, 900)
 
 
 func _lanternes() -> void:
@@ -172,8 +172,8 @@ func _decor() -> void:
 	berge(1100, 1630, 180, 130)
 	berge(80, 1900, 760, 90)
 	berge(960, 1900, 760, 90)
-	massif_higanbanas(1290, 1640, 50, 110, 22)
-	massif_higanbanas(620, 1170, 60, 50, 14)
+	massif_higanbanas(1290, 1640, 50, 110, 35)
+	massif_higanbanas(620, 1170, 60, 50, 22)
 	bambous(1560, 1380, 50, 140, 10)
 	bambous(185, 1560, 40, 50, 6)
 	bambous(190, 770, 280, 40, 12)

@@ -128,7 +128,7 @@ func _vegetation() -> void:
 	arbres([[450, 1450, 120, true], [1300, 1500, 120, true], [300, 400, 130]])
 	clair_de_lune("ClairDeLune", 900, 880, 500, 300)
 	clair_de_lune("ClairDeLuneJardin", 900, 1480, 400, 300)
-	higanbanas(120, 2200, 0, 1800, 2190, 2240, 900)
+	higanbanas(220, 2200, 0, 1800, 2190, 2240, 900)
 
 
 ## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
@@ -141,8 +141,8 @@ func _decor() -> void:
 	nenuphars(960, 1470, 120, 120, 8)
 	carpes(715, 1370, 130, 220, 4)
 	carpes(950, 1370, 140, 220, 5)
-	massif_higanbanas(700, 1622, 130, 30, 24)
-	massif_higanbanas(970, 1622, 130, 30, 24)
+	massif_higanbanas(700, 1622, 130, 30, 38)
+	massif_higanbanas(970, 1622, 130, 30, 38)
 	bambous(420, 1128, 200, 36, 10)
 	bambous(1180, 1128, 200, 36, 10)
 	bambous(1340, 310, 280, 40, 12)

@@ -131,6 +131,84 @@ func _gazon() -> void:
 		x += pas
 
 
+## Fleurs des champs en taches sur l'herbe libre : blanches, bleues (kikyō), jaunes et roses.
+func _fleurs_sauvages() -> void:
+	if _sol.size == Vector2.ZERO:
+		return
+	var taches := FastNoiseLite.new()
+	taches.seed = 7
+	taches.frequency = 0.006
+	var teintes := FastNoiseLite.new()
+	teintes.seed = 31
+	teintes.frequency = 0.003
+	var couleurs := [Color("#f4f0e4"), Color("#7a74e0"), Color("#f2c84b"), Color("#f39ac2")]
+	var meshes := []
+	for c in couleurs:
+		meshes.append(_mesh_fleurs(c))
+	var m := mat("#ffffff", {"vertex_color_use_as_albedo": true, "cull_mode": BaseMaterial3D.CULL_DISABLED,
+		"emission_enabled": true, "emission": Color("#3a3446"), "emission_energy_multiplier": 0.5})
+	_hasard.seed = 77
+	var pas := 24.0  # px
+	var x := _sol.position.x + pas / 2.0
+	while x < _sol.end.x:
+		var y := _sol.position.y + pas / 2.0
+		while y < _sol.end.y:
+			var px := x + _hasard.randf_range(-pas, pas) * 0.5
+			var py := y + _hasard.randf_range(-pas, pas) * 0.5
+			if taches.get_noise_2d(px, py) > 0.12 or _hasard.randf() < 0.04:
+				var libre := true
+				for r in _occupe:
+					if r.has_point(Vector2(px, py)):
+						libre = false
+						break
+				if libre:
+					var k := clampi(int((teintes.get_noise_2d(px, py) + 0.6) * 3.3), 0, 3)
+					var base := Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3.ONE * _hasard.randf_range(0.8, 1.25))
+					deco("Fleurs%d" % k, meshes[k], Transform3D(base, P(px, py, 0.0)), m, false)
+			y += pas
+		x += pas
+
+
+## Bouquet de 5 petites fleurs : tiges fines et corolles plates en étoile, cœur jaune.
+func _mesh_fleurs(couleur: Color) -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var h := RandomNumberGenerator.new()
+	h.seed = int(couleur.r * 1000)
+	var vert := Color("#3d5e31")
+	for f in 5:
+		var pied := Vector3(h.randf_range(-0.12, 0.12), 0, h.randf_range(-0.12, 0.12))
+		var haut := pied + Vector3(h.randf_range(-0.04, 0.04), h.randf_range(0.14, 0.26), h.randf_range(-0.04, 0.04))
+		# tige : deux plans croisés
+		st.set_color(vert)
+		for e in [Vector3(0.006, 0, 0), Vector3(0, 0, 0.006)]:
+			for p in [pied - e, haut - e, haut + e, pied - e, haut + e, pied + e]:
+				st.add_vertex(p)
+		# corolle : 5 pétales autour du cœur
+		var r := h.randf_range(0.045, 0.065)
+		var teinte := couleur.lightened(h.randf_range(-0.1, 0.15))
+		var tour := h.randf() * TAU
+		for k in 5:
+			var a := tour + k * TAU / 5.0
+			var b := a + TAU / 10.0
+			var c := a - TAU / 10.0
+			st.set_color(teinte)
+			st.add_vertex(haut + Vector3(0, 0.004, 0))
+			st.add_vertex(haut + Vector3(cos(c), 0.25, sin(c)) * r * 0.75)
+			st.add_vertex(haut + Vector3(cos(a), 0.15, sin(a)) * r)
+			st.add_vertex(haut + Vector3(0, 0.004, 0))
+			st.add_vertex(haut + Vector3(cos(a), 0.15, sin(a)) * r)
+			st.add_vertex(haut + Vector3(cos(b), 0.25, sin(b)) * r * 0.75)
+		st.set_color(Color("#f0b533"))
+		for k in 3:
+			var a := k * TAU / 3.0
+			st.add_vertex(haut + Vector3(0, 0.012, 0))
+			st.add_vertex(haut + Vector3(cos(a), 0.6, sin(a)) * 0.014)
+			st.add_vertex(haut + Vector3(cos(a + TAU / 3.0), 0.6, sin(a + TAU / 3.0)) * 0.014)
+	st.generate_normals()
+	return st.commit()
+
+
 func _mesh_touffe() -> ArrayMesh:
 	var st := SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
@@ -162,6 +240,7 @@ func carpes(x: float, y: float, w: float, d: float, nombre := 5) -> void:
 
 func finir(chemin: String) -> void:
 	_gazon()
+	_fleurs_sauvages()
 	var noeud := Node3D.new()
 	noeud.name = "DecorJaponais"
 	ajouter(racine, noeud)

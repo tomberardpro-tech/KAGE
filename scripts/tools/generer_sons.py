@@ -1,6 +1,8 @@
 """Génère toutes les musiques et tous les bruitages de KAGE par synthèse (aucun fichier extérieur).
 
-Lancer depuis la racine du projet :  python3 scripts/tools/generer_sons.py
+Lancer depuis la racine du projet :  python3 scripts/tools/generer_sons.py [nom ...]
+(sans nom : tout est refait ; avec des noms, seulement ceux-là, par exemple « pluie »).
+Les musiques « menu » et « jeu » ne sont plus synthétisées : ce sont des morceaux CC0 (voir CREDITS.md).
 Il faut numpy et ffmpeg (pour l'encodage en .ogg).
 
 Instruments imités :
@@ -342,6 +344,24 @@ def bruit_autel():
     return normaliser(reverb(cloche(note(0, 1), 2.5, 0.6)), 0.5)
 
 
+def bruit_pluie():
+    """Pluie en boucle : bruissement doux, gouttes sur les feuilles et les tuiles."""
+    duree = 12.0
+    n = int(duree * SR)
+    piste = passe_bas(passe_haut(hasard.normal(0, 1, n), 400), 5000) * 0.35
+    piste += passe_bas(hasard.normal(0, 1, n), 300) * 0.25
+    goutte_n = int(0.03 * SR)
+    tg = np.arange(goutte_n) / SR
+    for _ in range(int(duree * 70)):
+        f = hasard.uniform(1500, 4500)
+        g = np.sin(2 * np.pi * f * tg * (1 + tg * 8)) * np.exp(-tg * hasard.uniform(120, 260))
+        poser(piste, g * hasard.uniform(0.05, 0.25), hasard.uniform(0, duree - 0.05))
+    # fondu enchaîné : la fin se mélange au début pour une boucle sans raccord audible
+    f = int(1.0 * SR)
+    piste[:f] = piste[:f] * np.linspace(0, 1, f) + piste[-f:] * np.linspace(1, 0, f)
+    return normaliser(piste[:-f], 0.6)
+
+
 def bruit_clic():
     n = int(0.06 * SR)
     t = np.arange(n) / SR
@@ -350,12 +370,15 @@ def bruit_clic():
 
 
 if __name__ == "__main__":
-    for nom, f in [("menu", musique_menu), ("jeu", musique_jeu), ("chasse", musique_chasse),
-                   ("victoire", stinger_victoire), ("defaite", stinger_defaite)]:
-        ecrire(nom, f(), "music")
+    import sys
+    choix = set(sys.argv[1:])
+    for nom, f in [("chasse", musique_chasse), ("victoire", stinger_victoire), ("defaite", stinger_defaite)]:
+        if not choix or nom in choix:
+            ecrire(nom, f(), "music")
     for nom, f in [("pas", bruit_pas), ("saut", bruit_saut), ("grimpe", bruit_grimpe), ("dash", bruit_dash),
                    ("tranche", bruit_tranche), ("lanterne", bruit_lanterne), ("garde_tombe", bruit_garde_tombe),
                    ("alerte", bruit_alerte), ("frappe", bruit_frappe), ("grincement", bruit_grincement),
                    ("clochettes", bruit_clochettes), ("coupe", bruit_coupe), ("parchemin", bruit_parchemin),
-                   ("autel", bruit_autel), ("clic", bruit_clic)]:
-        ecrire(nom, f(), "sfx")
+                   ("autel", bruit_autel), ("clic", bruit_clic), ("pluie", bruit_pluie)]:
+        if not choix or nom in choix:
+            ecrire(nom, f(), "sfx")

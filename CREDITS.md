@@ -2,16 +2,22 @@
 
 ## Musiques et bruitages
 
-Tous les sons de KAGE sont **créés par synthèse**, sans aucun enregistrement ni fichier extérieur :
+- **Musique du menu : « Yoiyami-core Theme – Deep Blue Ambient Piano », par Yoiyami**
+  ([OpenGameArt](https://opengameart.org/content/yoiyami-core-theme-%E2%80%93-deep-blue-ambient-piano)),
+  licence CC0 (domaine public), raccourcie à 2 min 30.
+- **Musique en jeu : « Hot Springs Town », par Kistol**
+  ([OpenGameArt](https://opengameart.org/content/hot-springs-town)), licence CC0 (domaine public).
+
+Tous les autres sons de KAGE sont **créés par synthèse**, sans aucun enregistrement ni fichier extérieur :
 le script `scripts/tools/generer_sons.py` (Python, numpy et ffmpeg) les fabrique à partir de zéro.
 Ils sont donc libres de droits et appartiennent au projet.
 
 - Instruments imités : koto (corde pincée, algorithme de Karplus-Strong), shakuhachi (flûte et souffle),
   taiko (tambour grave), hyoshigi (claquoirs en bois), clochettes.
 - Gamme miyako-bushi (ré, mi bémol, sol, la, si bémol).
-- Musiques : menu, jeu (ambiance de nuit), chasse (tambours de poursuite), victoire, défaite.
+- Musiques : chasse (tambours de poursuite), victoire, défaite.
 - Bruitages : pas, saut, escalade, dash, sabre, lanterne, garde à terre, alerte, coup du garde,
-  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu.
+  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, pluie.
 
 ## Modèles 3D
 

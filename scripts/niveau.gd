@@ -46,6 +46,11 @@ func _ready() -> void:
 	$Sortie.touche.connect(_sur_sortie)
 	_ecrans.tutoriel()
 	Sons.musique("jeu")
+	# ambiance : pluie et esprits qui passent autour du ninja
+	for script in [preload("res://scripts/pluie.gd"), preload("res://scripts/esprits.gd")]:
+		var effet = script.new()
+		effet.cible = ninja
+		add_child(effet)
 
 
 func _process(delta: float) -> void:

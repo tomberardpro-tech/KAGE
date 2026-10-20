@@ -111,7 +111,7 @@ func _vegetation() -> void:
 	])
 	arbres([[400, 840, 120], [720, 1110, 110, true], [940, 880, 110], [160, 860, 100], [880, 420, 130, true]])
 	clair_de_lune("ClairDeLune", 600, 860, 300, 220)
-	higanbanas(140, 850, 0, 1200, 1620, 1700, 600)
+	higanbanas(260, 850, 0, 1200, 1620, 1700, 600)
 
 
 ## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
