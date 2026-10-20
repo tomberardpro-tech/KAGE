@@ -88,10 +88,11 @@ godot --path . -- --construire=res://scripts/tools/build_palais.gd
 ### Décor d'ambiance (ticket 4.4)
 
 Murs blancs à soubassement de pierre, fenêtres à barreaux et toits de tuiles, bâtiments à colombages avec shoji éclairés,
-lanternes en pierre (tōrō) et sur poteau qui vacillent, pins taillés, buissons, bambous, herbes hautes qui ondulent,
-higanbanas, eau animée avec nénuphars et berges de galets, cascades, ruisseau, ponts rouges, bannières au mon du clan,
-braseros, palissade en rondins, rizières, jardin zen ratissé, lucioles et brume. Textures Poly Haven et rochers Kenney
-(CC0, voir [CREDITS.md](CREDITS.md)). Le décor n'a pas de collision (sauf les gros rochers) : il ne change pas le jeu.
+lanternes en pierre (tōrō) et sur poteau qui vacillent avec leur halo, pins taillés et cerisiers en fleurs qui perdent
+leurs pétales, gazon et herbes hautes qui ondulent, buissons, bambous, higanbanas, eau animée avec carpes koï, nénuphars
+et berges de galets, cascades, ruisseau, ponts rouges, bannières au mon du clan, braseros, palissade en rondins, rizières,
+jardin zen ratissé, lucioles et brume. Les matières sont dessinées par un shader (`assets/shaders/matiere.gdshader`),
+dans un style doux et coloré ; seuls les rochers viennent d'un pack (Kenney, CC0, voir [CREDITS.md](CREDITS.md)). Le décor n'a pas de collision (sauf les gros rochers) : il ne change pas le jeu.
 
 On peut ensuite retoucher les scènes dans Godot, mais une nouvelle génération écrase les retouches : mieux vaut modifier le script. Le titre, les textes et le niveau suivant se règlent au début de chaque script.
 

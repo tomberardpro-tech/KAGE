@@ -1,35 +1,40 @@
 extends "res://scripts/tools/constructeur.gd"
 ## Décor d'ambiance japonaise, partagé par les trois niveaux (ticket 4.4).
-## Textures Poly Haven et rochers Kenney (CC0, voir CREDITS.md), le reste est construit ici :
+## Rochers Kenney (CC0, voir CREDITS.md) ; le reste est construit ici, avec des matières dessinées par shader :
 ## murs blancs à tuiles, buissons taillés, bambous, bannières, braseros, ruisseau, cascade,
 ## pont rouge, nénuphars, lucioles et brume.
 ## Tout ce décor est sans collision (sauf les gros rochers) : il ne change pas le jeu.
 ## Les petits objets répétés sont regroupés en MultiMesh pour rester léger dans le navigateur.
 
-const TEX := "res://assets/textures/polyhaven/"
 const SHADERS := "res://assets/shaders/"
 
 var _deco := {}  # nom -> {"mesh": Mesh, "transforms": Array, "ombre": bool, "materiau": Material}
 var _hasard := RandomNumberGenerator.new()
 var _meshes := {}
 var _corps_rochers: StaticBody3D
+var _occupe: Array[Rect2] = []  # sols, murs, bâtiments, eau : pas de gazon dessus
+var _sol := Rect2()
 
 
 # --- Matériaux et ambiance -------------------------------------------------
 
 func _materiaux() -> void:
 	super._materiaux()
-	materiaux["herbe"] = _texture("leafy_grass", "#4c6646", 0.3)
-	materiaux["pave"] = _texture("patterned_cobblestone", "#c4c6cc", 0.35)
-	materiaux["allee"] = _texture("stone_tiles_02", "#8d909a", 0.4)
-	materiaux["mur"] = _texture("white_plaster_02", "#f2ece0", 0.5)
-	materiaux["pierre"] = _texture("cobblestone_floor_04", "#8e9099", 0.9)
-	materiaux["tuiles"] = _texture("grey_roof_tiles", "#5a6070", 0.8)
-	materiaux["bois"] = _texture("dark_wooden_planks", "#8a6a50", 0.6)
-	materiaux["parquet"] = _texture("dark_wooden_planks", "#9a7a5c", 0.5)
-	materiaux["sable"] = _texture("gravel_floor", "#bdbbb4", 0.5)
-	materiaux["terre"] = _texture("gravel_floor", "#7a6650", 0.4)
-	materiaux["rocher"] = _texture("mossy_rock", "#8f958c", 0.6)
+	materiaux["herbe"] = _matiere(0, "#4d7a3f", "#2f5629")
+	materiaux["allee"] = _matiere(1, "#9a968c", "#7a7770", "#26331f")
+	materiaux["pave"] = _matiere(2, "#857f76", "#67635d", "#2e2c29")
+	materiaux["mur"] = _matiere(3, "#ebe5d8", "#ebe5d8")
+	materiaux["tuiles"] = _matiere(4, "#4a505c", "#1b1e26")
+	materiaux["bois"] = _matiere(5, "#8c5c3b", "#5c3a25")
+	materiaux["parquet"] = _matiere(5, "#b08254", "#7f5636")
+	materiaux["pierre"] = _matiere(6, "#a19c92", "#78746c", "#3b3a37")
+	materiaux["sable"] = _matiere(7, "#e0dccf", "#b7b2a5")
+	materiaux["terre"] = _matiere(8, "#93765a", "#6f5741", "#4a3a2c")
+	materiaux["rocher"] = _matiere(9, "#a3a39d", "#6d6d6a")
+	materiaux["chaume"] = _matiere(10, "#c2a868", "#806c42")
+	materiaux["tatami"] = _matiere(11, "#b3aa6c", "#8e8652")
+	materiaux["laque"] = mat("#b8321e", {"roughness": 0.45})
+	materiaux["rouge"] = mat("#c23b22", {"roughness": 0.5})
 	materiaux["eau"] = _shader("eau")
 	materiaux["feuillage"] = _shader("feuillage")
 	var fonce: ShaderMaterial = _shader("feuillage")
@@ -44,13 +49,13 @@ func _materiaux() -> void:
 	materiaux["or"] = mat("#d99a4e", {"metallic": 0.6, "roughness": 0.35})
 
 
-func _texture(nom: String, teinte: String, echelle: float) -> StandardMaterial3D:
-	var m := mat(teinte)
-	m.albedo_texture = load(TEX + nom + ".jpg")
-	m.uv1_triplanar = true
-	m.uv1_world_triplanar = true
-	m.uv1_scale = Vector3.ONE * echelle
-	m.texture_filter = BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+## Matière dessinée (voir assets/shaders/matiere.gdshader pour la liste des motifs).
+func _matiere(motif: int, a: String, b: String, joint := "#1c1c20") -> ShaderMaterial:
+	var m := _shader("matiere")
+	m.set_shader_parameter("motif", motif)
+	m.set_shader_parameter("couleur_a", Color(a))
+	m.set_shader_parameter("couleur_b", Color(b))
+	m.set_shader_parameter("couleur_joint", Color(joint))
 	return m
 
 
@@ -68,6 +73,9 @@ func _ambiance() -> void:
 	(racine.get_node("Lune") as DirectionalLight3D).light_energy = 0.75
 	env.fog_light_color = Color("#2c3448")
 	env.fog_density = 0.012
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.05
+	env.adjustment_contrast = 1.06
 	env.glow_enabled = true
 	env.glow_intensity = 0.6
 	env.glow_bloom = 0.05
@@ -82,7 +90,78 @@ func deco(nom: String, mesh: Mesh, t: Transform3D, materiau: Material = null, om
 	_deco[nom]["transforms"].append(t)
 
 
+## Comme constructeur.boite(), mais on note la place prise pour ne pas y faire pousser le gazon.
+func boite(nom: String, x: float, y: float, w: float, d: float, h: float, mat_nom: String,
+		parent: Node = null, base := 0.0) -> CSGBox3D:
+	if nom == "Sol":
+		_sol = Rect2(x, y, w, d)
+	elif base > -0.5 and mat_nom != "herbe":
+		_occupe.append(Rect2(x, y, w, d).grow(8))
+	return super.boite(nom, x, y, w, d, h, mat_nom, parent, base)
+
+
+func eau(nom: String, x: float, y: float, w: float, d: float, h: float) -> void:
+	_occupe.append(Rect2(x, y, w, d).grow(10))
+	super.eau(nom, x, y, w, d, h)
+
+
+## Gazon court sur toute l'herbe libre du niveau (une touffe tous les ~0,8 m).
+func _gazon() -> void:
+	if _sol.size == Vector2.ZERO:
+		return
+	var touffe := _mesh_touffe()
+	var m := _shader("gazon")
+	_hasard.seed = 2024
+	var pas := 20.0  # px
+	var x := _sol.position.x + pas / 2.0
+	while x < _sol.end.x:
+		var y := _sol.position.y + pas / 2.0
+		while y < _sol.end.y:
+			var px := x + _hasard.randf_range(-pas, pas) * 0.45
+			var py := y + _hasard.randf_range(-pas, pas) * 0.45
+			var libre := true
+			for r in _occupe:
+				if r.has_point(Vector2(px, py)):
+					libre = false
+					break
+			if libre:
+				var base := Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3.ONE * _hasard.randf_range(0.7, 1.3))
+				deco("Gazon", touffe, Transform3D(base, P(px, py, 0.0)), m, false)
+			y += pas
+		x += pas
+
+
+func _mesh_touffe() -> ArrayMesh:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hasard := RandomNumberGenerator.new()
+	hasard.seed = 7
+	for k in 8:
+		var a := k * TAU / 8.0 + hasard.randf_range(-0.3, 0.3)
+		var c := Vector3(cos(a), 0, sin(a)) * hasard.randf_range(0.03, 0.1)
+		var cote := Vector3(-sin(a), 0, cos(a)) * 0.035
+		var h := hasard.randf_range(0.18, 0.3)
+		var bout := c * 2.2 + Vector3(0, h, 0)
+		st.set_normal(Vector3.UP)
+		st.add_vertex(c - cote)
+		st.add_vertex(c + cote)
+		st.add_vertex(bout)
+	return st.commit()
+
+
+## Carpes koï qui nagent dans un bassin [x, y, w, d] (px).
+func carpes(x: float, y: float, w: float, d: float, nombre := 5) -> void:
+	var c := Node3D.new()
+	c.set_script(load("res://scripts/carpes.gd"))
+	c.name = "Carpes%d" % int(x)
+	c.taille = Vector2(w, d) * ECHELLE
+	c.nombre = nombre
+	c.position = P(x + w / 2.0, y + d / 2.0, 0.0)
+	ajouter(racine, c)
+
+
 func finir(chemin: String) -> void:
+	_gazon()
 	var noeud := Node3D.new()
 	noeud.name = "DecorJaponais"
 	ajouter(racine, noeud)
@@ -320,7 +399,7 @@ func _prisme(st: SurfaceTool, a: Vector3, b: Vector3, e: float, couleur: Color) 
 
 # --- Rochers ----------------------------------------------------------------
 
-## Rochers moussus (formes Kenney, texture Poly Haven) : [x, y, taille en m, modèle 0-8].
+## Rochers moussus (formes Kenney, matière dessinée) : [x, y, taille en m, modèle 0-8].
 ## Ceux de plus de 0,8 m ont une collision.
 func rochers(liste: Array) -> void:
 	var modeles := ["stone_largeA", "stone_largeB", "stone_largeC", "stone_largeE", "stone_tallA",
@@ -338,6 +417,7 @@ func rochers(liste: Array) -> void:
 		var s: float = r[2] / maxf(aabb.size.x, aabb.size.z)
 		var base := Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3.ONE * s)
 		var pos := P(r[0], r[1]) - Vector3(0, aabb.position.y * s + 0.05, 0)
+		_occupe.append(Rect2(r[0], r[1], 0, 0).grow(r[2] / ECHELLE * 0.5))
 		deco("Rochers" + nom, mesh, Transform3D(base, pos), materiaux["rocher"])
 		if r[2] > 0.8:
 			var forme := CollisionShape3D.new()
@@ -366,6 +446,7 @@ func ruisseau(nom: String, points: Array, largeur: float) -> void:
 	ajouter(racine, noeud)
 	_hasard.seed = int(largeur * 13)
 	for k in points.size() - 1:
+		_occupe.append(Rect2(Vector2(points[k][0], points[k][1]), Vector2.ZERO).expand(Vector2(points[k + 1][0], points[k + 1][1])).grow(largeur * 0.6))
 		var a := P(points[k][0], points[k][1], 0.035)
 		var b := P(points[k + 1][0], points[k + 1][1], 0.035)
 		var bande := MeshInstance3D.new()

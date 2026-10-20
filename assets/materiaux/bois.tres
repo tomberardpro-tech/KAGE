@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=3]
+
+[ext_resource type="Shader" path="res://assets/shaders/matiere.gdshader" id="1"]
+
+[resource]
+shader = ExtResource("1")
+shader_parameter/motif = 5
+shader_parameter/couleur_a = Color(0.55, 0.36, 0.23, 1)
+shader_parameter/couleur_b = Color(0.36, 0.23, 0.15, 1)
+shader_parameter/couleur_joint = Color(0.1, 0.1, 0.12, 1)
+shader_parameter/echelle = 1.0

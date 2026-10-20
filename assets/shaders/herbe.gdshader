@@ -2,8 +2,8 @@ shader_type spatial;
 // Brins d'herbe haute : pied sombre, pointe plus claire, qui ondulent dans le vent.
 render_mode cull_disabled, diffuse_lambert_wrap;
 
-uniform vec4 pied : source_color = vec4(0.07, 0.13, 0.09, 1.0);
-uniform vec4 pointe : source_color = vec4(0.30, 0.44, 0.26, 1.0);
+uniform vec4 pied : source_color = vec4(0.10, 0.20, 0.10, 1.0);
+uniform vec4 pointe : source_color = vec4(0.40, 0.58, 0.28, 1.0);
 
 varying float hauteur;
 

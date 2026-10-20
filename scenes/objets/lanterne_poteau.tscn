@@ -1,14 +1,9 @@
-[gd_scene load_steps=14 format=3]
+[gd_scene load_steps=20 format=3]
 
 [ext_resource type="Script" path="res://scripts/lanterne.gd" id="1"]
 [ext_resource type="Script" path="res://scripts/zone.gd" id="2"]
-[ext_resource type="Texture2D" path="res://assets/textures/polyhaven/dark_wooden_planks.jpg" id="3"]
-
-[sub_resource type="StandardMaterial3D" id="Bois"]
-albedo_color = Color(0.55, 0.42, 0.32, 1)
-albedo_texture = ExtResource("3")
-uv1_scale = Vector3(1.2, 1.2, 1.2)
-uv1_triplanar = true
+[ext_resource type="Material" path="res://assets/materiaux/bois.tres" id="3"]
+[ext_resource type="Material" path="res://assets/materiaux/halo.tres" id="4"]
 
 [sub_resource type="StandardMaterial3D" id="Noir"]
 albedo_color = Color(0.1, 0.1, 0.12, 1)
@@ -21,11 +16,11 @@ emission = Color(1, 0.6, 0.28, 1)
 emission_energy_multiplier = 2.2
 
 [sub_resource type="BoxMesh" id="Poteau"]
-material = SubResource("Bois")
+material = ExtResource("3")
 size = Vector3(0.11, 2.0, 0.11)
 
 [sub_resource type="BoxMesh" id="Pied"]
-material = SubResource("Bois")
+material = ExtResource("3")
 size = Vector3(0.5, 0.1, 0.12)
 
 [sub_resource type="CylinderMesh" id="Chapeau"]
@@ -50,6 +45,10 @@ bottom_radius = 0.1
 height = 0.05
 radial_segments = 10
 rings = 1
+
+[sub_resource type="QuadMesh" id="HaloMesh"]
+material = ExtResource("4")
+size = Vector2(1.1, 1.1)
 
 [sub_resource type="SphereShape3D" id="Rayon"]
 resource_local_to_scene = true
@@ -86,6 +85,10 @@ mesh = SubResource("Bague")
 [node name="BagueBas" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.45, 0)
 mesh = SubResource("Bague")
+
+[node name="Halo" type="MeshInstance3D" parent="Flamme"]
+cast_shadow = 0
+mesh = SubResource("HaloMesh")
 
 [node name="Lumiere" type="OmniLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)

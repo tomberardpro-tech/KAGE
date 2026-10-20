@@ -208,7 +208,7 @@ func herbes(touffes: Array) -> void:
 		ajouter(racine, z)
 
 
-## Arbres dont l'ombre cache le ninja : [x, y, diamètre] en px.
+## Arbres dont l'ombre cache le ninja : [x, y, diamètre] en px, et true en 4e pour un cerisier.
 func arbres(liste: Array) -> void:
 	var script := load("res://scripts/arbre.gd")
 	for i in liste.size():
@@ -217,6 +217,7 @@ func arbres(liste: Array) -> void:
 		z.set_script(script)
 		z.name = "Arbre%d" % i
 		z.rayon = a[2] / 2.0 * ECHELLE
+		z.cerisier = a.size() > 3 and a[3]
 		z.position = P(a[0] + a[2] / 2.0, a[1] + a[2] / 2.0)
 		ajouter(racine, z)
 

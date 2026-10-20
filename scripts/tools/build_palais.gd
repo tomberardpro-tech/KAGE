@@ -125,7 +125,7 @@ func _jardins() -> void:
 
 func _vegetation() -> void:
 	herbes([[480, 1200, 160, 100], [1160, 1780, 160, 80], [560, 880, 140, 90], [160, 2180, 300, 50]])
-	arbres([[450, 1450, 120], [1300, 1500, 120], [300, 400, 130]])
+	arbres([[450, 1450, 120, true], [1300, 1500, 120, true], [300, 400, 130]])
 	clair_de_lune("ClairDeLune", 900, 880, 500, 300)
 	clair_de_lune("ClairDeLuneJardin", 900, 1480, 400, 300)
 	higanbanas(120, 2200, 0, 1800, 2190, 2240, 900)
@@ -139,6 +139,8 @@ func _decor() -> void:
 	berge(700, 1350, 400, 260)
 	nenuphars(720, 1450, 120, 140, 10)
 	nenuphars(960, 1470, 120, 120, 8)
+	carpes(715, 1370, 130, 220, 4)
+	carpes(950, 1370, 140, 220, 5)
 	massif_higanbanas(700, 1622, 130, 30, 24)
 	massif_higanbanas(970, 1622, 130, 30, 24)
 	bambous(420, 1128, 200, 36, 10)
