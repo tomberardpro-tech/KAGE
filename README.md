@@ -45,7 +45,7 @@ Modèles 3D : le ninja et le garde ont été générés avec TRELLIS (trellis3d.
 Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) : les scènes
 `*_modele.tscn` règlent seulement la taille et la position, et l'import ignore les lumières du fichier.
 `scripts/anim_chibi.gd` leur donne un petit rebond en marchant.
-Ambiance : il pleut sur tous les niveaux (`scripts/pluie.gd` : gouttes, éclaboussures et bruit de pluie
+Ambiance : il pleut sur tous les niveaux (`scripts/pluie.gd`, retirée pour l'instant : gouttes et éclaboussures
 autour du ninja) et des esprits bleus (flammes hitodama, feux de renard ou petits fantômes) passent puis s'effacent (`scripts/esprits.gd`, sans collision).
 Des taches de fleurs des champs couvrent l'herbe libre, avec des coins de jardin (pierres moussues,
 buissons taillés, pas japonais, petits sanctuaires). Autour des niveaux : forêt de cèdres, pins et bambous,

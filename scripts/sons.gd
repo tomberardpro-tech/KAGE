@@ -6,7 +6,7 @@ extends Node
 
 const MUSIQUES := "res://assets/audio/music/%s.ogg"
 const BRUITAGES := "res://assets/audio/sfx/%s.ogg"
-const VOLUME_MUSIQUE := -14.0  ## dB : la musique reste en fond, on entend bien la pluie
+const VOLUME_MUSIQUE := -14.0  ## dB : la musique reste en fond
 const NB_VOIX := 10
 ## Les fichiers les plus forts sont baissés (dB) pour que tous les bruitages aient à peu près
 ## le même niveau (mesuré en LUFS : cri du boss, clochettes, coffre... étaient bien plus forts).

@@ -82,8 +82,9 @@ func _ready() -> void:
 	_camera_cine.far = 400.0
 	add_child(_camera_cine)
 	Sons.musique("jeu")
-	# ambiance : pluie, esprits et oiseaux qui passent autour du ninja
-	for script in [preload("res://scripts/pluie.gd"), preload("res://scripts/esprits.gd"), preload("res://scripts/oiseaux.gd")]:
+	# ambiance : esprits et oiseaux qui passent autour du ninja
+	# (la pluie, scripts/pluie.gd, est retirée pour l'instant à la demande de Berard)
+	for script in [preload("res://scripts/esprits.gd"), preload("res://scripts/oiseaux.gd")]:
 		var effet = script.new()
 		effet.cible = ninja
 		add_child(effet)

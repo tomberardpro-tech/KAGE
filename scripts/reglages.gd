@@ -10,7 +10,7 @@ var volume := 0.8:
 		AudioServer.set_bus_volume_db(0, linear_to_db(volume))
 		AudioServer.set_bus_mute(0, volume <= 0.0)
 
-## La musique et les bruitages démarrent assez bas : la pluie et l'ambiance restent agréables.
+## La musique et les bruitages démarrent assez bas : l'ambiance reste agréable.
 var volume_musique := 0.45:
 	set(v):
 		volume_musique = clampf(v, 0.0, 1.0)
