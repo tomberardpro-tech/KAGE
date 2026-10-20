@@ -40,11 +40,13 @@ Modèles 3D : le ninja et le garde ont été générés avec TRELLIS (trellis3d.
 Les fichiers sont utilisés tels quels (`assets/models/ninja.glb`, `garde.glb`) : les scènes
 `*_modele.tscn` règlent seulement la taille et la position, et l'import ignore les lumières du fichier.
 `scripts/anim_chibi.gd` leur donne un petit rebond en marchant.
-Le ninja est **articulé** : `scripts/tools/articuler.gd` lui pose un squelette (bassin, buste, tête, bras,
-cuisses et genoux) sans toucher à son apparence (mêmes sommets, même texture), et `anim_chibi.gd` l'anime :
-course jambes et bras opposés avec les genoux qui plient, saut groupé, chute bras écartés, dash penché bras
-en arrière, marche accroupie, respiration au repos, écrasement à l'atterrissage. Pour le refaire :
-`godot --path . --script res://scripts/tools/articuler.gd`.
+Le ninja est **riggé** : `scripts/tools/articuler.gd` lui pose un squelette de 14 os (bassin, ventre,
+poitrine, tête, bras, avant-bras, cuisses, tibias, pieds) sans toucher à son apparence (mêmes sommets, même
+texture), puis crée ses animations clés dans `assets/models/ninja_animations.res` : repos, course, marche
+accroupie, accroupi immobile, saut, chute, dash et atterrissage. `anim_chibi.gd` choisit l'animation selon
+le mouvement et fait les fondus entre elles. Pour le refaire (le chemin final exporte aussi un `.glb`
+ouvrable dans Blender) :
+`xvfb-run -a godot --rendering-driver opengl3 --path . --script res://scripts/tools/articuler.gd -- ninja_rig.glb`.
 
 - Marche à 5,5 m/s, accroupi à 2,2 m/s.
 - Saut d'environ 1,2 m : assez pour monter sur un muret.

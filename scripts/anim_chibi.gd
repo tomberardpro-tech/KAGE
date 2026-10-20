@@ -18,8 +18,9 @@ var _ecrase := 0.0  # > 0 : écrasé (atterrissage), < 0 : étiré (saut)
 var _ecrase_vit := 0.0
 var _au_sol := true
 var _vy_avant := 0.0
-var _poses := {}  # os du modèle articulé -> angles actuels (degrés)
-var _t := 0.0
+var _atterrit := 0.0  # temps restant de l'animation d'atterrissage
+
+@onready var _animations: AnimationPlayer = get_node_or_null("Animations")
 
 @onready var _jambes := [get_node_or_null("JambeG"), get_node_or_null("JambeD")]
 @onready var _bras := [get_node_or_null("BrasG"), get_node_or_null("BrasD")]
@@ -62,8 +63,8 @@ func _process(delta: float) -> void:
 	if _entier:
 		_animer_entier(delta, marche, dash, lissage)
 		return
-	if _squelette and _squelette.find_bone("GenouG") >= 0:
-		_animer_articule(delta, vitesse, marche, dash)
+	if _animations:
+		_animer_rig(delta, vitesse, dash)
 		return
 
 	for i in 2:
@@ -137,80 +138,36 @@ func _animer_entier(delta: float, marche: float, dash: bool, lissage: float) -> 
 	rotation.z = lerpf(rotation.z, deg_to_rad(dandine), lissage)
 
 
-## Modèle articulé (scripts/tools/articuler.gd) : vraie course jambes et bras opposés,
-## genoux qui plient, saut groupé, chute bras écartés, dash penché bras en arrière,
-## marche accroupie, respiration au repos. Tout est lissé pour passer d'une pose à l'autre.
-## Angles en degrés autour de X : positif = le membre part vers l'arrière, le buste se penche en avant.
-func _animer_articule(delta: float, vitesse: float, marche: float, dash: bool) -> void:
-	_t += delta
+
+## Ninja riggé (scripts/tools/articuler.gd) : on joue ses animations clés selon ce qu'il fait,
+## avec un fondu entre deux animations. La course accélère avec la vitesse.
+func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	var au_sol := _corps.is_on_floor()
 	var vy := _corps.velocity.y
 	var accroupi: bool = _corps.get("accroupi") == true
-	var c := {}  # pose visée : nom -> Vector3 (degrés)
-	var s := sin(_phase)
-	var genou_arriere := maxf(0.0, -cos(_phase))  # la jambe qui revient plie le genou
-	var genou_avant := maxf(0.0, cos(_phase))
-	if dash:
-		c = {"Corps": Vector3(38, 0, 0), "Tete": Vector3(-22, 0, 0),
-			"BrasG": Vector3(75, 0, 18), "BrasD": Vector3(75, 0, -18),
-			"JambeG": Vector3(-45, 0, 0), "GenouG": Vector3(40, 0, 0),
-			"JambeD": Vector3(55, 0, 0), "GenouD": Vector3(25, 0, 0), "Bassin": Vector3.ZERO}
-	elif not au_sol and vy > 0.5:
-		# Saut : jambes groupées, bras levés
-		c = {"Corps": Vector3(-6, 0, 0), "Tete": Vector3(-8, 0, 0),
-			"BrasG": Vector3(-130, 0, 25), "BrasD": Vector3(-130, 0, -25),
-			"JambeG": Vector3(-55, 0, 0), "GenouG": Vector3(80, 0, 0),
-			"JambeD": Vector3(15, 0, 0), "GenouD": Vector3(60, 0, 0), "Bassin": Vector3.ZERO}
-	elif not au_sol:
-		# Chute : bras écartés pour l'équilibre, jambes tendues vers le sol
-		c = {"Corps": Vector3(4, 0, 0), "Tete": Vector3(6, 0, 0),
-			"BrasG": Vector3(-20, 0, 70), "BrasD": Vector3(-20, 0, -70),
-			"JambeG": Vector3(-20, 0, 6), "GenouG": Vector3(25, 0, 0),
-			"JambeD": Vector3(10, 0, -6), "GenouD": Vector3(10, 0, 0), "Bassin": Vector3.ZERO}
-	elif accroupi:
-		# Marche de ninja accroupi : jambes pliées, petits pas, bras prêts
-		var a := 25.0 * marche
-		c = {"Corps": Vector3(22, 0, 0), "Tete": Vector3(-14, 0, 0),
-			"BrasG": Vector3(-35 + a * s * 0.4, 0, 12), "BrasD": Vector3(-35 - a * s * 0.4, 0, -12),
-			"JambeG": Vector3(-55 + a * s, 0, 4), "GenouG": Vector3(80 - 20.0 * genou_avant * marche, 0, 0),
-			"JambeD": Vector3(-55 - a * s, 0, -4), "GenouD": Vector3(80 - 20.0 * genou_arriere * marche, 0, 0),
-			"Bassin": Vector3.ZERO}
-	elif marche > 0.05:
-		# Course : jambes et bras opposés, buste qui tourne un peu, tête qui compense
-		var a := 50.0 * marche
-		c = {"Corps": Vector3(12 * marche, -9 * s * marche, 0), "Tete": Vector3(-8 * marche, 9 * s * marche, 0),
-			"BrasG": Vector3(-a * 1.1 * s, 0, 10), "BrasD": Vector3(a * 1.1 * s, 0, -10),
-			"JambeG": Vector3(a * s, 0, 0), "GenouG": Vector3(75.0 * genou_arriere * marche + 10.0, 0, 0),
-			"JambeD": Vector3(-a * s, 0, 0), "GenouD": Vector3(75.0 * genou_avant * marche + 10.0, 0, 0),
-			"Bassin": Vector3(0, 6 * s * marche, 0)}
-	else:
-		# Repos : il respire et balance doucement les bras
-		var r := sin(_t * 2.2)
-		c = {"Corps": Vector3(2 + r * 2.0, 0, 0), "Tete": Vector3(-r * 2.5, sin(_t * 0.7) * 6.0, 0),
-			"BrasG": Vector3(r * 4.0, 0, 6 + r * 2.0), "BrasD": Vector3(-r * 4.0, 0, -6 - r * 2.0),
-			"JambeG": Vector3.ZERO, "GenouG": Vector3.ZERO, "JambeD": Vector3.ZERO, "GenouD": Vector3.ZERO,
-			"Bassin": Vector3.ZERO}
-	var douceur := 1.0 - exp(-(22.0 if dash else 13.0) * delta)
-	for nom in c:
-		var i := _squelette.find_bone(nom)
-		if i < 0:
-			continue
-		var actuel: Vector3 = _poses.get(nom, Vector3.ZERO)
-		actuel = actuel.lerp(c[nom], douceur)
-		_poses[nom] = actuel
-		_squelette.set_bone_pose_rotation(i, Quaternion.from_euler(actuel * PI / 180.0))
-
-	# Rebond des pas, écrasement à l'atterrissage et étirement au décollage (ressort)
-	if au_sol and not _au_sol:
-		_ecrase_vit += clampf(-_vy_avant * 0.6, 1.0, 4.0)
-	elif not au_sol and _au_sol and vy > 1.0:
-		_ecrase_vit -= 2.2
+	if au_sol and not _au_sol and _vy_avant < -3.0:
+		_atterrit = 0.22
 	_au_sol = au_sol
 	_vy_avant = vy
-	var cible := 0.0 if au_sol else -clampf(absf(vy) * 0.015, 0.0, 0.08)
-	_ecrase_vit += (cible - _ecrase) * 260.0 * delta
-	_ecrase_vit *= exp(-13.0 * delta)
-	_ecrase = clampf(_ecrase + _ecrase_vit * delta, -0.2, 0.25)
-	scale = Vector3(1.0 + _ecrase * 0.4, 1.0 - _ecrase * 0.8, 1.0 + _ecrase * 0.4)
-	var pas := absf(cos(_phase)) * marche if au_sol and not accroupi else 0.0
-	position.y = lerpf(position.y, pas * 0.06 - (0.12 if accroupi else 0.0), 1.0 - exp(-14.0 * delta))
+	_atterrit = maxf(0.0, _atterrit - delta)
+	var nom := "repos"
+	var fondu := 0.18
+	var vitesse_anim := 1.0
+	if dash:
+		nom = "dash"
+		fondu = 0.06
+	elif not au_sol:
+		nom = "saut" if vy > 0.5 else "chute"
+		fondu = 0.1 if vy > 0.5 else 0.2
+	elif _atterrit > 0.0 and not accroupi:
+		nom = "atterrissage"
+		fondu = 0.05
+	elif accroupi:
+		nom = "accroupi" if vitesse > 0.3 else "accroupi_repos"
+		vitesse_anim = clampf(vitesse / 2.2, 0.6, 1.4)
+	elif vitesse > 0.3:
+		nom = "course"
+		vitesse_anim = clampf(vitesse / 5.5, 0.55, 1.3)
+	if _animations.current_animation != nom:
+		_animations.play(nom, fondu)
+	_animations.speed_scale = vitesse_anim
