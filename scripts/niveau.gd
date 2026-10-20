@@ -9,6 +9,10 @@ signal victoire(temps: float)
 signal mort
 signal pret  ## le niveau est préparé : l'écran de chargement peut s'effacer
 
+## Cinématiques de l'intro, de la grande porte et du boss. Coupées pour l'instant (demande de
+## Berard) : seule celle du parchemin reste. Remettre à true pour les retrouver telles quelles.
+const CINEMATIQUES := false
+
 @export var numero := 1
 @export var titre := ""  ## ex. « LE CHÂTEAU », affiché au tutoriel
 @export var lieu := ""  ## ex. « Le château », pour la phrase de victoire
@@ -196,7 +200,7 @@ func _pret_a_jouer() -> void:
 
 func _debut() -> void:
 	var maitre := get_node_or_null("Maitre") as Node3D
-	if maitre == null:
+	if maitre == null or not CINEMATIQUES:
 		_ecrans.tutoriel()
 		return
 	ninja.bloque = true
@@ -285,6 +289,11 @@ func _centre_de(nom: String, defaut: Vector3) -> Vector3:
 # --- La grande porte -------------------------------------------------------
 
 func _sur_grande_porte() -> void:
+	if not CINEMATIQUES:
+		_camera.secouer(0.25)
+		Sons.musique("chateau")
+		_messages.afficher("LE CHÂTEAU DU SEIGNEUR ONI", "Le parchemin est au cœur du donjon.", 2.5)
+		return
 	ninja.bloque = true
 	en_cinematique = true
 	_cinema.entrer(false)
@@ -302,6 +311,14 @@ func _combat() -> void:
 	if _seigneur == null or _seigneur.etat == Boss.Etat.MORT:
 		return
 	combat_en_cours = true
+	if not CINEMATIQUES:
+		# sans cinématique : la porte claque et le combat commence tout de suite
+		_porte_donjon.fermer()
+		_camera.secouer(0.5)
+		Sons.musique("boss")
+		_seigneur.reveiller()
+		_messages.afficher("ESQUIVE SA CHARGE", "Frappe-le quand il reprend son souffle. Saute par-dessus l'onde.", 3.0)
+		return
 	ninja.bloque = true
 	en_cinematique = true
 	# la porte claque derrière le ninja, la musique se tait
@@ -358,6 +375,10 @@ func _sur_coup_au_seigneur(vie: int, _vie_max: int) -> void:
 
 
 func _sur_seigneur_tombe() -> void:
+	if not CINEMATIQUES:
+		Sons.musique("")
+		_seigneur.disparaitre()
+		return
 	ninja.bloque = true
 	en_cinematique = true
 	Sons.musique("")
