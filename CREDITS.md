@@ -17,6 +17,7 @@ Musiques et sons enregistrés, tous sous **licence CC0** (domaine public) :
 | Sortir et ranger le katana | [Fantasy Weapons and Apparel SFX Library](https://opengameart.org/content/fantasy-weapons-and-apparel-sfx-library) | Jan Schupke (vehicle) |
 | Coup de katana | [Swishes Sound Pack](https://opengameart.org/content/swishes-sound-pack) | artisticdude |
 | Grande porte | [Creaky Door Hinge Spooky](https://opengameart.org/content/creaky-door-hinge-spooky) | wforster1 |
+| Clic du menu, autel | [Interface Sounds](https://kenney.nl/assets/interface-sounds) (pluck_002, glass_004 avec un léger écho) | Kenney |
 
 Les autres sons de KAGE sont **créés par synthèse**, sans enregistrement : le script
 `scripts/tools/generer_sons.py` (Python, numpy et ffmpeg) les fabrique à partir de zéro.
@@ -27,7 +28,7 @@ Ils sont libres de droits et appartiennent au projet.
 - Gamme miyako-bushi (ré, mi bémol, sol, la, si bémol).
 - Musiques : chasse (tambours de poursuite), boss, victoire, défaite.
 - Bruitages : escalade, sabre, lanterne, garde à terre, alerte (taiko et cri de shakuhachi), coup du garde,
-  plancher qui grince, clochettes, fil coupé, parchemin, autel, clic du menu, jingle du trésor, herse, coffre,
+  plancher qui grince, clochettes, fil coupé, parchemin, jingle du trésor, herse, coffre,
   cris et charge du seigneur Oni, onde, miaou, corbeaux.
 
 ## Modèles 3D

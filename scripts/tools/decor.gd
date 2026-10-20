@@ -14,6 +14,7 @@ const PETITS_DETAILS := ["Gazon", "Touffes", "Fleurs", "FeuillesBambou", "Galets
 const PORTEE_DETAILS := 55.0
 ## Petits objets qui ne projettent pas d'ombre de lune : on ne la verrait presque pas, et les ombres
 ## doublent le travail de dessin de tout ce qui en projette.
+const ZONE_VERTE := 2780.0  ## au sud de cette ligne (px), la première zone garde ses arbres verts
 const SANS_OMBRE := ["Galets", "PasJaponais", "Guirlande", "Sanctuaire", "Rochersstone_small", "Poutres", "Bambous", "Touffes"]
 
 var _deco := {}  # nom -> {"mesh": Mesh, "transforms": Array, "ombre": bool, "materiau": Material}
@@ -33,7 +34,8 @@ func _materiaux() -> void:
 	materiaux["allee"] = _matiere(1, "#9a968c", "#827e76", "#4a5440")
 	materiaux["pave"] = _matiere(2, "#8c8378", "#6a645c", "#47423b")
 	materiaux["mur"] = _matiere(3, "#ddd4c2", "#ddd4c2")
-	materiaux["tuiles"] = _matiere(4, "#4b5568", "#1d2230")
+	# toits du château en tuiles rouges (comme demandé), un peu plus sombres que celles du village
+	materiaux["tuiles"] = _matiere(4, "#a23a2a", "#4a130d")
 	materiaux["bois"] = _matiere(5, "#8c5c3b", "#5c3a25")
 	materiaux["parquet"] = _matiere(5, "#b08254", "#7f5636")
 	materiaux["pierre"] = _matiere(6, "#a19c92", "#78746c", "#3b3a37")
@@ -45,6 +47,12 @@ func _materiaux() -> void:
 	materiaux["planches"] = _matiere(5, "#a87850", "#6e4a2e")
 	materiaux["bois_sombre"] = _matiere(5, "#4a3020", "#2c1c13")
 	materiaux["tatami"] = _matiere(11, "#b3aa6c", "#8e8652")
+	# gravier blanc ratissé des cours du château (jardin sec), remparts en bois sombre sur pierre
+	materiaux["gravier"] = _matiere(7, "#c4bfb2", "#97928a")
+	materiaux["bois_rempart"] = _matiere(5, "#3b2c24", "#231912")
+	var ishigaki := _matiere(6, "#9d978b", "#6f6a61", "#34322e")
+	ishigaki.set_shader_parameter("echelle", 0.55)
+	materiaux["ishigaki"] = ishigaki
 	materiaux["laque"] = mat("#b8321e", {"roughness": 0.45})
 	materiaux["rouge"] = mat("#c23b22", {"roughness": 0.5})
 	materiaux["eau"] = _shader("eau")
@@ -334,27 +342,114 @@ func toit_japonais(nom: String, x: float, y: float, w: float, d: float, h: float
 	if etages == 1:
 		_pan_de_toit(noeud, c + Vector3(0, bas, 0), lx, lz, 1.0, matiere)
 		return
-	# donjon : un toit bas tronqué, un étage blanc, puis le toit du haut
-	_pan_de_toit(noeud, c + Vector3(0, bas, 0), lx, lz, 0.5)
-	var ex := w * ECHELLE * 0.62
-	var ez := d * ECHELLE * 0.62
-	var etage := MeshInstance3D.new()
-	var boite_etage := BoxMesh.new()
-	boite_etage.size = Vector3(ex, 1.7, ez)
-	etage.mesh = boite_etage
-	etage.material_override = materiaux["mur"]
-	etage.position = c + Vector3(0, bas + 0.9 + 0.85, 0)
-	ajouter(noeud, etage)
-	for sx in [-1.0, 1.0]:
-		for sz in [-1.0, 1.0]:
-			var poteau := MeshInstance3D.new()
-			var b := BoxMesh.new()
-			b.size = Vector3(0.2, 1.7, 0.2)
-			poteau.mesh = b
-			poteau.material_override = materiaux["bois"]
-			poteau.position = c + Vector3(sx * ex / 2.0, bas + 1.75, sz * ez / 2.0)
-			ajouter(noeud, poteau)
-	_pan_de_toit(noeud, c + Vector3(0, bas + 2.6, 0), ex + 1.3, ez + 1.3, 1.0)
+	# donjon (tenshu) : trois étages blancs de plus en plus petits, fenêtres éclairées,
+	# pignons triangulaires (chidori-hafu) sur la façade et toits de tuiles rouges
+	var demi := Vector2(lx / 2.0, lz / 2.0)
+	var niveau_y := bas
+	var coupes := [0.42, 0.5]
+	for etage in 2:
+		var court := minf(demi.x, demi.y)
+		var hauteur := minf(court * 0.6, 3.6)
+		var coupe: float = coupes[etage]
+		_pan_de_toit(noeud, c + Vector3(0, niveau_y, 0), demi.x * 2.0, demi.y * 2.0, coupe, matiere)
+		# pignon sur la façade sud (côté caméra), posé sur la pente du toit
+		var pente_z := demi.y - (court - 0.08) * coupe * 0.5
+		_pignon(noeud, c + Vector3(0, niveau_y + hauteur * pow(coupe * 0.5, 1.7), pente_z), minf(demi.x * 0.5, 4.0), 1.3 - etage * 0.2, matiere)
+		var rentre := (court - 0.08) * coupe
+		demi = Vector2(demi.x - rentre - 0.35, demi.y - rentre - 0.35)
+		# les étages du haut sont plus carrés et plus hauts : une vraie tour, pas une longue halle
+		demi.x = minf(demi.x, demi.y * (1.7 if etage == 0 else 1.25))
+		niveau_y += hauteur * pow(coupe, 1.7) - 0.15
+		var h_corps := 2.6 - etage * 0.3
+		_corps_tenshu(noeud, c + Vector3(0, niveau_y, 0), demi, h_corps)
+		niveau_y += h_corps
+		demi = Vector2(demi.x + 0.7, demi.y + 0.7)
+	_pan_de_toit(noeud, c + Vector3(0, niveau_y, 0), demi.x * 2.0, demi.y * 2.0, 1.0, matiere)
+
+
+## Étage du donjon : murs blancs, bandeau de bois sombre, rangée de fenêtres éclairées.
+func _corps_tenshu(parent: Node3D, base: Vector3, demi: Vector2, h: float) -> void:
+	var murs := MeshInstance3D.new()
+	var b := BoxMesh.new()
+	b.size = Vector3(demi.x * 2.0, h, demi.y * 2.0)
+	murs.mesh = b
+	murs.material_override = materiaux["mur"]
+	murs.position = base + Vector3(0, h / 2.0, 0)
+	ajouter(parent, murs)
+	var bande := MeshInstance3D.new()
+	var bb := BoxMesh.new()
+	bb.size = Vector3(demi.x * 2.0 + 0.06, 0.16, demi.y * 2.0 + 0.06)
+	bande.mesh = bb
+	bande.material_override = materiaux["bois_sombre"]
+	bande.position = base + Vector3(0, h * 0.25, 0)
+	ajouter(parent, bande)
+	# fenêtres éclairées sur les quatre faces
+	var vitre := BoxMesh.new()
+	vitre.size = Vector3(0.6, 0.55, 0.05)
+	for face in 4:
+		var le_long_x := face < 2
+		var longueur := demi.x * 2.0 if le_long_x else demi.y * 2.0
+		var n := maxi(int(longueur / 1.6), 1)
+		var signe := 1.0 if face % 2 == 0 else -1.0
+		for k in n:
+			var t := ((k + 0.5) / n - 0.5) * longueur
+			var f := MeshInstance3D.new()
+			f.mesh = vitre
+			f.material_override = materiaux["shoji"]
+			f.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			if le_long_x:
+				f.position = base + Vector3(t, h * 0.62, signe * (demi.y + 0.02))
+			else:
+				f.position = base + Vector3(signe * (demi.x + 0.02), h * 0.62, t)
+				f.rotation.y = PI / 2.0
+			ajouter(parent, f)
+
+
+## Pignon triangulaire (chidori-hafu) : petit toit à deux pans tourné vers le sud, face blanche.
+func _pignon(parent: Node3D, base: Vector3, largeur: float, hauteur: float, matiere: String) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var demi := largeur / 2.0
+	var prof := 1.6
+	var g := Vector3(-demi - 0.25, -0.1, prof * 0.5)
+	var d := Vector3(demi + 0.25, -0.1, prof * 0.5)
+	var h := Vector3(0, hauteur, prof * 0.5 + 0.1)
+	var g2 := g - Vector3(0, -0.6, prof)
+	var d2 := d - Vector3(0, -0.6, prof)
+	var h2 := h - Vector3(0, 0, prof)
+	var tri := [g, h, h2, g, h2, g2, h, d, d2, h, d2, h2]
+	for v in tri:
+		st.add_vertex(v)
+	tri.reverse()  # les deux faces, pour ne pas dépendre du sens des triangles
+	for v in tri:
+		st.add_vertex(v)
+	st.generate_normals()
+	var toit := MeshInstance3D.new()
+	toit.mesh = st.commit()
+	toit.material_override = materiaux[matiere]
+	toit.position = base
+	ajouter(parent, toit)
+	var face := SurfaceTool.new()
+	face.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for v in [Vector3(-demi, 0, 0), Vector3(demi, 0, 0), Vector3(0, hauteur - 0.18, 0)]:
+		face.set_normal(Vector3.BACK)
+		face.add_vertex(v)
+	for v in [Vector3(-demi, 0, 0), Vector3(0, hauteur - 0.18, 0), Vector3(demi, 0, 0)]:
+		face.set_normal(Vector3.BACK)
+		face.add_vertex(v)
+	var mur_face := MeshInstance3D.new()
+	mur_face.mesh = face.commit()
+	mur_face.material_override = materiaux["mur"]
+	mur_face.position = base + Vector3(0, -0.05, prof * 0.45)
+	ajouter(parent, mur_face)
+	# petit ornement doré au sommet
+	var orne := MeshInstance3D.new()
+	var bo := BoxMesh.new()
+	bo.size = Vector3(0.3, 0.12, 0.1)
+	orne.mesh = bo
+	orne.material_override = materiaux["or"]
+	orne.position = base + Vector3(0, hauteur * 0.62, prof * 0.5 + 0.05)
+	ajouter(parent, orne)
 
 
 ## Un toit à quatre pans en courbe (plus raide en haut, presque plat au bord, coins relevés),
@@ -496,8 +591,7 @@ func maison_bois(nom: String, x: float, y: float, w: float, d: float, h := 1.9, 
 			plaque("Marches", c + f[0] + dehors * 1.15 + Vector3(0, 0.1, 0), Vector3(0.9, 0.2, 0.5) if le_long_x else Vector3(0.5, 0.2, 0.9), "pierre")
 
 
-## Chemin de terre qui serpente par les points donnés (px) : un ruban posé sur l'herbe, avec deux
-## ornières, des cailloux et un bord irrégulier où l'herbe mord (assets/shaders/chemin.gdshader).
+## Chemin de terre qui serpente par les points donnés (px) : un ruban posé sur l'herbe, avec des cailloux et un bord irrégulier où l'herbe mord (assets/shaders/chemin.gdshader).
 func chemin_terre(nom: String, points: Array, largeur: float) -> void:
 	var pts: Array[Vector3] = []
 	for p in points:
@@ -580,15 +674,47 @@ func cachettes(liste: Array) -> void:
 
 
 ## Torii rouge au-dessus d'un chemin : centre (x, y) en px, largeur en m.
-func torii(x: float, y: float, largeur := 4.0, h := 3.6) -> void:
+func torii(x: float, y: float, largeur := 4.0, h := 3.6, angle := 0.0) -> void:
 	var c := P(x, y)
+	var tourne := Basis(Vector3.UP, deg_to_rad(angle))
+	var morceau := func(nom: String, local: Vector3, taille: Vector3, materiau: String) -> void:
+		deco(nom, _boite_unite(), Transform3D(tourne * Basis().scaled(taille), c + tourne * local), materiaux[materiau])
+	if not racine.has_node("Torii"):
+		var corps := StaticBody3D.new()
+		corps.name = "Torii"
+		ajouter(racine, corps)
 	for s in [-1.0, 1.0]:
-		plaque("ToriiPiliers", c + Vector3(s * largeur / 2.0, h / 2.0, 0), Vector3(0.28, h, 0.28), "laque_vive")
-		plaque("ToriiSocles", c + Vector3(s * largeur / 2.0, 0.15, 0), Vector3(0.4, 0.3, 0.4), "noir")
-	plaque("ToriiNuki", c + Vector3(0, h - 0.7, 0), Vector3(largeur + 0.6, 0.2, 0.18), "laque_vive")
-	plaque("ToriiKasagi", c + Vector3(0, h + 0.05, 0), Vector3(largeur + 1.4, 0.26, 0.34), "noir")
-	plaque("ToriiShimaki", c + Vector3(0, h - 0.18, 0), Vector3(largeur + 1.0, 0.22, 0.26), "laque_vive")
-	plaque("ToriiGakuzuka", c + Vector3(0, h - 0.4, 0), Vector3(0.18, 0.4, 0.16), "laque_vive")
+		morceau.call("ToriiPiliers", Vector3(s * largeur / 2.0, h / 2.0, 0), Vector3(0.28, h, 0.28), "laque_vive")
+		morceau.call("ToriiSocles", Vector3(s * largeur / 2.0, 0.15, 0), Vector3(0.4, 0.3, 0.4), "noir")
+		# les piliers arrêtent le ninja
+		var forme := CollisionShape3D.new()
+		var cyl := CylinderShape3D.new()
+		cyl.radius = 0.2
+		cyl.height = h
+		forme.shape = cyl
+		forme.position = c + tourne * Vector3(s * largeur / 2.0, h / 2.0, 0)
+		ajouter(racine.get_node("Torii"), forme)
+	morceau.call("ToriiNuki", Vector3(0, h - 0.7, 0), Vector3(largeur + 0.6, 0.2, 0.18), "laque_vive")
+	morceau.call("ToriiKasagi", Vector3(0, h + 0.05, 0), Vector3(largeur + 1.4, 0.26, 0.34), "noir")
+	morceau.call("ToriiShimaki", Vector3(0, h - 0.18, 0), Vector3(largeur + 1.0, 0.22, 0.26), "laque_vive")
+	morceau.call("ToriiGakuzuka", Vector3(0, h - 0.4, 0), Vector3(0.18, 0.4, 0.16), "laque_vive")
+
+
+## Allée de torii (senbon torii) le long d'un chemin [[x, y]...] (px) : un portail tous les `pas` px,
+## chacun tourné face au chemin.
+func allee_torii(chemin: Array, pas: float, largeur := 3.2, h := 3.3) -> void:
+	var reste := 0.0
+	for k in chemin.size() - 1:
+		var a := Vector2(chemin[k][0], chemin[k][1])
+		var b := Vector2(chemin[k + 1][0], chemin[k + 1][1])
+		var l := a.distance_to(b)
+		var t := reste
+		while t <= l:
+			var p := a.lerp(b, t / l)
+			var dir := (b - a) / l
+			torii(p.x, p.y, largeur, h, rad_to_deg(atan2(dir.x, dir.y)))
+			t += pas
+		reste = t - l
 
 
 ## Grande porte du château : deux vantaux qui s'ouvrent avec E, entre x et x + w (px), à la ligne y.
@@ -789,6 +915,14 @@ func _alentours() -> void:
 		f.set_shader_parameter("couleur_sombre", Color(c[1]))
 		f.set_shader_parameter("touffes", 5.0)
 		feuillages.append(f)
+	# au nord du ruisseau (château), la forêt est en fleurs : cerisiers roses et glycines mauves
+	var fleuris := []
+	for c in [["#f2b8cc", "#a8506f"], ["#c39ae6", "#5e3a8c"]]:
+		var f: ShaderMaterial = _shader("feuillage")
+		f.set_shader_parameter("couleur_claire", Color(c[0]))
+		f.set_shader_parameter("couleur_sombre", Color(c[1]))
+		f.set_shader_parameter("touffes", 7.0)
+		fleuris.append(f)
 	_hasard.seed = 909
 	var pas := 3.8 / ECHELLE
 	var largeur := 22.0 / ECHELLE
@@ -811,6 +945,11 @@ func _alentours() -> void:
 						deco("ForetBuissons", _sphere(), Transform3D(tourne.scaled(Vector3(s * 1.3, s * 0.8, s * 1.3)), pos + Vector3(0, s * 0.25, 0)), feuillages[k], false)
 				elif _hasard.randf() < 0.12:
 					bambous(px - 40, py - 40, 80, 80, 7)
+				elif py < ZONE_VERTE and _hasard.randf() < 0.6:
+					var s := h * _hasard.randf_range(0.5, 0.65)
+					var j := _hasard.randi() % 2
+					deco("ForetFleuris%d" % j, pin, Transform3D(tourne.scaled(Vector3(s, s * 0.8, s)), pos + Vector3(0, h * 0.42, 0)), fleuris[j], false)
+					deco("ForetTroncs", tronc, Transform3D(Basis().scaled(Vector3(0.8, h * 0.5, 0.8)), pos + Vector3(0, h * 0.25, 0)), materiaux["bois"], false)
 				elif _hasard.randf() < 0.45:
 					var l := h * _hasard.randf_range(0.28, 0.36)
 					deco("ForetCedres%d" % k, cedre, Transform3D(tourne.scaled(Vector3(l, h, l)), pos + Vector3(0, h * 0.18, 0)), feuillages[k], false)
@@ -1094,8 +1233,8 @@ func plaque(nom: String, centre: Vector3, taille: Vector3, materiau: String, omb
 # --- Murs et bâtiments ------------------------------------------------------
 
 ## Mur blanc à soubassement de pierre, poutre sombre, petites fenêtres et toit de tuiles à faîtage.
-func mur(nom: String, x: float, y: float, w: float, d: float, h: float) -> void:
-	boite(nom, x, y, w, d, h, "mur")
+func mur(nom: String, x: float, y: float, w: float, d: float, h: float, enduit := "mur") -> void:
+	boite(nom, x, y, w, d, h, enduit)
 	boite(nom + "Tuiles", x - 6, y - 6, w + 12, d + 12, 0.25, "tuiles", null, h)
 	var centre := P(x + w / 2.0, y + d / 2.0)
 	var long := maxf(w, d) * ECHELLE
@@ -1123,9 +1262,82 @@ func mur(nom: String, x: float, y: float, w: float, d: float, h: float) -> void:
 					plaque("Barreaux", centre + barreau, taille.call(0.03, 0.34, 0.05), "bois", false)
 
 
+## Rempart du château : grosse base de pierres en fruit (ishigaki), mur de planches sombres,
+## bandeau d'enduit blanc sous le toit de tuiles rouges, meurtrières.
+func rempart(nom: String, x: float, y: float, w: float, d: float, h: float) -> void:
+	mur(nom, x, y, w, d, h, "bois_rempart")
+	var centre := P(x + w / 2.0, y + d / 2.0)
+	var long := maxf(w, d) * ECHELLE
+	var epais := minf(w, d) * ECHELLE
+	var le_long_x := w >= d
+	var taille := func(l: float, haut: float, e: float) -> Vector3:
+		return Vector3(l, haut, e) if le_long_x else Vector3(e, haut, l)
+	# base de pierre évasée : 0,3 m de plus de chaque côté au pied, presque rien à 1,8 m
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var hb := 1.8
+	var bas := Vector2(long / 2.0 + 0.3, epais / 2.0 + 0.3)
+	var haut := Vector2(long / 2.0 + 0.05, epais / 2.0 + 0.04)
+	var coins_bas := [Vector3(-bas.x, 0, -bas.y), Vector3(bas.x, 0, -bas.y), Vector3(bas.x, 0, bas.y), Vector3(-bas.x, 0, bas.y)]
+	var coins_haut := [Vector3(-haut.x, hb, -haut.y), Vector3(haut.x, hb, -haut.y), Vector3(haut.x, hb, haut.y), Vector3(-haut.x, hb, haut.y)]
+	for i in 4:
+		var j := (i + 1) % 4
+		for v in [coins_bas[i], coins_haut[j], coins_bas[j], coins_bas[i], coins_haut[i], coins_haut[j]]:
+			st.add_vertex(v if le_long_x else Vector3(v.z, v.y, v.x))
+	for v in [coins_haut[0], coins_haut[2], coins_haut[1], coins_haut[0], coins_haut[3], coins_haut[2]]:
+		st.add_vertex(v if le_long_x else Vector3(v.z, v.y, v.x))
+	st.generate_normals()
+	var base := MeshInstance3D.new()
+	base.name = nom + "Ishigaki"
+	base.mesh = st.commit()
+	base.material_override = materiaux["ishigaki"]
+	base.position = centre
+	ajouter(racine, base)
+	# bandeau blanc sous le toit, et meurtrières rondes et carrées en alternance
+	plaque("Bandeaux", centre + Vector3(0, h - 0.42, 0), taille.call(long + 0.03, 0.5, epais + 0.05), "mur")
+	var n := int(long / 2.2)
+	for k in n:
+		var t := ((k + 0.5) / n - 0.5) * long
+		for cote in [-1.0, 1.0]:
+			var decal := Vector3(t, h * 0.62, cote * (epais / 2.0 + 0.02))
+			if not le_long_x:
+				decal = Vector3(cote * (epais / 2.0 + 0.02), h * 0.62, t)
+			var cote_l := 0.22 if k % 2 == 0 else 0.16
+			plaque("Meurtrieres", centre + decal, taille.call(cote_l, cote_l * (1.0 if k % 2 == 0 else 1.6), 0.05), "noir", false)
+
+
+## Tourelle (yagura) centrée en (x, y), de w × d px, posée à `base` m (sur le rempart) :
+## socle de pierre jusque-là (si `socle`), étage blanc aux fenêtres éclairées, toit rouge.
+func yagura(nom: String, x: float, y: float, w := 110.0, d := 110.0, base := 3.4, socle := true) -> void:
+	var noeud := Node3D.new()
+	noeud.name = nom
+	ajouter(racine, noeud)
+	var c := P(x, y)
+	var lx := w * ECHELLE
+	var lz := d * ECHELLE
+	if socle:
+		boite(nom + "Socle", x - w / 2.0, y - d / 2.0, w, d, base, "ishigaki")
+	plaque("YaguraCorps", c + Vector3(0, base + 0.8, 0), Vector3(lx - 0.4, 1.6, lz - 0.4), "mur")
+	plaque("Poutres", c + Vector3(0, base + 0.05, 0), Vector3(lx - 0.2, 0.14, lz - 0.2), "bois_sombre")
+	plaque("Poutres", c + Vector3(0, base + 1.55, 0), Vector3(lx - 0.3, 0.12, lz - 0.3), "bois_sombre")
+	for s in [-1.0, 1.0]:
+		var nx := maxi(int((lx - 0.4) / 1.4), 1)
+		for k in nx:
+			var t := ((k + 0.5) / nx - 0.5) * (lx - 0.4)
+			plaque("Shoji", c + Vector3(t, base + 0.85, s * (lz / 2.0 - 0.18)), Vector3(0.5, 0.42, 0.04), "shoji", false)
+		var nz := maxi(int((lz - 0.4) / 1.4), 1)
+		for k in nz:
+			var t := ((k + 0.5) / nz - 0.5) * (lz - 0.4)
+			plaque("Shoji", c + Vector3(s * (lx / 2.0 - 0.18), base + 0.85, t), Vector3(0.04, 0.42, 0.5), "shoji", false)
+	_pan_de_toit(noeud, c + Vector3(0, base + 1.6, 0), lx + 0.9, lz + 0.9, 1.0)
+
+
 ## Bâtiment : murs blancs à colombages sombres, fenêtres shoji éclairées, toit de tuiles débordant.
 func batiment(nom: String, x: float, y: float, w: float, d: float, h: float, toit := "tuiles") -> void:
-	super.batiment(nom, x, y, w, d, h, toit)
+	# murs et soubassement comme avant, mais un vrai toit japonais à quatre pans à la place du toit plat
+	boite(nom, x, y, w, d, h, "mur")
+	boite(nom + "Soubassement", x - 2, y - 2, w + 4, d + 4, 0.4, "pierre")
+	toit_japonais(nom + "Toit", x, y, w, d, h - 0.4, 1, toit)
 	var c := P(x + w / 2.0, y + d / 2.0)
 	var lx := w * ECHELLE
 	var lz := d * ECHELLE
@@ -1134,9 +1346,6 @@ func batiment(nom: String, x: float, y: float, w: float, d: float, h: float, toi
 		for sz in [-1.0, 1.0]:
 			plaque("Poteaux", c + Vector3(sx * lx / 2.0, h / 2.0, sz * lz / 2.0), Vector3(0.18, h, 0.18), "bois")
 	plaque("Poutres", c + Vector3(0, h - 0.15, 0), Vector3(lx + 0.06, 0.16, lz + 0.06), "bois")
-	# Faîtage sur le toit, dans le sens de la longueur
-	var faitage := Vector3(lx + 0.6, 0.16, 0.24) if lx >= lz else Vector3(0.24, 0.16, lz + 0.6)
-	plaque("Faitages", c + Vector3(0, h + 0.38, 0), faitage, "noir")
 	# Fenêtres shoji : une lueur chaude derrière le papier, sur chaque face
 	var faces := [[Vector3(0, 0, lz / 2.0 + 0.02), lx, true], [Vector3(0, 0, -lz / 2.0 - 0.02), lx, true],
 		[Vector3(lx / 2.0 + 0.02, 0, 0), lz, false], [Vector3(-lx / 2.0 - 0.02, 0, 0), lz, false]]
@@ -1323,34 +1532,83 @@ func _mesh_du_modele(chemin: String) -> Mesh:
 
 # --- Eau ----------------------------------------------------------------------
 
-## Ruisseau : bandes d'eau entre les points [[x, y]...] (px), avec des galets sur les berges.
-func ruisseau(nom: String, points: Array, largeur: float) -> void:
+## Rivière : un lit creusé dans le sol entre les points [[x, y]...] (px), l'eau en contrebas,
+## des galets et des rochers sur les berges. On ne peut la traverser que sur les ponts :
+## `passages` donne les intervalles [x0, x1] (px) laissés libres.
+func ruisseau(nom: String, points: Array, largeur: float, passages := []) -> void:
 	var noeud := Node3D.new()
 	noeud.name = nom
 	ajouter(racine, noeud)
+	var bords := StaticBody3D.new()
+	bords.name = nom + "Bords"
+	ajouter(racine, bords)
 	_hasard.seed = int(largeur * 13)
+	var large := largeur * ECHELLE
 	for k in points.size() - 1:
 		_occupe.append(Rect2(Vector2(points[k][0], points[k][1]), Vector2.ZERO).expand(Vector2(points[k + 1][0], points[k + 1][1])).grow(largeur * 0.6))
-		var a := P(points[k][0], points[k][1], 0.035)
-		var b := P(points[k + 1][0], points[k + 1][1], 0.035)
+		var a := P(points[k][0], points[k][1])
+		var b := P(points[k + 1][0], points[k + 1][1])
+		var angle := -atan2(b.z - a.z, b.x - a.x)
+		var longueur := a.distance_to(b)
+		# le lit, creusé dans le sol (les segments se chevauchent aux coudes)
+		var lit := CSGBox3D.new()
+		lit.name = "%sLit%d" % [nom, k]
+		lit.operation = CSGShape3D.OPERATION_SUBTRACTION
+		lit.size = Vector3(longueur + large * 0.9, 0.9, large)
+		lit.position = (a + b) / 2.0 + Vector3(0, -0.35, 0)
+		lit.rotation.y = angle
+		ajouter(decor, lit)
 		var bande := MeshInstance3D.new()
 		var plan := PlaneMesh.new()
-		plan.size = Vector2(a.distance_to(b) + largeur * ECHELLE, largeur * ECHELLE)
+		plan.size = Vector2(longueur + large, large)
 		plan.material = materiaux["eau"]
 		bande.mesh = plan
-		bande.position = (a + b) / 2.0
-		bande.rotation.y = -atan2(b.z - a.z, b.x - a.x)
+		bande.position = (a + b) / 2.0 + Vector3(0, -0.22, 0)
+		bande.rotation.y = angle
 		bande.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ajouter(noeud, bande)
-		# Galets le long des deux berges
+		# murs invisibles au-dessus de l'eau, sauf aux ponts
+		var x0 := minf(a.x, b.x)
+		var x1 := maxf(a.x, b.x)
+		var morceaux := [[x0 - 0.2, x1 + 0.2]]
+		for passage in passages:
+			var p0 := P(passage[0], 0).x
+			var p1 := P(passage[1], 0).x
+			var suite := []
+			for m in morceaux:
+				if p1 <= m[0] or p0 >= m[1]:
+					suite.append(m)
+				else:
+					if p0 > m[0]:
+						suite.append([m[0], p0])
+					if p1 < m[1]:
+						suite.append([p1, m[1]])
+			morceaux = suite
+		for m in morceaux:
+			var ta: float = (m[0] - a.x) / (b.x - a.x)
+			var tb: float = (m[1] - a.x) / (b.x - a.x)
+			var ma := a.lerp(b, ta)
+			var mb := a.lerp(b, tb)
+			var forme := CollisionShape3D.new()
+			var boite_mur := BoxShape3D.new()
+			boite_mur.size = Vector3(ma.distance_to(mb), 3.0, large * 0.95)
+			forme.shape = boite_mur
+			forme.position = (ma + mb) / 2.0 + Vector3(0, 1.0, 0)
+			forme.rotation.y = angle
+			ajouter(bords, forme)
+		# galets le long des berges, et quelques-uns dans l'eau
 		var dir := (b - a).normalized()
 		var cote := dir.cross(Vector3.UP)
-		var n := int(a.distance_to(b) / 0.5)
+		var n := int(longueur / 0.45)
 		for i in n:
 			for s in [-1.0, 1.0]:
-				var p: Vector3 = a.lerp(b, (i + _hasard.randf()) / n) + cote * s * (largeur * ECHELLE / 2.0 + _hasard.randf_range(-0.05, 0.12))
-				var t := _hasard.randf_range(0.12, 0.28)
-				deco("Galets", _sphere(), Transform3D(Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(t * 1.3, t * 0.55, t)), Vector3(p.x, 0.03, p.z)), materiaux["rocher"])
+				var p: Vector3 = a.lerp(b, (i + _hasard.randf()) / n) + cote * s * (large / 2.0 + _hasard.randf_range(-0.12, 0.1))
+				var t := _hasard.randf_range(0.14, 0.32)
+				deco("Galets", _sphere(), Transform3D(Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(t * 1.3, t * 0.6, t)), Vector3(p.x, 0.0, p.z)), materiaux["rocher"])
+			if _hasard.randf() < 0.18:
+				var q: Vector3 = a.lerp(b, (i + 0.5) / n) + cote * _hasard.randf_range(-0.4, 0.4) * large
+				var t := _hasard.randf_range(0.2, 0.36)
+				deco("GaletsEau", _sphere(), Transform3D(Basis(Vector3.UP, _hasard.randf() * TAU).scaled(Vector3(t * 1.4, t * 0.7, t)), Vector3(q.x, -0.24, q.z)), materiaux["rocher"])
 
 
 ## Sillons ratissés en cercles autour d'un rocher du jardin zen (rayon du premier cercle en m).
@@ -1420,8 +1678,11 @@ func cascade(nom: String, x: float, y: float, hauteur := 2.2, regard := 0.0) -> 
 	chute.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	ajouter(noeud, chute)
 	# Rochers autour et derrière la chute (en coordonnées locales, tournées avec la cascade)
+	# derrière, une falaise de grands rochers plus haute que la chute : l'eau en sort au lieu de flotter
 	var rocs := [[-0.9, -0.6, 1.4, 4], [0.9, -0.6, 1.3, 5], [0.0, -1.2, 1.6, 0], [-1.5, 0.1, 0.9, 2],
-		[1.4, 0.2, 0.8, 3], [-0.6, 0.5, 0.5, 7], [0.7, 0.6, 0.45, 6]]
+		[1.4, 0.2, 0.8, 3], [-0.6, 0.5, 0.5, 7], [0.7, 0.6, 0.45, 6],
+		[-0.75, -1.25, 1.0, 5], [0.75, -1.25, 1.0, 4], [0.0, -2.0, 1.7, 1], [-1.5, -1.6, 1.3, 2],
+		[1.5, -1.6, 1.3, 0], [-0.9, -2.6, 1.5, 3], [0.9, -2.6, 1.5, 1]]
 	for r in rocs:
 		var local := Vector3(r[0], 0, r[1]).rotated(Vector3.UP, deg_to_rad(regard))
 		var p := noeud.position + local
@@ -1429,6 +1690,11 @@ func cascade(nom: String, x: float, y: float, hauteur := 2.2, regard := 0.0) -> 
 		var py := p.z / ECHELLE + origine.y
 		var s: float = r[2] * (1.0 if r[1] > -1.0 else hauteur / 1.6)
 		rochers([[px, py, s, r[3]]])
+	# de la verdure par-dessus et derrière la falaise
+	for v in [[-1.8, -2.9, 1.4], [1.8, -2.9, 1.3], [0.0, -3.4, 1.6]]:
+		var local := Vector3(v[0], 0, v[1]).rotated(Vector3.UP, deg_to_rad(regard))
+		var p := noeud.position + local
+		buissons([[p.x / ECHELLE + origine.x, p.z / ECHELLE + origine.y, v[2]]])
 	# Écume et embruns au pied de la chute
 	var ecume := CPUParticles3D.new()
 	ecume.name = "Embruns"
@@ -1469,6 +1735,61 @@ func pont_rouge(x: float, y: float, w: float, d: float, h := 0.2) -> void:
 			var p := c + cote + (Vector3(0, 0, t) if le_long_z else Vector3(t, 0, 0))
 			plaque("PoteauxPont", p + Vector3(0, (h + 0.85) / 2.0 - 0.3, 0), Vector3(0.13, h + 1.15, 0.13), "laque_vive")
 			deco("Pommeaux", pommeau, Transform3D(Basis(), p + Vector3(0, h + 0.92, 0)), materiaux["noir"])
+
+
+## Pont arqué en bois aux garde-corps laqués, sur le rectangle [x, y, w, d] (px), dans le sens
+## de la plus grande longueur. Le tablier monte en pente douce (on y marche sans sauter) et les
+## garde-corps empêchent de tomber à l'eau.
+func pont_arque(nom: String, x: float, y: float, w: float, d: float, hauteur := 0.55) -> void:
+	var le_long_z := d > w
+	var c := P(x + w / 2.0, y + d / 2.0)
+	var longueur := (d if le_long_z else w) * ECHELLE
+	var large := (w if le_long_z else d) * ECHELLE
+	var axe := Vector3(0, 0, 1) if le_long_z else Vector3(1, 0, 0)
+	var travers := Vector3.UP.cross(axe)
+	var n := 10
+	var pts: Array[Vector3] = []
+	for i in n + 1:
+		var t := float(i) / n
+		pts.append(c + axe * (t - 0.5) * longueur + Vector3(0, hauteur * sin(PI * t), 0))
+	var pommeau := SphereMesh.new()
+	pommeau.radius = 0.08
+	pommeau.height = 0.2
+	for i in n:
+		var a := pts[i]
+		var b := pts[i + 1]
+		var dir := (b - a).normalized()
+		var haut := dir.cross(travers).normalized()
+		var l := a.distance_to(b)
+		var planche := CSGBox3D.new()
+		planche.name = "%s%d" % [nom, i]
+		planche.size = Vector3(large, 0.16, l + 0.06)
+		planche.transform = Transform3D(Basis(travers, haut, dir), (a + b) / 2.0 - haut * 0.08)
+		planche.material = materiaux["bois"]
+		ajouter(decor, planche)
+		for s in [-1.0, 1.0]:
+			var bord: Vector3 = travers * s * large / 2.0
+			for hr in [0.9, 0.5]:
+				var rail := Basis(travers * 0.08, haut * (0.08 if hr > 0.6 else 0.05), dir * (l + 0.02))
+				deco("GardeCorps", _boite_unite(), Transform3D(rail, (a + b) / 2.0 + bord + Vector3(0, hr, 0)), materiaux["laque_vive"])
+			if i % 2 == 0:
+				plaque("PoteauxPont", a + bord + Vector3(0, 0.45, 0), Vector3(0.13, 1.1, 0.13), "laque_vive")
+				deco("Pommeaux", pommeau, Transform3D(Basis(), a + bord + Vector3(0, 1.05, 0)), materiaux["noir"])
+	for s in [-1.0, 1.0]:
+		var bout: Vector3 = pts[n] + travers * s * large / 2.0
+		plaque("PoteauxPont", bout + Vector3(0, 0.45, 0), Vector3(0.13, 1.1, 0.13), "laque_vive")
+		deco("Pommeaux", pommeau, Transform3D(Basis(), bout + Vector3(0, 1.05, 0)), materiaux["noir"])
+	# garde-corps solides
+	var corps := StaticBody3D.new()
+	corps.name = nom + "GardeCorps"
+	ajouter(racine, corps)
+	for s in [-1.0, 1.0]:
+		var forme := CollisionShape3D.new()
+		var b := BoxShape3D.new()
+		b.size = Vector3(0.12, 1.8, longueur - 0.3) if le_long_z else Vector3(longueur - 0.3, 1.8, 0.12)
+		forme.shape = b
+		forme.position = c + travers * s * (large / 2.0 + 0.05) + Vector3(0, 0.7, 0)
+		ajouter(corps, forme)
 
 
 # --- Lumières et objets d'ambiance -----------------------------------------

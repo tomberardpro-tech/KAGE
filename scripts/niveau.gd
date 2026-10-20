@@ -40,6 +40,7 @@ var _cinema: Cinema
 var _camera_cine: Camera3D
 var _tween_cine: Tween
 var est_pret := false
+var avancement := 0.0  ## 0..1 pendant prechauffer(), affiché par l'écran de chargement
 
 @onready var ninja: Ninja = $Ninja
 @onready var _camera: Camera3D = $Camera
@@ -113,15 +114,22 @@ func prechauffer() -> void:
 		[ninja.global_position + Vector3(0, 14, 9), ninja.global_position],
 		[Vector3(0, 14, 66), Vector3(0, 0, 58)], [Vector3(0, 12, 32), Vector3(0, 0, 22)],
 		[Vector3(0, 14, -2), Vector3(0, 0, -10)], [Vector3(0, 14, -20), Vector3(0, 0, -29)]]
+	# puis tout le parcours vu comme en jeu, de chaque côté du chemin : plus rien à préparer en jouant
+	for z in range(84, -36, -10):
+		for x in [-14.0, 0.0, 14.0]:
+			vues.append([Vector3(x, 10, z + 8), Vector3(x, 0, z)])
 	# les grands titres préparent leurs lettres (sous l'écran de chargement, qui les cache)
 	_cinema.titre("KAGE 影 PARCHEMIN DU CLAN SEIGNEUR ONI", "Le parchemin du clan, gardien", 0.1)
 	_camera_cine.current = true
-	for vue in vues:
+	for k in vues.size():
+		var vue: Array = vues[k]
+		avancement = float(k) / vues.size()
 		_camera_cine.global_position = vue[0]
 		_camera_cine.look_at(vue[1], Vector3.UP)
 		_camera_cine.fov = 75.0
 		for i in 3:
 			await get_tree().process_frame
+	avancement = 1.0
 	_camera_cine.fov = 40.0
 	_cinema.cacher_titre()
 	rouleau.queue_free()
@@ -319,7 +327,7 @@ func _combat() -> void:
 		_camera.secouer(0.5)
 		Sons.musique("boss")
 		_seigneur.reveiller()
-		_messages.afficher("ESQUIVE SA CHARGE", "Frappe-le quand il reprend son souffle. Saute par-dessus l'onde.", 3.0)
+		_messages.afficher("ESQUIVE SES ATTAQUES", "Recule quand il lève son épée, bouge sous ses flammes, saute par-dessus l'onde. Frappe-le quand il souffle.", 4.5)
 		return
 	ninja.bloque = true
 	en_cinematique = true
@@ -364,7 +372,7 @@ func _combat() -> void:
 	await _retour_camera(0.0 if passe else 0.9)
 	_pret_a_jouer()
 	_seigneur.reveiller()
-	_messages.afficher("ESQUIVE SA CHARGE", "Frappe-le quand il reprend son souffle. Saute par-dessus l'onde.", 3.0)
+	_messages.afficher("ESQUIVE SES ATTAQUES", "Recule quand il lève son épée, bouge sous ses flammes, saute par-dessus l'onde. Frappe-le quand il souffle.", 4.5)
 
 
 ## Ralenti sur le dernier coup.

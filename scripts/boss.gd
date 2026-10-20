@@ -4,13 +4,20 @@ extends CharacterBody3D
 ## Il marche vers le ninja, prend son élan (il rougit : c'est le moment de s'écarter), charge,
 ## puis reste un instant essoufflé : c'est là qu'il faut frapper. Tous les trois assauts,
 ## il saute et frappe le sol : une onde rouge s'étend, il faut sauter par-dessus.
+## Entre deux, il frappe de sa grande épée (elle rougit quand il la lève : on recule)
+## ou recule et souffle trois boules de feu (sa gueule s'allume : on se déplace).
 ## À la moitié de sa vie, il enrage et va plus vite.
 
 signal tombe  ## il vient de s'effondrer (le niveau lui laisse dire sa dernière réplique)
 signal vaincu  ## il a disparu : la herse se lève, le coffre apparaît
 signal vie_changee(vie: int, vie_max: int)
 
-enum Etat { ATTENTE, POURSUITE, ELAN, CHARGE, SOUFFLE, ONDE_ELAN, ONDE, MORT }
+enum Etat { ATTENTE, POURSUITE, ELAN, CHARGE, SOUFFLE, ONDE_ELAN, ONDE, MORT,
+	EPEE_LEVE, EPEE_FRAPPE, FLAMMES_ELAN, FLAMMES }
+
+## ordre des assauts : charge, épée, onde, flammes, puis on recommence
+const ORDRE := [Etat.ELAN, Etat.EPEE_LEVE, Etat.ONDE_ELAN, Etat.FLAMMES_ELAN]
+const FLAMME := preload("res://scripts/flamme_boss.gd")
 
 @export var vie_max := 8
 @export var vitesse := 2.4
@@ -18,6 +25,8 @@ enum Etat { ATTENTE, POURSUITE, ELAN, CHARGE, SOUFFLE, ONDE_ELAN, ONDE, MORT }
 @export var portee_charge := 6.0
 @export var duree_elan := 0.75
 @export var duree_souffle := 1.3
+@export var portee_epee := 2.8
+@export var duree_leve := 0.55
 
 var vie := 8
 var etat := Etat.ATTENTE
@@ -39,6 +48,14 @@ var _barre: CanvasLayer
 var _barre_vie: Control
 var _vie_affichee := 1.0
 var _aura: OmniLight3D
+var _epee: Node3D  # pivot de la grande épée, dans sa main droite
+var _lame: StandardMaterial3D
+var _trainee: MeshInstance3D
+var _trainee_mat: ShaderMaterial
+var _gueule: StandardMaterial3D
+var _flamme_cachee: MeshInstance3D  # boule invisible : le niveau préchauffe sa matière
+var _vise := 0.0  # angle de regard au moment de frapper
+var _tirs := 0
 
 
 func _ready() -> void:
@@ -56,6 +73,7 @@ func _ready() -> void:
 	add_child(forme)
 	_construire_modele()
 	_construire_onde()
+	_construire_epee()
 	_construire_barre()
 
 
@@ -97,6 +115,7 @@ func reinitialiser() -> void:
 	_onde.visible = false
 	_fleche.visible = false
 	_teinte(0.0)
+	_calmer()
 	_changer(Etat.ATTENTE)
 	_regarder(Vector3.BACK, 1.0)
 	vie_changee.emit(vie, vie_max)
@@ -146,15 +165,24 @@ func _physics_process(delta: float) -> void:
 	match etat:
 		Etat.POURSUITE:
 			_regarder(ecart.normalized(), delta * 5.0)
-			var cible := ecart.normalized() * vitesse * rage
+			_modele.rotation.x = 0.0
+			var prochain: Etat = ORDRE[_assauts % ORDRE.size()]
+			# pour l'épée il doit venir tout près : il presse le pas
+			var allure := 1.5 if prochain == Etat.EPEE_LEVE else 1.0
+			var portee := portee_charge
+			if prochain == Etat.EPEE_LEVE:
+				portee = portee_epee - 0.4
+			elif prochain == Etat.FLAMMES_ELAN:
+				portee = 9.0
+			var cible := ecart.normalized() * vitesse * rage * allure
 			velocity.x = move_toward(velocity.x, cible.x, delta * 12.0)
 			velocity.z = move_toward(velocity.z, cible.z, delta * 12.0)
 			_jouer("marche", 1.2 * rage)
 			if ninja.bloque:
 				velocity = Vector3.ZERO
-			elif _temps <= 0.0 and ecart.length() < portee_charge:
+			elif _temps <= 0.0 and ecart.length() < portee:
 				_assauts += 1
-				_changer(Etat.ONDE_ELAN if _assauts % 3 == 0 else Etat.ELAN)
+				_changer(prochain)
 		Etat.ELAN:
 			# il recule un peu, rougit et vise : une flèche rouge montre où il va charger
 			velocity = velocity.move_toward(Vector3.ZERO, delta * 20.0)
@@ -183,6 +211,7 @@ func _physics_process(delta: float) -> void:
 				_changer(Etat.SOUFFLE)
 		Etat.SOUFFLE:
 			velocity = velocity.move_toward(Vector3.ZERO, delta * 25.0)
+			_epee.rotation.x = lerpf(_epee.rotation.x, 0.5, delta * 4.0)
 			_jouer("repos", 0.6)
 			if _temps <= 0.0:
 				_changer(Etat.POURSUITE)
@@ -205,6 +234,71 @@ func _physics_process(delta: float) -> void:
 			if _temps <= 0.0:
 				_teinte(0.0)
 				_changer(Etat.SOUFFLE)
+		Etat.EPEE_LEVE:
+			# il lève l'épée, qui rougit, le buste tourné pour prendre de l'élan
+			velocity = velocity.move_toward(Vector3.ZERO, delta * 20.0)
+			_regarder(ecart.normalized(), delta * 6.0)
+			_vise = _modele.rotation.y
+			var p := 1.0 - _temps / duree_leve
+			_epee.rotation.x = lerpf(0.5, -1.9, minf(p * 2.0, 1.0))
+			_rougir_lame(p)
+			_teinte(p * 0.6)
+			if _temps <= 0.0:
+				_a_touche = false
+				Sons.jouer("tranche", -6.0, 0.6)
+				_trainee.visible = true
+				_trainee.rotation.y = _vise
+				_changer(Etat.EPEE_FRAPPE)
+		Etat.EPEE_FRAPPE:
+			# grand revers horizontal, de sa droite vers sa gauche, en avançant d'un pas
+			var p := clampf(1.0 - _temps / 0.24, 0.0, 1.0)
+			var angle := lerpf(-1.25, 1.25, p)
+			_modele.rotation.y = _vise + angle
+			_epee.rotation.x = lerpf(-1.9, -0.05, minf(p * 3.0, 1.0))
+			velocity.x = sin(_vise) * 3.0
+			velocity.z = cos(_vise) * 3.0
+			_trainee_mat.set_shader_parameter("avance", p)
+			# le ninja est touché s'il est dans l'arc déjà balayé, à portée de lame
+			var local := ecart.rotated(Vector3.UP, -_vise)
+			var a := atan2(local.x, local.z)
+			var dy := absf(ninja.global_position.y - global_position.y)
+			if not _a_touche and ecart.length() < portee_epee and dy < 1.6 and a > -1.4 and a < angle + 0.2 \
+					and ninja.blesser(global_position):
+				_a_touche = true
+				Sons.jouer("frappe", -6.0, 0.8)
+				_toucher_ninja(ninja)
+			if _temps <= 0.0:
+				_rougir_lame(0.0)
+				_teinte(0.0)
+				_effacer_trainee()
+				_changer(Etat.SOUFFLE)
+		Etat.FLAMMES_ELAN:
+			# il recule en inspirant : sa gueule et son aura s'embrasent
+			_regarder(ecart.normalized(), delta * 8.0)
+			velocity.x = -sin(_modele.rotation.y) * 2.5
+			velocity.z = -cos(_modele.rotation.y) * 2.5
+			var p := 1.0 - _temps / 0.85
+			_gueule.emission_energy_multiplier = p * 6.0
+			_aura.light_energy = 0.8 + p * 2.5
+			_modele.rotation.x = -0.25 * p  # il se cambre
+			# une boule de feu grossit déjà dans sa gueule
+			_flamme_cachee.visible = true
+			_flamme_cachee.scale = Vector3.ONE * 0.3 * p
+			if _temps <= 0.0:
+				_tirs = 0
+				_changer(Etat.FLAMMES)
+		Etat.FLAMMES:
+			velocity = velocity.move_toward(Vector3.ZERO, delta * 20.0)
+			_regarder(ecart.normalized(), delta * 6.0)
+			_modele.rotation.x = 0.1
+			if _temps <= 0.0:
+				if _tirs < 3:
+					_cracher(ninja)
+					_tirs += 1
+					_temps = 0.38
+				else:
+					_calmer(false)
+					_changer(Etat.SOUFFLE)
 	_gravite(delta)
 	move_and_slide()
 
@@ -228,6 +322,19 @@ func _changer(nouvel: Etat) -> void:
 		Etat.ONDE:
 			_temps = 0.9
 			_a_touche = false
+		Etat.EPEE_LEVE:
+			_temps = duree_leve
+			Sons.jouer("boss_cri", -6.0, randf_range(1.0, 1.1))
+			Sons.jouer("degainer", -8.0, 0.7)
+			_jouer("repos", 0.3)
+		Etat.EPEE_FRAPPE:
+			_temps = 0.24
+		Etat.FLAMMES_ELAN:
+			_temps = 0.85
+			Sons.jouer("boss_charge", -9.0, 0.6)
+			_jouer("repos", 0.3)
+		Etat.FLAMMES:
+			_temps = 0.0
 
 
 func _gravite(delta: float) -> void:
@@ -245,6 +352,33 @@ func _toucher_ninja(ninja: Ninja) -> void:
 			niveau.ninja_vaincu()
 
 
+## Une boule de feu part de sa gueule, droit vers le ninja (là où il est maintenant).
+func _cracher(ninja: Ninja) -> void:
+	var boule := FLAMME.new()
+	boule.lanceur = self
+	get_parent().add_child(boule)
+	boule.global_position = _flamme_cachee.global_position
+	var vers := ninja.global_position + Vector3.UP * 0.6 - boule.global_position
+	boule.direction = vers.normalized()
+	Sons.jouer("boss_onde", -10.0, 1.6)
+	_gueule.emission_energy_multiplier = 6.0
+	create_tween().tween_property(_gueule, "emission_energy_multiplier", 3.0, 0.3)
+
+
+## 0 : acier ; 1 : lame rouge vif (il va frapper).
+func _rougir_lame(v: float) -> void:
+	_lame.albedo_color = Color("#dfe3ea").lerp(Color(1.0, 0.2, 0.1), v)
+	_lame.emission_energy_multiplier = v * 3.0
+
+
+func _effacer_trainee() -> void:
+	var t := create_tween()
+	t.tween_method(func(v: float): _trainee_mat.set_shader_parameter("fondu", v), 1.0, 0.0, 0.2)
+	t.tween_callback(func():
+		_trainee.visible = false
+		_trainee_mat.set_shader_parameter("fondu", 1.0))
+
+
 ## Il frappe le sol : une onde rouge s'étend jusqu'à 8 m.
 func _lancer_onde() -> void:
 	Sons.jouer("boss_onde")
@@ -257,6 +391,20 @@ func _lancer_onde() -> void:
 	t.tween_callback(func(): _onde.visible = false)
 
 
+## Épée baissée, gueule éteinte et (sauf demande) plus aucune boule de feu en vol.
+func _calmer(eteindre_flammes := true) -> void:
+	_epee.rotation.x = 0.5
+	_rougir_lame(0.0)
+	_trainee.visible = false
+	_gueule.emission_energy_multiplier = 0.0
+	_flamme_cachee.visible = false
+	_aura.light_energy = 0.8
+	_modele.rotation.x = 0.0
+	if eteindre_flammes:
+		for f in get_tree().get_nodes_in_group("flamme_boss"):
+			f.queue_free()
+
+
 func _mourir() -> void:
 	etat = Etat.MORT
 	remove_from_group("boss")
@@ -264,6 +412,7 @@ func _mourir() -> void:
 	_fleche.visible = false
 	_onde.visible = false
 	_teinte(0.0)
+	_calmer()
 	_jouer("repos", 0.2)
 	_animations.pause()
 	var t := create_tween()
@@ -372,6 +521,30 @@ func _construire_modele() -> void:
 		oeil.position = Vector3(s * 0.045, 0.14, 0.1)
 		tete.add_child(oeil)
 		_peau.append(oeil)
+	# gueule : éteinte, elle s'allume avant les flammes
+	_gueule = StandardMaterial3D.new()
+	_gueule.albedo_color = Color(0.25, 0.05, 0.02)
+	_gueule.emission_enabled = true
+	_gueule.emission = Color(1.0, 0.45, 0.1)
+	_gueule.emission_energy_multiplier = 0.0
+	var gueule := MeshInstance3D.new()
+	var bouche := SphereMesh.new()
+	bouche.radius = 0.045
+	bouche.height = 0.05
+	gueule.mesh = bouche
+	gueule.material_override = _gueule
+	gueule.position = Vector3(0, 0.08, 0.1)
+	tete.add_child(gueule)
+	_peau.append(gueule)
+	# les boules de feu partent d'ici ; celle-ci reste cachée (préchauffage de sa matière)
+	_flamme_cachee = MeshInstance3D.new()
+	_flamme_cachee.mesh = FLAMME.maillage()
+	_flamme_cachee.material_override = FLAMME.matiere()
+	_flamme_cachee.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_flamme_cachee.scale = Vector3.ONE * 0.3
+	_flamme_cachee.position = Vector3(0, 0.08, 0.2)
+	_flamme_cachee.visible = false
+	tete.add_child(_flamme_cachee)
 	_aura = OmniLight3D.new()
 	_aura.light_color = Color(1.0, 0.3, 0.15)
 	_aura.omni_range = 4.0
@@ -425,6 +598,94 @@ void fragment() {
 	_fleche.position.y = 0.07
 	_fleche.visible = false
 	add_child(_fleche)
+
+
+## Sa grande épée (nodachi) dans la main droite, et la traînée rouge de son revers.
+func _construire_epee() -> void:
+	var squelette: Skeleton3D = _modele.find_child("Squelette", true, false)
+	var main := BoneAttachment3D.new()
+	main.bone_name = "AvantBrasD"
+	squelette.add_child(main)
+	_epee = Node3D.new()
+	_epee.position = Vector3(0, -0.08, 0)  # le poing, au bout de l'avant-bras
+	_epee.rotation.x = 0.5
+	main.add_child(_epee)
+	var noir := StandardMaterial3D.new()
+	noir.albedo_color = Color("#1c1210")
+	noir.roughness = 0.8
+	var or_ := StandardMaterial3D.new()
+	or_.albedo_color = Color("#d9a94e")
+	or_.metallic = 0.8
+	or_.roughness = 0.3
+	_lame = StandardMaterial3D.new()
+	_lame.albedo_color = Color("#dfe3ea")
+	_lame.metallic = 0.4
+	_lame.roughness = 0.25
+	_lame.emission_enabled = true
+	_lame.emission = Color(1.0, 0.12, 0.04)
+	_lame.emission_energy_multiplier = 0.0
+	# poignée (en unités du maillage : le géant est environ 2,3 fois plus grand)
+	var poignee := MeshInstance3D.new()
+	var cyl := CylinderMesh.new()
+	cyl.top_radius = 0.012
+	cyl.bottom_radius = 0.012
+	cyl.height = 0.2
+	cyl.radial_segments = 8
+	poignee.mesh = cyl
+	poignee.material_override = noir
+	poignee.rotation.x = PI / 2.0
+	poignee.position.z = -0.03
+	# garde (tsuba)
+	var tsuba := MeshInstance3D.new()
+	var disque := CylinderMesh.new()
+	disque.top_radius = 0.035
+	disque.bottom_radius = 0.035
+	disque.height = 0.008
+	disque.radial_segments = 12
+	tsuba.mesh = disque
+	tsuba.material_override = or_
+	tsuba.rotation.x = PI / 2.0
+	tsuba.position.z = 0.075
+	# lame, longue et fine, qui rougit quand il la lève
+	var lame := MeshInstance3D.new()
+	var boite := BoxMesh.new()
+	boite.size = Vector3(0.008, 0.032, 0.86)
+	lame.mesh = boite
+	lame.material_override = _lame
+	lame.position.z = 0.51
+	for m in [poignee, tsuba, lame]:
+		_epee.add_child(m)
+		_peau.append(m)
+	# traînée de l'arc : un éventail rouge additif, bref
+	_trainee = MeshInstance3D.new()
+	var plan := PlaneMesh.new()
+	plan.size = Vector2.ONE * portee_epee * 2.0
+	_trainee.mesh = plan
+	_trainee_mat = ShaderMaterial.new()
+	_trainee_mat.shader = Shader.new()
+	_trainee_mat.shader.code = """
+shader_type spatial;
+render_mode unshaded, blend_add, depth_draw_never, cull_disabled, shadows_disabled, fog_disabled;
+uniform float avance = 1.0;
+uniform float fondu = 1.0;
+uniform float portee = 3.0;
+varying vec3 p;
+void vertex() { p = VERTEX; }
+void fragment() {
+	float r = length(p.xz) / portee;
+	float a = atan(p.x, p.z);
+	float bout = mix(-1.25, 1.25, avance);
+	float arc = smoothstep(bout - 1.8, bout, a) * step(a, bout + 0.05) * step(-1.3, a);
+	float bande = smoothstep(0.3, 0.55, r) * smoothstep(1.0, 0.85, r);
+	ALBEDO = vec3(1.0, 0.2, 0.06) * arc * arc * bande * 1.6 * fondu;
+}
+"""
+	_trainee_mat.set_shader_parameter("portee", portee_epee)
+	_trainee.material_override = _trainee_mat
+	_trainee.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_trainee.position.y = 0.65  # hauteur du poing
+	_trainee.visible = false
+	add_child(_trainee)
 
 
 ## Barre de vie du seigneur, en haut de l'écran pendant le combat.

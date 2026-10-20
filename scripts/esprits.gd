@@ -1,12 +1,17 @@
 extends Node3D
 ## Esprits bleus (hitodama, kitsune-bi ou yūrei) : lueurs qui apparaissent près du ninja, flottent un moment
 ## en ondulant puis s'effacent. Purement décoratifs : aucune collision, les gardes les ignorent.
-## Ajoutés par niveau.gd.
+## Quand le ninja s'approche, l'esprit fuit devant lui : on peut lui courir après, presque l'attraper,
+## puis il s'évanouit en petites étincelles. Ajoutés par niveau.gd.
 
 const MAX := 1  ## un seul à la fois : un passage rare, pas un essaim qui distrait
-const COEUR := Color(0.85, 0.97, 1.0)  ## centre presque blanc
-const BLEU := Color(0.16, 0.42, 1.0)  ## bord bleu profond
-const LUEUR := Color(0.3, 0.55, 1.0)
+const COEUR := Color(0.4, 0.85, 1.0)  ## centre cyan
+const VIOLET := Color(0.48, 0.12, 0.95)  ## entre-deux violet vif
+const BLEU := Color(0.2, 0.05, 0.55)  ## bord indigo profond
+const LUEUR := Color(0.45, 0.3, 1.0)
+const DISTANCE_FUITE := 4.0  ## le ninja approche : l'esprit s'enfuit
+const VITESSE_FUITE := 7.6  ## un peu moins que le sprint (8,5) : on peut presque l'attraper
+const DISTANCE_TOUCHE := 0.8
 
 ## 0 : hitodama (flamme d'âme), 1 : kitsune-bi (procession de petites flammes), 2 : yūrei (fantôme bleu)
 @export var style := 0
@@ -23,6 +28,7 @@ shader_type spatial;
 render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
 uniform vec3 coeur : source_color;
 uniform vec3 bleu : source_color;
+uniform vec3 violet : source_color;
 uniform float opacite = 1.0;
 uniform int forme = 0;  // 0 flamme, 1 fantôme
 uniform float phase = 0.0;
@@ -32,7 +38,7 @@ void vertex() {
 }
 float flamme(vec2 p, float t) {
 	// goutte : rond en bas, pointe qui danse en haut
-	p.x += sin(p.y * 5.0 - t * 3.0) * 0.07 * (p.y + 0.5);
+	p.x += (sin(p.y * 5.0 - t * 3.0) * 0.1 + sin(p.y * 11.0 - t * 5.3) * 0.035) * (p.y + 0.5);
 	float h = clamp((p.y + 0.3) / 1.15, 0.0, 1.0);
 	float l = 0.36 * pow(1.0 - h, 1.4) * (0.88 + 0.12 * sin(t * 6.0 + p.y * 11.0));
 	float bas = length(p - vec2(0.0, -0.3));
@@ -56,9 +62,10 @@ void fragment() {
 		yeux = smoothstep(0.11, 0.07, length((vec2(abs(p.x) - 0.15, p.y - 0.3)) * vec2(1.0, 0.75)));
 	}
 	float forme_a = smoothstep(0.0, 0.25, f);
-	float centre = smoothstep(0.35, 0.95, f) * (1.0 - yeux);
-	float halo = pow(max(0.0, 1.0 - length(p * vec2(1.0, 0.8))), 2.0) * 0.45;
-	vec3 c = mix(bleu, coeur, centre) * (1.0 - yeux * 0.85);
+	float centre = smoothstep(0.55, 1.0, f) * (1.0 - yeux);
+	float milieu = smoothstep(0.1, 0.5, f);
+	float halo = pow(max(0.0, 1.0 - length(p * vec2(1.0, 0.8))), 2.0) * 0.2;
+	vec3 c = mix(mix(bleu, violet, milieu), coeur, centre) * (1.0 - yeux * 0.85);
 	ALBEDO = c * forme_a + bleu * halo;
 	ALPHA = clamp((forme_a + halo) * opacite, 0.0, 1.0);
 }
@@ -66,23 +73,26 @@ void fragment() {
 
 
 func _process(delta: float) -> void:
-	# quand le ninja approche, l'esprit file et s'évanouit
+	# quand le ninja approche, l'esprit fuit devant lui
 	if cible:
 		for esprit: Node3D in get_children():
-			if not esprit.get_meta("fuit", false):
-				var ecart := esprit.global_position - cible.global_position
-				ecart.y = 0.0
-				if ecart.length() < 3.5:
-					_fuir(esprit, ecart.normalized())
+			if esprit.get_meta("fini", false):
+				continue
+			var ecart := esprit.global_position - cible.global_position
+			ecart.y = 0.0
+			if esprit.get_meta("fuit", false):
+				_poursuite(esprit, ecart, delta)
+			elif ecart.length() < DISTANCE_FUITE:
+				_fuir(esprit)
 	_attente -= delta
 	if _attente <= 0.0 and cible and get_child_count() < MAX:
 		_apparaitre()
-		_attente = randf_range(12.0, 22.0)
+		_attente = randf_range(10.0, 18.0)
 
 
 func _apparaitre() -> void:
 	var angle := randf() * TAU
-	var depart := cible.global_position + Vector3(cos(angle), 0.0, sin(angle)) * randf_range(4.0, 9.0)
+	var depart := cible.global_position + Vector3(cos(angle), 0.0, sin(angle)) * randf_range(6.0, 10.0)
 	depart.y += randf_range(0.8, 1.8)
 	var cap := Vector3(cos(angle + PI / 2.0), 0.0, sin(angle + PI / 2.0)) * (1.0 if randf() < 0.5 else -1.0)
 	var esprit := Node3D.new()
@@ -102,6 +112,7 @@ func _apparaitre() -> void:
 		m.shader = _shader
 		m.set_shader_parameter("coeur", COEUR)
 		m.set_shader_parameter("bleu", BLEU)
+		m.set_shader_parameter("violet", VIOLET)
 		m.set_shader_parameter("forme", 1 if style == 2 else 0)
 		m.set_shader_parameter("phase", i * 1.7)
 		m.set_shader_parameter("opacite", 0.0)
@@ -150,8 +161,9 @@ func _apparaitre() -> void:
 	mp.albedo_texture = rond
 	point.material = mp
 	trainee.mesh = point
+	esprit.set_meta("point", point)
 	var g := Gradient.new()
-	g.colors = PackedColorArray([Color(COEUR, 0.9), Color(BLEU, 0.0)])
+	g.colors = PackedColorArray([Color(COEUR, 0.8), Color(VIOLET, 0.0)])
 	trainee.color_ramp = g
 	trainee.position.y = 0.1 if style == 2 else -0.15
 	esprit.add_child(trainee)
@@ -168,9 +180,10 @@ func _apparaitre() -> void:
 	var visible_a := func(v: float) -> void:
 		for m in flammes:
 			m.set_shader_parameter("opacite", v)
-		lueur.light_energy = v * 2.2
+		lueur.light_energy = v * 1.4
 		trainee.emitting = v > 0.2
 	esprit.set_meta("visible_a", visible_a)
+	esprit.set_meta("opacite", flammes[0])
 	var fondu := esprit.create_tween()
 	fondu.tween_method(visible_a, 0.0, 1.0, 1.2)
 	fondu.tween_interval(duree - 2.7)
@@ -179,20 +192,70 @@ func _apparaitre() -> void:
 	esprit.set_meta("fondu", fondu)
 
 
-## L'esprit s'enfuit loin du ninja en montant, puis disparaît.
-func _fuir(esprit: Node3D, direction: Vector3) -> void:
+## Le ninja l'a vu : l'esprit cesse de dériver et se met à fuir.
+func _fuir(esprit: Node3D) -> void:
 	esprit.set_meta("fuit", true)
+	esprit.set_meta("reste", randf_range(6.0, 10.0))
+	esprit.set_meta("vitesse", Vector3.ZERO)
 	for nom in ["trajet", "fondu"]:
 		var tw: Tween = esprit.get_meta(nom)
 		if tw and tw.is_valid():
 			tw.kill()
-	var visible_a: Callable = esprit.get_meta("visible_a")
-	var depart := 1.0
-	var mat: ShaderMaterial = esprit.get_child(0).get_child(0).material_override
-	if mat:
-		depart = mat.get_shader_parameter("opacite")
-	var fuite := esprit.create_tween().set_parallel(true)
-	fuite.tween_property(esprit, "global_position", esprit.global_position + direction * 5.0 + Vector3(0, 1.5, 0), 0.9) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	fuite.tween_method(visible_a, depart, 0.0, 0.9)
-	fuite.chain().tween_callback(esprit.queue_free)
+	# il se ravive s'il était en train de s'effacer
+	var mat: ShaderMaterial = esprit.get_meta("opacite")
+	var t := esprit.create_tween()
+	t.tween_method(esprit.get_meta("visible_a"), mat.get_shader_parameter("opacite"), 1.0, 0.3)
+	esprit.set_meta("ravive", t)
+
+
+## Il file devant le ninja en flottant, d'autant plus vite qu'il est proche ; au bout d'un moment,
+## ou si le ninja le touche, il s'évanouit.
+func _poursuite(esprit: Node3D, ecart: Vector3, delta: float) -> void:
+	var reste: float = esprit.get_meta("reste") - delta
+	esprit.set_meta("reste", reste)
+	var d := ecart.length()
+	if reste <= 0.0 or d < DISTANCE_TOUCHE:
+		_evanouir(esprit)
+		return
+	var fuite := ecart.normalized() if d > 0.01 else Vector3.FORWARD
+	# il louvoie un peu, comme une flamme portée par le vent
+	fuite = fuite.rotated(Vector3.UP, sin(Time.get_ticks_msec() * 0.0017 + esprit.get_instance_id()) * 0.6)
+	var vite := lerpf(VITESSE_FUITE, 1.5, clampf((d - 1.5) / 7.0, 0.0, 1.0))
+	var v: Vector3 = esprit.get_meta("vitesse")
+	v = v.lerp(fuite * vite, 1.0 - exp(-3.0 * delta))
+	esprit.set_meta("vitesse", v)
+	esprit.global_position += v * delta
+	var hauteur := cible.global_position.y + 1.3 + sin(Time.get_ticks_msec() * 0.003) * 0.3
+	esprit.global_position.y = lerpf(esprit.global_position.y, hauteur, 1.0 - exp(-2.0 * delta))
+
+
+## Fondu rapide et petite gerbe d'étincelles, puis il disparaît.
+func _evanouir(esprit: Node3D) -> void:
+	esprit.set_meta("fini", true)
+	var ravive: Tween = esprit.get_meta("ravive")
+	if ravive and ravive.is_valid():
+		ravive.kill()
+	var gerbe := CPUParticles3D.new()
+	gerbe.one_shot = true
+	gerbe.explosiveness = 0.9
+	gerbe.amount = 26
+	gerbe.lifetime = 0.9
+	gerbe.gravity = Vector3(0, 0.8, 0)
+	gerbe.direction = Vector3.UP
+	gerbe.spread = 180.0
+	gerbe.initial_velocity_min = 0.8
+	gerbe.initial_velocity_max = 2.2
+	gerbe.damping_min = 2.0
+	gerbe.damping_max = 3.0
+	gerbe.scale_amount_min = 0.5
+	gerbe.mesh = esprit.get_meta("point")
+	var g := Gradient.new()
+	g.colors = PackedColorArray([Color(COEUR, 1.0), Color(VIOLET, 0.0)])
+	gerbe.color_ramp = g
+	esprit.add_child(gerbe)
+	gerbe.emitting = true
+	var t := esprit.create_tween().set_parallel(true)
+	t.tween_method(esprit.get_meta("visible_a"), 1.0, 0.0, 0.5)
+	t.tween_property(esprit, "global_position:y", esprit.global_position.y + 0.6, 0.5)
+	t.chain().tween_interval(0.9)
+	t.chain().tween_callback(esprit.queue_free)

@@ -4,6 +4,7 @@ extends Node3D
 ## Il suit sa journée : une liste d'étapes [endroit, activité, durée] qu'il enchaîne en boucle
 ## (marcher, balayer, porter du bois, pêcher, discuter, se reposer...). Quand le ninja s'approche,
 ## il s'arrête, se tourne vers lui et le salue ; son nom apparaît au-dessus de sa tête.
+## Tout près, une petite bulle « … » : E pour lui parler, il répond une phrase dans une bulle.
 
 enum Allure { ADULTE, VIEUX, ENFANT }
 enum Activite { REPOS, BALAYER, PORTER, PECHER, DISCUTER, ASSIS, JOUER }
@@ -23,6 +24,29 @@ enum Activite { REPOS, BALAYER, PORTER, PECHER, DISCUTER, ASSIS, JOUER }
 
 const PEAU := Color("#f0c9a4")
 const DISTANCE_SALUT := 2.6
+const DISTANCE_BULLE := 3.0
+const DUREE_PAROLE := 4.0
+
+## Ce que dit chacun (deux phrases qui alternent à chaque fois qu'on lui parle).
+const PAROLES := {
+	"Maître Kagemaru": ["Le parchemin du clan est au donjon. Reste dans l'ombre, Kage.",
+		"Un vrai ninja ne se bat que s'il ne peut plus se cacher."],
+	"Hana": ["Les gardes du seigneur Oni rôdent même la nuit… Sois prudent.",
+		"Je balaie, je balaie… mais la peur, elle, ne s'en va pas."],
+	"Grand-mère Ume": ["De mon temps, le château était à nous. Ramène-nous ce parchemin, petit.",
+		"Les herbes hautes cachent mieux qu'un mur, crois-en une vieille femme."],
+	"Kenji": ["Encore du bois pour les lanternes du seigneur Oni… Éteins-les pour moi.",
+		"Les gardes regardent la lumière. Passe derrière eux."],
+	"Jiro le pêcheur": ["Chut… tu vas faire fuir les carpes.",
+		"Depuis que l'Oni est là, même les poissons se cachent."],
+	"Petit Taro": ["Tu es un vrai ninja ? Montre-moi comment on disparaît !",
+		"Quand je serai grand, je serai Kage, moi aussi !"],
+	"Sora": ["On dit que le seigneur Oni ne dort jamais.",
+		"Les esprits bleus sont sortis cette nuit. C'est un présage."],
+	"Aiko": ["Le village compte sur toi, Kage.",
+		"Les clochettes sur les fils trahissent ceux qui passent. Attention."],
+}
+const PAROLE_DEFAUT := ["Bonsoir, Kage. Que les esprits te protègent.", "Le seigneur Oni nous a tout pris…"]
 
 var _etape := 0
 var _attente := 0.0
@@ -37,6 +61,11 @@ var _jambes: Array[Node3D] = []
 var _objet: Node3D  ## balai, fagot ou canne à pêche, selon l'activité
 var _nom: Label3D
 var _taille := 1.0
+var _parle := 0.0  ## > 0 : il parle au ninja (temps restant)
+var _replique := 0
+var _bulle: PanelContainer  ## bulle 2D posée au-dessus de sa tête
+var _bulle_texte: Label
+var _bulle_a := 0.0
 
 static var _materiaux := {}
 
@@ -62,12 +91,14 @@ func _ready() -> void:
 	_nom.font_size = 30
 	_nom.outline_size = 10
 	_nom.fixed_size = true  # même taille à l'écran, de près comme de loin
-	_nom.pixel_size = 0.0011
+	_nom.pixel_size = 0.00032
 	_nom.font = load("res://assets/fonts/IBMPlexSansJP-SemiBold.ttf")
 	_nom.modulate = Color(Palette.WASHI, 0.0)
 	_nom.outline_modulate = Color(Palette.NOIR, 0.0)
 	_nom.position.y = 1.75 * _taille
 	add_child(_nom)
+	_construire_bulle()
+	add_to_group("interactifs")
 	if not journee.is_empty():
 		_attente = randf_range(0.0, 2.0)
 
@@ -223,6 +254,87 @@ func _tenir(activite: int) -> void:
 			canne.rotation.x = 1.1
 
 
+# --- Parler avec le ninja ----------------------------------------------------
+
+func texte_action() -> String:
+	return "Parler à " + nom_affiche if nom_affiche != "" else "Parler"
+
+
+func peut_interagir() -> bool:
+	var niveau := get_tree().current_scene
+	return not (niveau and niveau.get("en_cinematique") == true)
+
+
+## Il se tourne vers le ninja et dit une de ses phrases (elles alternent), sans bloquer le jeu.
+func interagir() -> void:
+	var phrases: Array = PAROLES.get(nom_affiche, PAROLE_DEFAUT)
+	_bulle_texte.text = phrases[_replique % phrases.size()]
+	_replique += 1
+	_parle = DUREE_PAROLE
+	_salut = 0.0
+	_a_salue = 12.0
+	_bulle_a = minf(_bulle_a, 0.3)  # petit « pop » de la nouvelle bulle
+
+
+## Bulle de BD discrète : panneau sombre arrondi avec une petite pointe vers la tête.
+func _construire_bulle() -> void:
+	var calque := CanvasLayer.new()
+	calque.layer = 4  # sous le HUD
+	add_child(calque)
+	_bulle = PanelContainer.new()
+	var fond := StyleBoxFlat.new()
+	fond.bg_color = Color("#0d0f14", 0.84)
+	fond.border_color = Color(1, 1, 1, 0.1)
+	fond.set_border_width_all(1)
+	fond.set_corner_radius_all(16)
+	fond.content_margin_left = 18
+	fond.content_margin_right = 18
+	fond.content_margin_top = 8
+	fond.content_margin_bottom = 10
+	_bulle.add_theme_stylebox_override("panel", fond)
+	_bulle.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	calque.add_child(_bulle)
+	_bulle_texte = Label.new()
+	_bulle_texte.add_theme_font_override("font", load("res://assets/fonts/IBMPlexSansJP-SemiBold.ttf"))
+	_bulle_texte.add_theme_color_override("font_color", Color("#f4f1ea"))
+	_bulle_texte.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_bulle.add_child(_bulle_texte)
+	var pointe := Polygon2D.new()
+	pointe.name = "Pointe"
+	pointe.polygon = PackedVector2Array([Vector2(-9, -1), Vector2(9, -1), Vector2(0, 11)])
+	pointe.color = fond.bg_color
+	_bulle.add_child(pointe)
+	_bulle.hide()
+
+
+## Place la bulle au-dessus de la tête : « … » quand le ninja est proche, sa phrase quand il parle.
+func _placer_bulle(distance: float, cache: bool, delta: float) -> void:
+	if cache:
+		_parle = 0.0
+	var parle := _parle > 0.0
+	var cible := 1.0 if (parle or distance < DISTANCE_BULLE) and not cache else 0.0
+	_bulle_a = move_toward(_bulle_a, cible, delta * 5.0)
+	var camera := get_viewport().get_camera_3d()
+	var tete := global_position + Vector3.UP * (2.0 * _taille)
+	if _bulle_a <= 0.01 or camera == null or camera.is_position_behind(tete):
+		_bulle.hide()
+		return
+	if not parle and cible > 0.0:
+		_bulle_texte.text = "…"
+	var petit := _bulle_texte.text == "…"
+	_bulle_texte.add_theme_font_size_override("font_size", 30 if petit else 24)
+	_bulle_texte.autowrap_mode = TextServer.AUTOWRAP_OFF if petit else TextServer.AUTOWRAP_WORD_SMART
+	_bulle_texte.custom_minimum_size = Vector2(0, 0) if petit else Vector2(420, 0)
+	_bulle.show()
+	_bulle.reset_size()
+	_bulle.pivot_offset = Vector2(_bulle.size.x / 2.0, _bulle.size.y)
+	_bulle.scale = Vector2.ONE * lerpf(0.85, 1.0, _bulle_a)
+	_bulle.modulate.a = _bulle_a * (1.0 if parle else 0.85)
+	var p := camera.unproject_position(tete)
+	_bulle.position = p - Vector2(_bulle.size.x / 2.0, _bulle.size.y + 14.0)
+	_bulle.get_node("Pointe").position = Vector2(_bulle.size.x / 2.0, _bulle.size.y)
+
+
 # --- Sa journée ----------------------------------------------------------------
 
 func _process(delta: float) -> void:
@@ -233,11 +345,24 @@ func _process(delta: float) -> void:
 	# le nom apparaît quand on s'approche
 	var a := clampf((7.0 - distance) / 2.0, 0.0, 1.0)
 	var niveau := get_tree().current_scene
-	if niveau and niveau.get("en_cinematique") == true:
+	var cine: bool = niveau != null and niveau.get("en_cinematique") == true
+	if cine:
 		a = 0.0
 	_nom.modulate.a = lerpf(_nom.modulate.a, a, 1.0 - exp(-6.0 * delta))
 	_nom.outline_modulate.a = _nom.modulate.a * 0.85
 	_nom.visible = _nom.modulate.a > 0.01
+	# taille fixe à l'écran, quel que soit le champ de vision de la vue choisie (touche U)
+	var camera := get_viewport().get_camera_3d()
+	if camera:
+		_nom.pixel_size = 0.00032 * tan(deg_to_rad(camera.fov) / 2.0) / tan(deg_to_rad(20.0))
+	_placer_bulle(distance, cine, delta)
+	if _parle > 0.0 and ninja:
+		# il parle : il fait face au ninja et accompagne sa phrase des mains
+		_parle -= delta
+		var face := ninja.global_position - global_position
+		_tourner(atan2(face.x, face.z), delta * 6.0)
+		_poser_activite(Activite.DISCUTER, delta)
+		return
 	if _salut > 0.0:
 		_salut -= delta
 		_poser_salut(delta)

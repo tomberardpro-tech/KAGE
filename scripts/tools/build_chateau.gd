@@ -47,20 +47,30 @@ func _sols() -> void:
 	var douves := boite("Douves", 80, 1900, 1640, 90, 1.2, "eau", null, -1.2)
 	douves.operation = CSGShape3D.OPERATION_SUBTRACTION
 	# Cours pavées (légèrement surélevées pour ne pas scintiller)
-	boite("CourExterieure", 180, 1360, 1440, 480, 0.02, "herbe")
+	# cours du château en gravier blanc ratissé (plus d'herbe dedans)
+	boite("CourExterieure", 180, 1360, 1440, 480, 0.02, "gravier")
+	boite("CourDonjon", 180, 340, 1440, 420, 0.02, "gravier")
 	boite("CourInterieure", 180, 760, 1440, 560, 0.02, "pave")
 	boite("AlleeExterieure", 860, 1360, 80, 480, 0.03, "allee")
 	boite("AlleeInterieure", 870, 900, 60, 420, 0.03, "allee")
 	boite("PasDePorte", 860, 1320, 80, 40, 0.03, "allee")
+	boite("SeuilInterieur", 740, 1320, 320, 40, 0.02, "gravier")
 
 
 func _remparts() -> void:
-	mur("RempartSudOuest", 140, 1840, 700, 40, H_REMPART)
-	mur("RempartSudEst", 960, 1840, 700, 40, H_REMPART)
-	mur("RempartOuest", 140, 300, 40, 1540, H_REMPART)
-	mur("RempartEstNord", 1620, 300, 40, 150, H_REMPART)
-	mur("RempartEstSud", 1620, 570, 40, 1270, H_REMPART)
-	mur("RempartNord", 180, 300, 1440, 40, H_REMPART)
+	# Remparts : base de pierres, planches sombres, bandeau blanc et toit rouge
+	rempart("RempartSudOuest", 140, 1840, 700, 40, H_REMPART)
+	rempart("RempartSudEst", 960, 1840, 700, 40, H_REMPART)
+	rempart("RempartOuest", 140, 300, 40, 1540, H_REMPART)
+	rempart("RempartEstNord", 1620, 300, 40, 150, H_REMPART)
+	rempart("RempartEstSud", 1620, 570, 40, 1270, H_REMPART)
+	rempart("RempartNord", 180, 300, 1440, 40, H_REMPART)
+	# tourelles aux quatre coins, et la tour au-dessus de la grande porte
+	yagura("YaguraSudOuest", 160, 1860)
+	yagura("YaguraSudEst", 1640, 1860)
+	yagura("YaguraNordOuest", 160, 320)
+	yagura("YaguraNordEst", 1640, 320)
+	yagura("TourPorte", 900, 1860, 190, 70, H_REMPART + 1.0, false)
 	mur("MurInterieurOuest", 180, 1320, 560, 40, H_MUR)
 	mur("MurInterieurEst", 1060, 1320, 560, 40, H_MUR)
 	# Montants des portes
@@ -109,7 +119,8 @@ func _donjon() -> void:
 
 func _douves() -> void:
 	eau("Eau", 80, 1900, 1640, 90, -0.45)
-	boite("PontLevis", 840, 1890, 120, 110, 0.15, "bois", null, -0.1)
+	# pont arqué au-dessus des douves (on monte dessus sans sauter)
+	pont_arque("PontLevis", 845, 1884, 110, 124, 0.5)
 	boite("Etang", 1100, 1630, 180, 130, 0.04, "eau")
 
 
@@ -122,11 +133,10 @@ func _limites() -> void:
 
 
 func _vegetation() -> void:
-	herbes([
-		[200, 2100, 260, 170], [1280, 2080, 300, 180], [230, 1620, 220, 160],
-		[1330, 1680, 240, 130], [640, 1400, 180, 110], [680, 1200, 180, 100],
-	])
-	arbres([[1380, 1380, 110, true], [220, 1400, 90, true], [640, 1020, 140], [1030, 960, 150]])
+	# herbes hautes seulement dehors ; dans le château, ce sont des buissons taillés pour se cacher
+	herbes([[200, 2100, 260, 170], [1280, 2080, 300, 180]])
+	cachettes([[340, 1700, 2.2], [1450, 1745, 2.0], [730, 1455, 1.8], [770, 1250, 1.8]])
+	arbres([[1380, 1380, 110, true], [220, 1400, 90, true], [640, 1020, 140, true], [1030, 960, 150, true]])
 	clair_de_lune("ClairDeLune", 900, 950, 400, 300)
 	higanbanas(700, 1350, 100, 1700, 2030, 3450, 900)
 
@@ -145,15 +155,12 @@ func _gardes() -> void:
 		["GardePorteInterieure", 900, 1395, []],
 		["GardeCourNord", 640, 920, [[620, 920], [1160, 920]]],
 		["GardeCourSud", 1160, 1160, [[1160, 1160], [700, 1160]]],
-		# dehors : la ronde le long des douves et sur le chemin de la forêt
-		["GardeDouves", 520, 2090, [[500, 2090], [1300, 2090]]],
-		["GardeChemin", 880, 2390, [[880, 2390], [880, 2560]]],
 	])
 
 
 func _objectifs() -> void:
 	# Guirlandes de lanternes au-dessus des cours et des allées ; le parchemin est dans le coffre du seigneur.
-	guirlandes([[200, 1250, 560, 1250], [1300, 1180, 1600, 1180], [830, 1480, 970, 1480], [830, 1700, 970, 1700]])
+	guirlandes([[830, 1480, 970, 1480], [830, 1700, 970, 1700]])
 	autels([["Depart", 870, 3380], ["AutelPorte", 1060, 2240], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280],
 		["AutelDonjon", 760, 830]])
 	sortie(1650, 510, Vector3(2.0, 2.0, 4.8))
@@ -162,7 +169,6 @@ func _objectifs() -> void:
 ## Décor d'ambiance (ticket 4.4) : rien de tout ça ne gêne le passage ni la vue des gardes.
 func _decor() -> void:
 	# Devant le château : pont rouge, bannières, berges des douves
-	pont_rouge(845, 1882, 110, 126, 0.05)
 	bannieres([[790, 2040, 0], [1010, 2040, 0], [705, 1290, 0], [1095, 1290, 0]])
 	braseros([[790, 1800], [1010, 1800], [780, 800], [1020, 800]])
 	buissons([
@@ -191,8 +197,12 @@ func _decor() -> void:
 	bambous(185, 1560, 40, 50, 6)
 	bambous(190, 770, 280, 40, 12)
 	bambous(1330, 770, 270, 40, 12)
+	bambous(1130, 1560, 140, 40, 9)
+	bambous(185, 1040, 40, 200, 8)
+	bambous(1575, 1000, 40, 220, 8)
+	bambous(190, 350, 260, 40, 10)
+	bambous(1350, 350, 260, 40, 10)
 	parsemer(100, 2000, 1600, 340, 35)
-	parsemer(190, 1370, 1420, 460, 25)
 	lucioles([[150, 2020, 600, 300], [1050, 2020, 600, 300], [200, 1600, 300, 200],
 		[1300, 1640, 300, 170], [600, 980, 220, 200], [1000, 920, 220, 200]])
 	brume([[80, 1880, 800, 130], [920, 1880, 800, 130], [100, 2250, 1600, 110], [1080, 1600, 240, 200]])
@@ -202,8 +212,9 @@ func _decor() -> void:
 
 func _village() -> void:
 	# Le chemin de terre qui serpente de la cabane du maître jusqu'au pont du château
-	chemin_terre("Chemin", [[900, 3300], [905, 3200], [870, 3080], [935, 2950], [905, 2830], [880, 2760],
-		[880, 2690], [925, 2560], [900, 2420], [880, 2250], [900, 2100], [900, 1992]], 64)
+	# (coupé à la rivière : le pont arqué passe au-dessus)
+	chemin_terre("Chemin", [[900, 3300], [905, 3200], [870, 3080], [935, 2950], [905, 2830], [885, 2805]], 64)
+	chemin_terre("CheminNord", [[880, 2712], [880, 2690], [925, 2560], [900, 2420], [880, 2250], [900, 2100], [900, 1992]], 64)
 
 	# Cabane du maître, en bois, ouverte au nord ; mur sud bas pour que la caméra voie dedans
 	var e := 12.0
@@ -234,34 +245,42 @@ func _village() -> void:
 		plaque("Poteaux", P(743, 2968, 1.15) + Vector3(sx * 0.7, 0, 0), Vector3(0.1, 0.9, 0.1), "bois_sombre")
 
 	# Ruisseau qui traverse la forêt d'ouest en est, et le pont rouge du chemin
-	ruisseau("Ruisseau", [[80, 2770], [400, 2745], [700, 2770], [900, 2760], [1150, 2775], [1450, 2750], [1720, 2770]], 46)
-	boite("PontForet", 845, 2700, 70, 120, 0.12, "bois")
-	pont_rouge(845, 2700, 70, 120, 0.1)
+	# Rivière creusée qui coupe la forêt d'ouest en est : on la traverse par le pont du chemin
+	# ou par le petit pont de l'ouest, derrière la maison de Kenji
+	ruisseau("Ruisseau", [[80, 2770], [400, 2745], [700, 2770], [900, 2760], [1150, 2775], [1450, 2750], [1720, 2770]], 46,
+		[[850, 910], [380, 430]])
+	pont_arque("PontForet", 845, 2700, 70, 120, 0.55)
+	pont_arque("PontOuest", 375, 2690, 60, 110, 0.5)
+	bambous(170, 2700, 150, 25, 8)
+	bambous(1500, 2700, 160, 25, 8)
+	bambous(600, 2800, 120, 25, 6)
 	# Étang aux carpes, avec sa petite cascade (le pêcheur s'assoit au bord)
 	boite("EtangForet", 1180, 2880, 240, 160, 0.04, "eau")
 	berge(1180, 2880, 240, 160)
 	cascade("CascadeForet", 1300, 2886, 1.4)
 	nenuphars(1190, 2940, 220, 90, 10)
 	carpes(1200, 2900, 200, 130, 5)
-	torii(900, 3235, 3.4)
-	# Deux guirlandes seulement, au-dessus du chemin, loin des lanternes
-	guirlandes([[760, 3010, 1060, 3010], [790, 2580, 1040, 2580]])
+	# Allée de torii rouges le long du chemin, de la cabane vers le château
+	allee_torii([[903, 3185], [870, 3080], [935, 2950]], 62.0)
+	# Une seule guirlande, au-dessus du chemin, loin des lanternes
+	guirlandes([[790, 2580, 1040, 2580]])
 	herbes([[130, 2620, 180, 100], [1460, 2880, 200, 140], [600, 3250, 180, 100], [300, 2650, 200, 60]])
 	# Gros buissons où se cacher : devant les douves (la ronde des gardes), dans le village et au château
 	cachettes([[620, 2130, 2.4], [1180, 2120, 2.4], [420, 2210, 2.2], [1400, 2200, 2.6], [760, 2330, 2.0],
 		[1040, 2330, 2.0], [780, 2470, 2.0], [1020, 2500, 2.0], [200, 2600, 2.4], [1600, 2620, 2.4],
 		[250, 3220, 2.6], [1560, 3350, 2.4], [620, 2990, 2.0], [1080, 2660, 2.2],
 		[300, 1700, 2.2], [1480, 1460, 2.2], [700, 1480, 2.0], [700, 1250, 2.0], [1120, 1240, 2.0]])
-	arbres([[120, 2380, 120], [1560, 2380, 130], [380, 2400, 110, true], [1420, 2420, 120], [1060, 2830, 120],
-		[180, 3120, 130], [1520, 3040, 120, true], [600, 3390, 110], [1180, 3430, 120], [150, 2760, 110], [1650, 2900, 120]])
+	# arbres en fleurs (roses ou mauves) au nord de la rivière ; verts dans la première zone, au sud
+	arbres([[120, 2380, 120, true], [1560, 2380, 130, true], [380, 2400, 110, true], [1420, 2420, 120, true], [1060, 2830, 120],
+		[180, 3120, 130], [1520, 3040, 120], [600, 3390, 110], [1180, 3430, 120], [150, 2760, 110], [1650, 2900, 120]])
 	# Lanternes en quinconce le long du chemin (aucune près des guirlandes)
 	lanternes([[985, 3215, 2.5], [830, 3115, 2.5], [1000, 2890, 2.5], [960, 2840, 2.5], [805, 2690, 2.5],
 		[840, 2500, 2.5], [985, 2330, 2.5], [815, 2160, 2.5]])
 	_habitants()
 	chats([[790, 3180, 200], [1240, 2840, 40], [1000, 3420, 120]])
-	rochers([[1150, 2870, 0.8, 2], [1430, 3040, 0.7, 0], [330, 2760, 0.6, 6], [1500, 2780, 0.6, 7],
+	rochers([[1150, 2870, 0.8, 2], [1430, 3040, 0.7, 0], [330, 2800, 0.6, 6], [1500, 2790, 0.6, 7],
 		[160, 3400, 1.2, 1], [1650, 3420, 1.1, 0]])
-	buissons([[470, 3250, 1.0], [1460, 3170, 1.0], [790, 3440, 0.9], [1030, 3300, 0.8], [480, 2740, 0.8], [1150, 2470, 0.9]])
+	buissons([[470, 3250, 1.0], [1460, 3170, 1.0], [790, 3440, 0.9], [1030, 3300, 0.8], [480, 2705, 0.8], [1150, 2470, 0.9]])
 	bambous(100, 2420, 50, 300, 10)
 	bambous(1650, 2420, 50, 300, 10)
 	bambous(120, 3250, 300, 50, 10)
@@ -272,7 +291,9 @@ func _village() -> void:
 	lucioles([[80, 2340, 200, 200], [1520, 2340, 210, 210], [600, 2590, 190, 190], [1020, 2790, 200, 200],
 		[200, 3000, 210, 210], [1480, 3000, 200, 200], [560, 3320, 190, 190], [1140, 3320, 200, 200],
 		[300, 2720, 500, 100], [1000, 2720, 500, 100], [1180, 2880, 240, 160]])
-	brume([[80, 2720, 800, 110], [920, 2720, 800, 110], [1180, 2880, 240, 160], [100, 3380, 1600, 100]])
+	# brume au ras du sol, plus épaisse au départ
+	brume([[80, 2720, 800, 110], [920, 2720, 800, 110], [1180, 2880, 240, 160], [100, 3380, 1600, 100],
+		[300, 3060, 1200, 260], [150, 2860, 1400, 160], [200, 3200, 500, 160], [1100, 3200, 500, 160]])
 
 
 ## Les habitants et leur journée (scripts/habitant.gd) : [x, y, activité, durée (s), regard].

@@ -44,6 +44,11 @@ var _frappe := -1.0  ## > 0 : élan du coup en cours
 var _perdu := 0.0
 var _souffle := 0.0  ## après un coup, il reprend son souffle avant de recommencer
 var _dernier_vu: Vector3
+var _fouille: Array[Vector3] = []  ## pas qui lui restent à faire autour de la cachette
+var _axe_fouille := Vector3.ZERO  ## pendant une fouille : il regarde à gauche et à droite de cet axe
+var _marche_fouille := 0.0
+var _retour_poste := false  ## garde en faction qui revient à son poste après une fouille
+var _lanterne: Node3D
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -70,6 +75,7 @@ func reinitialiser() -> void:
 	_attente = 0.0
 	_frappe = -1.0
 	_souffle = 0.0
+	_finir_fouille()
 	_visuel.position = Vector3.ZERO
 	_tourner_vers(_regard_depart, 1.0)
 
@@ -80,16 +86,112 @@ func tuer() -> void:
 	etat = Etat.MORT
 	remove_from_group("gardes")
 	Sons.jouer("tranche")
-	Sons.jouer("garde_tombe", -4.0)
 	var niveau := get_tree().current_scene
 	if niveau.has_method("compter_garde_tue"):
 		niveau.compter_garde_tue()
 	collision_layer = 0
-	_cone.visible = false
 	set_process(false)
-	var tween := create_tween()
-	tween.tween_property(_visuel, "rotation:x", -PI / 2.0, 0.3)
-	tween.tween_property(_visuel, "scale", Vector3(1, 0.2, 1), 0.4)
+	_animer_mort()
+
+
+## Il titube sous le coup, tombe à genoux puis sur le côté. Sa lanterne roule au sol et
+## s'éteint doucement. Quelques secondes plus tard, le corps s'enfonce dans la terre et disparaît.
+func _animer_mort() -> void:
+	var anim: AnimationPlayer = _visuel.get_node_or_null("Modele/Animations")
+	if anim:
+		anim.play("repos")
+		anim.seek(0.0, true)
+		anim.pause()
+	var arriere := -_direction_regard()
+	var cote := 1.0 if randf() < 0.5 else -1.0
+	var corps := create_tween().set_parallel()
+	# il titube en arrière
+	corps.tween_property(_visuel, "position", arriere * 0.3, 0.45).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	corps.tween_property(_visuel, "rotation:x", -0.3, 0.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	corps.tween_property(_visuel, "rotation:z", 0.18 * cote, 0.2)
+	corps.chain().tween_property(_visuel, "rotation:z", -0.14 * cote, 0.25).set_trans(Tween.TRANS_SINE)
+	# à genoux, penché en avant
+	corps.chain().tween_property(_visuel, "position:y", -0.22, 0.3).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	corps.tween_property(_visuel, "rotation:x", 0.4, 0.35).set_trans(Tween.TRANS_SINE)
+	corps.tween_property(_visuel, "rotation:z", 0.0, 0.3)
+	corps.chain().tween_interval(0.3)
+	# puis il bascule sur le côté
+	corps.chain().tween_property(_visuel, "rotation:z", PI / 2.0 * cote, 0.5).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+	corps.tween_property(_visuel, "rotation:x", 0.1, 0.5)
+	corps.tween_property(_visuel, "position:y", 0.12, 0.5).set_trans(Tween.TRANS_SINE)
+	corps.chain().tween_callback(func():
+		Sons.jouer("garde_tombe", -4.0)
+		_poussiere(_visuel.global_position + _visuel.global_basis.y * 0.5, 16))
+	# petit rebond au choc
+	corps.tween_property(_visuel, "rotation:z", (PI / 2.0 - 0.1) * cote, 0.1).set_ease(Tween.EASE_OUT)
+	corps.chain().tween_property(_visuel, "rotation:z", PI / 2.0 * cote, 0.15).set_ease(Tween.EASE_IN)
+	# il s'efface : s'enfonce dans la terre en devenant transparent
+	corps.chain().tween_interval(3.0)
+	corps.chain().tween_callback(func(): _poussiere(_visuel.global_position + _visuel.global_basis.y * 0.5, 22))
+	corps.tween_property(_visuel, "position:y", -0.9, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	corps.tween_property(_lanterne, "position:y", -0.4, 1.8).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN)
+	for morceau: GeometryInstance3D in _visuel.find_children("*", "GeometryInstance3D", true, false) + _lanterne.find_children("*", "GeometryInstance3D", true, false):
+		corps.tween_property(morceau, "transparency", 1.0, 1.6)
+	corps.chain().tween_callback(func():
+		_visuel.visible = false
+		_cone.visible = false)
+
+	# la lanterne tombe, rebondit, roule un peu et s'éteint
+	var lampe := create_tween().set_parallel()
+	lampe.tween_property(_lanterne, "position:y", 0.09, 0.7).set_trans(Tween.TRANS_BOUNCE).set_ease(Tween.EASE_OUT)
+	lampe.tween_property(_lanterne, "position:z", _lanterne.position.z + 0.35, 1.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	lampe.tween_property(_lanterne, "rotation:z", PI / 2.0 * -cote, 0.6).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT).set_delay(0.25)
+	lampe.tween_method(func(k: float): _cone_materiau.set_shader_parameter("force", 0.22 * (1.0 - k)), 0.0, 1.0, 0.4)
+	lampe.tween_method(_eteindre_lanterne.bind(_faisceau.light_energy), 0.0, 1.0, 2.8).set_delay(0.3)
+
+
+## k de 0 (allumée) à 1 (éteinte) : la flamme baisse en vacillant.
+func _eteindre_lanterne(k: float, energie: float) -> void:
+	var vacille := 0.75 + 0.25 * sin(k * 47.0) * sin(k * 13.0)
+	var reste := (1.0 - k) * (1.0 - k)
+	_faisceau.light_energy = energie * reste * vacille
+	_lueur_lanterne.emission_energy_multiplier = 4.0 * reste * vacille
+	if k >= 1.0:
+		_faisceau.visible = false
+
+
+## Petit nuage de poussière quand il touche le sol ou s'efface.
+func _poussiere(point: Vector3, nombre: int) -> void:
+	var nuage := CPUParticles3D.new()
+	nuage.one_shot = true
+	nuage.explosiveness = 0.85
+	nuage.amount = nombre
+	nuage.lifetime = 1.1
+	var boule := SphereMesh.new()
+	boule.radius = 0.07
+	boule.height = 0.14
+	boule.radial_segments = 6
+	boule.rings = 3
+	var matiere := StandardMaterial3D.new()
+	matiere.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	matiere.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	matiere.vertex_color_use_as_albedo = true
+	boule.material = matiere
+	nuage.mesh = boule
+	nuage.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
+	nuage.emission_sphere_radius = 0.4
+	nuage.direction = Vector3.UP
+	nuage.spread = 70.0
+	nuage.initial_velocity_min = 0.4
+	nuage.initial_velocity_max = 1.2
+	nuage.gravity = Vector3(0, -0.6, 0)
+	nuage.damping_min = 1.5
+	nuage.damping_max = 2.5
+	nuage.scale_amount_min = 0.7
+	nuage.scale_amount_max = 1.8
+	var fondu := Gradient.new()
+	fondu.set_color(0, Color(0.62, 0.56, 0.46, 0.55))
+	fondu.set_color(1, Color(0.62, 0.56, 0.46, 0.0))
+	nuage.color_ramp = fondu
+	add_child(nuage)
+	nuage.global_position = Vector3(point.x, global_position.y + 0.15, point.z)
+	nuage.emitting = true
+	nuage.finished.connect(nuage.queue_free)
 
 
 func _physics_process(delta: float) -> void:
@@ -112,6 +214,10 @@ func _physics_process(delta: float) -> void:
 
 func _faire_la_ronde(delta: float) -> void:
 	if ronde.size() < 2:
+		if _retour_poste:
+			if _aller_vers(_depart, delta):
+				_retour_poste = false
+			return
 		# En faction : il balaie doucement du regard.
 		_balayage += delta * 0.6
 		var angle := sin(_balayage) * deg_to_rad(35.0)
@@ -127,16 +233,75 @@ func _faire_la_ronde(delta: float) -> void:
 		_attente = pause_bout_de_ronde
 
 
+const DUREE_REGARD := 1.2  ## pendant une fouille : temps pour regarder à gauche puis à droite
+
+
 func _enqueter(delta: float) -> void:
+	var fouille := _axe_fouille != Vector3.ZERO
 	if _attente > 0.0:
 		_attente -= delta
 		velocity = Vector3.ZERO
-		_tourner_vers(_direction_regard().rotated(Vector3.UP, delta * 1.5), 1.0)
+		if fouille:
+			# il tourne la tête à gauche, puis à droite
+			var balaye := sin((1.0 - _attente / DUREE_REGARD) * TAU) * deg_to_rad(65.0)
+			_tourner_vers(_axe_fouille.rotated(Vector3.UP, balaye), delta * 8.0)
+		else:
+			_tourner_vers(_direction_regard().rotated(Vector3.UP, delta * 1.5), 1.0)
 		if _attente <= 0.0:
-			etat = Etat.RONDE
+			if not _fouille.is_empty():
+				_point_enquete = _fouille.pop_front()
+				_marche_fouille = 0.0
+			else:
+				if fouille:
+					_retour_poste = true
+				_finir_fouille()
+				etat = Etat.RONDE
 		return
-	if _aller_vers(_point_enquete, delta):
-		_attente = 2.5
+	_marche_fouille += delta
+	# pendant une fouille, s'il bute contre un mur il n'insiste pas
+	if _aller_vers(_point_enquete, delta) or (fouille and _marche_fouille > 2.5):
+		velocity = Vector3.ZERO
+		if fouille:
+			_attente = DUREE_REGARD
+			_axe_fouille = _direction_regard()
+		else:
+			_attente = 2.5
+
+
+## Le ninja a plongé dans une cachette : le garde s'arrête là où il l'a vu disparaître,
+## regarde autour de lui, fait quelques pas d'un côté puis de l'autre, et retourne à sa ronde.
+func _fouiller() -> void:
+	etat = Etat.ENQUETE
+	soupcon = 0.5  # encore méfiant : s'il nous revoit, il réagit vite
+	_attente = 0.0
+	_point_enquete = global_position
+	_marche_fouille = 0.0
+	var face := _dernier_vu - global_position
+	face.y = 0.0
+	face = face.normalized() if face.length() > 0.1 else _direction_regard()
+	_axe_fouille = face
+	var cote := 1.0 if randf() < 0.5 else -1.0
+	_fouille.clear()
+	for i in 2:
+		var dir := face.rotated(Vector3.UP, deg_to_rad(randf_range(65.0, 110.0)) * cote)
+		_fouille.append(_point_libre(global_position, dir * randf_range(1.3, 1.8)))
+		cote = -cote
+
+
+## Le point à « ecart » de depart, raccourci s'il y a un mur sur le chemin.
+func _point_libre(depart: Vector3, ecart: Vector3) -> Vector3:
+	var haut := Vector3.UP * 0.6
+	var requete := PhysicsRayQueryParameters3D.create(depart + haut, depart + ecart + haut, 1, [get_rid()])
+	var touche := get_world_3d().direct_space_state.intersect_ray(requete)
+	if touche.is_empty():
+		return depart + ecart
+	var libre := maxf(depart.distance_to(touche.position - haut) - 0.5, 0.0)
+	return depart + ecart.normalized() * libre
+
+
+func _finir_fouille() -> void:
+	_fouille.clear()
+	_axe_fouille = Vector3.ZERO
 
 
 ## Renvoie true une fois arrivé.
@@ -163,6 +328,7 @@ func entendre(point: Vector3) -> void:
 	if etat != Etat.RONDE and etat != Etat.ENQUETE:
 		return
 	etat = Etat.ENQUETE
+	_finir_fouille()
 	var ecart := global_position - point
 	ecart.y = 0.0
 	_point_enquete = point + ecart.normalized() * 1.2 if ecart.length() > 1.2 else global_position
@@ -173,6 +339,8 @@ func _commencer_chasse(ninja: Ninja) -> void:
 	etat = Etat.CHASSE
 	_perdu = 0.0
 	_frappe = -1.0
+	_finir_fouille()
+	_retour_poste = false
 	_dernier_vu = ninja.global_position
 	chasse_commencee.emit(self)
 	for autre: Garde in get_tree().get_nodes_in_group("gardes"):
@@ -206,6 +374,13 @@ func _chasser(delta: float) -> void:
 		velocity = Vector3.ZERO
 		_tourner_vers(ecart.normalized(), delta * 6.0)
 		return
+	if ninja.est_cache() and _perdu > 0.0:
+		# caché sous ses yeux : il court jusqu'à l'endroit où il nous a vus disparaître, puis fouille
+		var reste := _dernier_vu - global_position
+		reste.y = 0.0
+		if reste.length() < 1.6 or _perdu > temps_pour_semer:
+			_fouiller()
+			return
 	if _perdu > temps_pour_semer:
 		# Semé : il fouille l'endroit où il nous a vus pour la dernière fois.
 		etat = Etat.ENQUETE
@@ -340,6 +515,7 @@ func _creer_cone() -> void:
 	var lanterne := Node3D.new()
 	lanterne.position = Vector3(0.3, 1.0, 0.42)
 	_cone.add_child(lanterne)
+	_lanterne = lanterne
 	var corps := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
 	cyl.top_radius = 0.09

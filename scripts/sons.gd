@@ -10,8 +10,9 @@ const VOLUME_MUSIQUE := -14.0  ## dB : la musique reste en fond
 const NB_VOIX := 10
 ## Les fichiers les plus forts sont baissés (dB) pour que tous les bruitages aient à peu près
 ## le même niveau (mesuré en LUFS : cri du boss, clochettes, coffre... étaient bien plus forts).
-const CORRECTION := {"boss_cri": -9.0, "clochettes": -5.0, "coffre": -4.0, "frappe": -4.0, "coffre_apparait": -3.0,
-	"alerte": -2.0, "boss_touche": -2.0, "herse": -2.0, "tresor": -3.0, "parchemin": -2.0}
+const CORRECTION := {"boss_cri": -9.0, "clochettes": -5.0, "coffre": -4.0, "frappe": -7.0, "coffre_apparait": -3.0,
+	"alerte": -2.0, "boss_touche": -5.0, "herse": -5.0, "tresor": -3.0, "parchemin": -2.0,
+	"tranche": -7.0, "porte": -8.0, "porte_claque": -5.0, "garde_tombe": -4.0, "clic": -8.0, "autel": -6.0}
 
 var _musique: AudioStreamPlayer
 var _poursuite: AudioStreamPlayer
