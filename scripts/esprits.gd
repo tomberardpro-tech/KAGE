@@ -1,6 +1,7 @@
 extends Node3D
-## Esprits bleus (hitodama, kitsune-bi ou yūrei) : lueurs qui apparaissent près du ninja, flottent un moment
-## en ondulant puis s'effacent. Purement décoratifs : aucune collision, les gardes les ignorent.
+## Esprits bleus (hitodama, kitsune-bi ou yūrei) : petits fantômes qui apparaissent près du ninja, flottent un
+## moment en ondulant puis s'effacent. Leur silhouette (tête en goutte qui finit en volute, billes flottantes,
+## yeux clairs en amande, petite cape qui ondule) est dessinée par assets/shaders/esprit.gdshader. Purement décoratifs : aucune collision, les gardes les ignorent.
 ## Quand le ninja s'approche, l'esprit fuit devant lui : on peut lui courir après, presque l'attraper,
 ## puis il s'évanouit en petites étincelles. Ajoutés par niveau.gd.
 
@@ -9,11 +10,13 @@ const COEUR := Color(0.4, 0.85, 1.0)  ## centre cyan
 const VIOLET := Color(0.48, 0.12, 0.95)  ## entre-deux violet vif
 const BLEU := Color(0.2, 0.05, 0.55)  ## bord indigo profond
 const LUEUR := Color(0.45, 0.3, 1.0)
+const CAPE := Color(0.56, 0.6, 0.86)  ## petite cape bleu-gris, contraste avec le corps
+const DESSIN := Vector2(1.4, 2.0)  ## cadre du dessin dans le shader (en mètres à l'échelle 1)
 const DISTANCE_FUITE := 4.0  ## le ninja approche : l'esprit s'enfuit
 const VITESSE_FUITE := 7.6  ## un peu moins que le sprint (8,5) : on peut presque l'attraper
 const DISTANCE_TOUCHE := 0.8
 
-## 0 : hitodama (flamme d'âme), 1 : kitsune-bi (procession de petites flammes), 2 : yūrei (fantôme bleu)
+## 0 : hitodama (un petit fantôme), 1 : kitsune-bi (procession de trois tout petits), 2 : yūrei (un plus grand)
 @export var style := 0
 
 var cible: Node3D
@@ -22,54 +25,7 @@ var _shader: Shader
 
 
 func _ready() -> void:
-	_shader = Shader.new()
-	_shader.code = """
-shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, cull_disabled, fog_disabled;
-uniform vec3 coeur : source_color;
-uniform vec3 bleu : source_color;
-uniform vec3 violet : source_color;
-uniform float opacite = 1.0;
-uniform int forme = 0;  // 0 flamme, 1 fantôme
-uniform float phase = 0.0;
-void vertex() {
-	// toujours face à la caméra
-	MODELVIEW_MATRIX = VIEW_MATRIX * mat4(INV_VIEW_MATRIX[0], INV_VIEW_MATRIX[1], INV_VIEW_MATRIX[2], MODEL_MATRIX[3]);
-}
-float flamme(vec2 p, float t) {
-	// goutte : rond en bas, pointe qui danse en haut
-	p.x += (sin(p.y * 5.0 - t * 3.0) * 0.1 + sin(p.y * 11.0 - t * 5.3) * 0.035) * (p.y + 0.5);
-	float h = clamp((p.y + 0.3) / 1.15, 0.0, 1.0);
-	float l = 0.36 * pow(1.0 - h, 1.4) * (0.88 + 0.12 * sin(t * 6.0 + p.y * 11.0));
-	float bas = length(p - vec2(0.0, -0.3));
-	float d = p.y < -0.3 ? bas / 0.36 : abs(p.x) / max(l, 0.001);
-	return 1.0 - d;
-}
-void fragment() {
-	vec2 p = UV * 2.0 - 1.0;
-	p.y = -p.y;
-	float t = TIME + phase;
-	float f;
-	float yeux = 0.0;
-	if (forme == 0) {
-		f = flamme(p * vec2(1.0, 1.0) + vec2(0.0, 0.1), t);
-	} else {
-		float ondule = sin(p.y * 6.0 + t * 3.0) * 0.14 * clamp(-p.y, 0.0, 1.0);
-		float largeur = mix(0.42, 0.02, clamp(-p.y * 0.95, 0.0, 1.0)) * (0.9 + 0.1 * sin(t * 5.0 + p.y * 9.0));
-		float corps = (1.0 - abs(p.x - ondule) / max(largeur, 0.001)) * step(p.y, 0.3) * smoothstep(-1.0, -0.5, p.y);
-		float tete = 1.0 - length(p - vec2(0.0, 0.3)) / 0.42;
-		f = max(corps, tete);
-		yeux = smoothstep(0.11, 0.07, length((vec2(abs(p.x) - 0.15, p.y - 0.3)) * vec2(1.0, 0.75)));
-	}
-	float forme_a = smoothstep(0.0, 0.25, f);
-	float centre = smoothstep(0.55, 1.0, f) * (1.0 - yeux);
-	float milieu = smoothstep(0.1, 0.5, f);
-	float halo = pow(max(0.0, 1.0 - length(p * vec2(1.0, 0.8))), 2.0) * 0.2;
-	vec3 c = mix(mix(bleu, violet, milieu), coeur, centre) * (1.0 - yeux * 0.85);
-	ALBEDO = c * forme_a + bleu * halo;
-	ALPHA = clamp((forme_a + halo) * opacite, 0.0, 1.0);
-}
-"""
+	_shader = preload("res://assets/shaders/esprit.gdshader")
 
 
 func _process(delta: float) -> void:
@@ -106,14 +62,16 @@ func _apparaitre() -> void:
 	for i in nombre:
 		var q := MeshInstance3D.new()
 		var quad := QuadMesh.new()
-		quad.size = Vector2(1.1, 1.4) if style == 2 else (Vector2(0.55, 0.75) if style == 1 else Vector2(0.9, 1.2))
+		# ~1,5× la taille des anciennes flammes : le petit fantôme fait ~1,45 m de la pointe aux billes
+		quad.size = DESSIN * (0.95 if style == 2 else (0.5 if style == 1 else 0.85))
 		q.mesh = quad
 		var m := ShaderMaterial.new()
 		m.shader = _shader
 		m.set_shader_parameter("coeur", COEUR)
 		m.set_shader_parameter("bleu", BLEU)
 		m.set_shader_parameter("violet", VIOLET)
-		m.set_shader_parameter("forme", 1 if style == 2 else 0)
+		m.set_shader_parameter("cape", CAPE)
+		m.set_shader_parameter("taille", DESSIN)
 		m.set_shader_parameter("phase", i * 1.7)
 		m.set_shader_parameter("opacite", 0.0)
 		q.material_override = m
@@ -142,7 +100,7 @@ func _apparaitre() -> void:
 	trainee.initial_velocity_max = 0.2
 	trainee.spread = 180.0
 	trainee.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
-	trainee.emission_sphere_radius = 0.2
+	trainee.emission_sphere_radius = 0.3
 	trainee.scale_amount_min = 0.4
 	var point := QuadMesh.new()
 	point.size = Vector2(0.09, 0.09)
@@ -165,7 +123,7 @@ func _apparaitre() -> void:
 	var g := Gradient.new()
 	g.colors = PackedColorArray([Color(COEUR, 0.8), Color(VIOLET, 0.0)])
 	trainee.color_ramp = g
-	trainee.position.y = 0.1 if style == 2 else -0.15
+	trainee.position.y = 0.25  # les braises montent de la tête et de la volute
 	esprit.add_child(trainee)
 
 	# il passe : apparition, dérive en ondulant, puis disparition

@@ -1,6 +1,7 @@
 class_name Ninja
 extends CharacterBody3D
-## Le ninja : marcher, s'accroupir, sauter, s'accrocher aux murs bas et frapper au katana (L).
+## Le ninja : marcher, s'accroupir, sauter (et faire un salto en double saut), s'accrocher
+## aux murs bas et frapper au katana (L) dans la direction où il va.
 ## Il a 3 points de vie : chaque coup de garde en retire un.
 
 signal a_saute
@@ -20,6 +21,8 @@ signal blesse(vie: int)
 @export var gravite := 18.0
 @export var tolerance_saut := 0.12     # on peut encore sauter juste après le bord
 @export var hauteur_grimpe_max := 2.4  # mur ou toit qu'on peut attraper en sautant
+@export var force_double_saut := 6.0  ## second appui en l'air : salto
+@export var duree_salto := 0.45  ## durée du tour complet du modèle
 
 @export_group("Katana et vie")
 @export var duree_coup := 0.42  ## durée de l'animation du coup
@@ -36,6 +39,7 @@ var en_grimpe := false
 var pose_forcee := ""  ## animation imposée pendant une cinématique (ex. « brandir »)
 var katana_en_main := false  ## P sort le katana ou le range dans son fourreau
 var sprinte := false
+var salto := 0.0  ## > 0 : salto du double saut en cours (temps restant), lu par anim_chibi.gd
 
 ## Portée du katana, devant le ninja (gardes et lanternes).
 const PORTEE_SABRE := 1.7
@@ -54,6 +58,9 @@ var _grimpe := false
 var _a_touche := false
 var _invulnerable := 0.0
 var _pas := 0.0
+var _double_saut := true  ## rechargé en touchant le sol ou après s'être hissé sur un mur
+var _direction_coup := Vector3.BACK  ## sens du coup de katana en cours
+var _trainee: Trainee
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -64,6 +71,17 @@ func _ready() -> void:
 	add_to_group("ninja")
 	collision_layer = 2
 	collision_mask = 1 | 4  # décor et gardes
+	# Traînée rouge du salto : elle suit un point au niveau des hanches du modèle,
+	# qui décrit une boucle quand le modèle tourne sur lui-même.
+	var hanches := Node3D.new()
+	hanches.name = "PointTrainee"
+	hanches.position = Vector3(0.0, 0.32, -0.05)
+	var modele := _visuel.get_node_or_null("Modele")
+	(modele if modele else _visuel).add_child(hanches)
+	_trainee = Trainee.new()
+	_trainee.name = "Trainee"
+	_trainee.source = hanches
+	add_child(_trainee)
 
 
 func entrer_zone(zone: Zone) -> void:
@@ -103,6 +121,9 @@ func _physics_process(delta: float) -> void:
 	if _grimpe:
 		return
 	_clignoter(delta)  # même bloqué, sinon il pourrait rester invisible pendant une cinématique
+	if salto > 0.0:
+		salto = maxf(0.0, salto - delta)
+	_trainee.actif = salto > 0.04
 	if bloque:
 		velocity = Vector3(0.0, velocity.y - gravite * delta, 0.0)
 		move_and_slide()
@@ -129,6 +150,10 @@ func _physics_process(delta: float) -> void:
 		_sol_recent = 0.0
 		a_saute.emit()
 		Sons.jouer("saut", -16.0, randf_range(0.95, 1.08))
+	elif Input.is_action_just_pressed("jump") and not is_on_floor() and _double_saut:
+		_double_sauter()
+	if is_on_floor() and salto <= 0.0:
+		_double_saut = true
 	if not is_on_floor():
 		velocity.y -= gravite * delta
 	elif Input.is_action_just_released("jump") and velocity.y > 0.0:
@@ -143,7 +168,7 @@ func _physics_process(delta: float) -> void:
 	velocity.x = horizontal.x
 	velocity.z = horizontal.y
 
-	if direction.length() > 0.1:
+	if direction.length() > 0.1 and attaque <= 0.0:  # pendant un coup, on garde le sens de la lame
 		_tourner_vers(direction, delta)
 
 	move_and_slide()
@@ -157,7 +182,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("frapper") and attaque <= 0.0:
 		if not katana_en_main:
 			ranger_katana(false)  # L sort le katana s'il était rangé
-		_frapper()
+		_frapper(direction)
 
 	if Input.is_action_just_pressed("interact"):
 		var objet := objet_proche()
@@ -185,6 +210,9 @@ func reapparaitre(position_depart := _point_depart) -> void:
 	velocity = Vector3.ZERO
 	vie = vie_max
 	attaque = 0.0
+	salto = 0.0
+	_double_saut = true
+	_trainee.effacer()
 	_invulnerable = 0.0
 	_visuel.visible = true
 	blesse.emit(vie)
@@ -243,14 +271,29 @@ func _essayer_grimper(direction: Vector3) -> void:
 	tween.tween_property(self, "global_position", arrivee, 0.16)
 	tween.finished.connect(func():
 		_grimpe = false
-		en_grimpe = false)
+		en_grimpe = false
+		_double_saut = true)
 
 
-## Coup de katana vers la souris (ou devant soi) ; la lame touche un peu après le début.
-func _frapper() -> void:
-	var direction := _direction_souris()
-	if direction != Vector3.ZERO:
-		_visuel.rotation.y = atan2(direction.x, direction.z)
+## Second saut en l'air : petite impulsion, salto vers l'avant et traînée rouge.
+func _double_sauter() -> void:
+	_double_saut = false
+	velocity.y = force_double_saut
+	salto = duree_salto
+	_saut_demande = 0.0
+	a_saute.emit()
+	Sons.jouer("saut", -14.0, randf_range(1.12, 1.25))
+
+
+## Coup de katana dans la direction où l'on va (flèches / ZQSD) ; sans touche de direction,
+## vers la souris si l'on clique, sinon droit devant soi. La lame touche un peu après le début.
+func _frapper(direction := Vector3.ZERO) -> void:
+	var vise := direction
+	if vise.length() < 0.1 and Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+		vise = _direction_souris()
+	if vise.length() > 0.1:
+		_visuel.rotation.y = atan2(vise.x, vise.z)
+	_direction_coup = Vector3(sin(_visuel.rotation.y), 0.0, cos(_visuel.rotation.y))
 	attaque = duree_coup
 	_a_touche = false
 	a_frappe.emit()
@@ -286,9 +329,9 @@ func _distance_a(objet: Node3D) -> float:
 	return local.length()
 
 
-## Le katana touche les gardes, les lanternes et le seigneur Oni devant le ninja.
+## Le katana touche les gardes, les lanternes et le seigneur Oni dans le sens du coup.
 func _trancher() -> void:
-	var devant := Vector3(sin(_visuel.rotation.y), 0.0, cos(_visuel.rotation.y))
+	var devant := _direction_coup
 	for cible in get_tree().get_nodes_in_group("gardes") + get_tree().get_nodes_in_group("lanternes") + get_tree().get_nodes_in_group("boss"):
 		var ecart: Vector3 = cible.global_position - global_position
 		ecart.y = 0.0

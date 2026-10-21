@@ -1,6 +1,6 @@
 extends Node3D
 ## Animation simple des modèles chibi : jambes et bras qui balancent en marchant,
-## petit rebond, foulard qui flotte, pose de dash pour le ninja.
+## petit rebond, foulard qui flotte, pose de dash pour le ninja, salto du double saut.
 ## Marche avec des pivots (modèles en pièces) ou avec un squelette dont les os
 ## portent les mêmes noms (modèles d'un seul tenant, voir blender_squelette.py).
 
@@ -19,6 +19,11 @@ var _ecrase_vit := 0.0
 var _au_sol := true
 var _vy_avant := 0.0
 var _atterrit := 0.0  # temps restant de l'animation d'atterrissage
+var _en_salto := false  # le modèle est en train de tourner sur lui-même
+var _transform_repos := Transform3D.IDENTITY  # placement du modèle hors salto
+
+## Le salto tourne autour du milieu du corps, pas autour des pieds.
+const CENTRE_SALTO := Vector3(0.0, 0.62, 0.0)
 
 @onready var _animations: AnimationPlayer = get_node_or_null("Animations")
 @onready var _katana_main: Node3D = find_child("KatanaMain", true, false)
@@ -36,6 +41,7 @@ func _ready() -> void:
 	while n and not n is CharacterBody3D:
 		n = n.get_parent()
 	_corps = n
+	_transform_repos = transform
 	for pivot in _jambes + _bras + [_tronc, _tete, _pans]:
 		if pivot:
 			_repos[pivot] = pivot.rotation
@@ -174,6 +180,9 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	elif _corps.get("en_grimpe") == true:
 		nom = "grimpe"
 		fondu = 0.04
+	elif _reste_salto() > 0.0:
+		nom = "accroupi_repos"  # genoux ramassés pendant le salto
+		fondu = 0.06
 	elif dash:
 		nom = "dash"
 		fondu = 0.06
@@ -194,6 +203,30 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	if not deja:
 		_animations.play(nom, fondu)
 	_animations.speed_scale = vitesse_anim
+	_tourner_salto()
+
+
+## Double saut : un tour complet vers l'avant, rapide au milieu et adouci aux deux bouts,
+## autour du centre du corps. Le maillage n'est pas touché, seulement l'orientation du modèle.
+func _tourner_salto() -> void:
+	var reste := _reste_salto()
+	if reste <= 0.0:
+		if _en_salto:
+			_en_salto = false
+			transform = _transform_repos
+		return
+	_en_salto = true
+	var duree: float = maxf(_corps.get("duree_salto"), 0.01)
+	var p := clampf(1.0 - reste / duree, 0.0, 1.0)
+	var tour := TAU * (p * p * (3.0 - 2.0 * p))
+	var base := Basis(Vector3.RIGHT, tour)
+	transform = _transform_repos * Transform3D(base, CENTRE_SALTO - base * CENTRE_SALTO)
+
+
+## Temps restant du salto du personnage (0 s'il n'en fait pas, ou s'il ne sait pas en faire).
+func _reste_salto() -> float:
+	var reste = _corps.get("salto")
+	return reste if reste is float else 0.0
 
 
 ## Garde : ronde au pas, course pendant la chasse, coup de lance quand il frappe.
