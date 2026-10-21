@@ -10,6 +10,7 @@ extends "res://scripts/tools/decor.gd"
 const H_REMPART := 3.4
 const H_MUR := 3.0
 const H_DONJON := 3.4
+const Interieurs := preload("res://scripts/tools/interieurs.gd")
 
 
 func _init() -> void:
@@ -88,6 +89,10 @@ func _batiments() -> void:
 	batiment("Remise", 580, 1680, 160, 110, 1.5)
 	batiment("Caserne", 220, 820, 340, 420, 1.9)
 	batiment("Entrepot", 1240, 820, 340, 420, 1.9)
+	# portes et intérieurs (scripts/tools/interieurs.gd) : portes au sud, bien visibles de dessus
+	Interieurs.maison(self, "RemiseChateau", 580, 1680, 160, 110, 0, "remise", 1.5, true)
+	Interieurs.maison(self, "Caserne", 220, 820, 340, 420, 0, "caserne", 1.9, true)
+	Interieurs.maison(self, "Entrepot", 1240, 820, 340, 420, 0, "entrepot", 1.9, true)
 	# une petite ville dans l'enceinte : maisons des serviteurs, pagode, grand cerisier au centre
 	batiment("MaisonServiteurs", 200, 1380, 150, 95, 1.6)
 	batiment("MaisonCuisine", 385, 1385, 140, 90, 1.6)
@@ -241,12 +246,20 @@ func _village() -> void:
 	plaque("Kakejiku", P(900, 3400, 1.2), Vector3(0.6, 1.0, 0.03), "shoji", false)
 
 	# Maisons de bois aux toits rouges, autour de la petite place et le long du chemin
-	maison_bois("MaisonHana", 560, 3080, 200, 140, 1.9, 2)
-	maison_bois("MaisonUme", 1100, 3120, 200, 140, 1.9, 3)
+	# (la face de la porte doit rester la même que dans Interieurs.maison juste en dessous)
+	maison_bois("MaisonHana", 560, 3080, 200, 140, 1.9, 0)
+	maison_bois("MaisonUme", 1100, 3120, 200, 140, 1.9, 0)
 	maison_bois("MaisonKenji", 500, 2560, 210, 140, 2.0, 2)
 	maison_bois("MaisonJiro", 1180, 2600, 190, 130, 1.8, 3)
-	maison_bois("Grenier", 290, 2890, 170, 130, 2.2, 2)
-	maison_bois("Remise", 1290, 3290, 150, 110, 1.7, 3)
+	maison_bois("Grenier", 290, 2890, 170, 130, 2.2, 0)
+	maison_bois("Remise", 1290, 3290, 150, 110, 1.7, 0)
+	# on entre dans chaque maison par sa porte (scripts/tools/interieurs.gd)
+	Interieurs.maison(self, "MaisonHana", 560, 3080, 200, 140, 0, "maison", 1.9)
+	Interieurs.maison(self, "MaisonUme", 1100, 3120, 200, 140, 0, "maison", 1.9)
+	Interieurs.maison(self, "MaisonKenji", 500, 2560, 210, 140, 2, "maison", 2.0)
+	Interieurs.maison(self, "MaisonJiro", 1180, 2600, 190, 130, 3, "maison", 1.8)
+	Interieurs.maison(self, "Grenier", 290, 2890, 170, 130, 0, "grenier", 2.2)
+	Interieurs.maison(self, "Remise", 1290, 3290, 150, 110, 0, "remise", 1.7)
 	boite("Puits", 720, 2945, 46, 46, 0.7, "pierre")
 	plaque("PuitsToit", P(743, 2968, 1.6), Vector3(1.6, 0.1, 1.4), "bardeaux")
 	for sx in [-1.0, 1.0]:
