@@ -44,6 +44,7 @@ func _materiaux() -> void:
 	materiaux["rocher"] = _matiere(9, "#a3a39d", "#6d6d6a")
 	materiaux["chaume"] = _matiere(10, "#c2a868", "#806c42")
 	materiaux["tuiles_rouges"] = _matiere(4, "#9c3426", "#47120d")
+	materiaux["bardeaux"] = _matiere(4, "#8a6646", "#43301f")  # toits de bois des cabanes du village
 	materiaux["planches"] = _matiere(5, "#a87850", "#6e4a2e")
 	materiaux["bois_sombre"] = _matiere(5, "#4a3020", "#2c1c13")
 	materiaux["tatami"] = _matiere(11, "#b3aa6c", "#8e8652")
@@ -284,11 +285,6 @@ func _sanctuaire(centre: Vector3, angle: float, e: float) -> void:
 	piece.call("SanctuaireToit", Vector3(0, 0.95, 0.17), Vector3(0.78, 0.05, 0.42), "tuiles", 0.55)
 	piece.call("SanctuaireToit", Vector3(0, 0.95, -0.17), Vector3(0.78, 0.05, 0.42), "tuiles", -0.55)
 	piece.call("SanctuaireFaitage", Vector3(0, 1.05, 0), Vector3(0.82, 0.06, 0.07), "noir")
-	# petit torii rouge
-	piece.call("SanctuaireTorii", Vector3(-0.32, 0.45, 0.75), Vector3(0.06, 0.9, 0.06), "laque")
-	piece.call("SanctuaireTorii", Vector3(0.32, 0.45, 0.75), Vector3(0.06, 0.9, 0.06), "laque")
-	piece.call("SanctuaireTorii", Vector3(0, 0.92, 0.75), Vector3(0.9, 0.07, 0.09), "laque")
-	piece.call("SanctuaireTorii", Vector3(0, 0.78, 0.75), Vector3(0.72, 0.05, 0.05), "laque")
 
 
 ## Autels (points de reprise) : même rôle qu'avant, mais en forme de petit sanctuaire avec sa lanterne.
@@ -324,6 +320,31 @@ func autels(liste: Array) -> void:
 		lueur.material_override = halo
 		lueur.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		ajouter(flamme, lueur)
+		# cercle lumineux au sol et cristal flottant : on voit de loin que c'est une sauvegarde
+		var cercle := MeshInstance3D.new()
+		cercle.name = "Cercle"
+		var plan := PlaneMesh.new()
+		plan.size = Vector2(2.6, 2.6)
+		cercle.mesh = plan
+		var m_cercle := _shader("cercle_sauvegarde")
+		m_cercle.set_shader_parameter("actif", 1.0 if a[0] == "Depart" else 0.0)
+		cercle.material_override = m_cercle
+		cercle.position.y = 0.04
+		cercle.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ajouter(autel, cercle)
+		var cristal := MeshInstance3D.new()
+		cristal.name = "Cristal"
+		var prisme := SphereMesh.new()
+		prisme.radius = 0.14
+		prisme.height = 0.42
+		prisme.radial_segments = 4
+		prisme.rings = 2
+		cristal.mesh = prisme
+		cristal.material_override = mat("#9cc8ff" if a[0] != "Depart" else "#ffd27a", {"emission_enabled": true,
+			"emission": Color("#5b8cff") if a[0] != "Depart" else Color("#ffb347"), "emission_energy_multiplier": 1.6})
+		cristal.position.y = 1.75
+		cristal.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ajouter(autel, cristal)
 
 
 ## Grand toit japonais à quatre pans aux bords relevés, au-dessus d'un bâtiment [x, y, w, d] (px)
@@ -547,7 +568,7 @@ func habitants(liste: Array) -> void:
 ## Maison du village en bois : murs de planches, poteaux et poutres sombres, fenêtres de papier
 ## éclairées, porte, petite véranda (engawa) devant, et toit de tuiles rouges. Toit escaladable.
 ## `face` : côté de la porte (0 sud, 1 nord, 2 est, 3 ouest).
-func maison_bois(nom: String, x: float, y: float, w: float, d: float, h := 1.9, face := 0, toit := "tuiles_rouges") -> void:
+func maison_bois(nom: String, x: float, y: float, w: float, d: float, h := 1.9, face := 0, toit := "bardeaux") -> void:
 	boite(nom, x, y, w, d, h, "planches")
 	boite(nom + "Socle", x - 4, y - 4, w + 8, d + 8, 0.22, "pierre")
 	toit_japonais(nom + "Toit", x, y, w, d, h - 0.4, 1, toit)
@@ -1332,6 +1353,73 @@ func yagura(nom: String, x: float, y: float, w := 110.0, d := 110.0, base := 3.4
 	_pan_de_toit(noeud, c + Vector3(0, base + 1.6, 0), lx + 0.9, lz + 0.9, 1.0)
 
 
+## Pagode à cinq étages, centrée en (x, y), de `cote` px au sol : socle de pierre, étages
+## de bois rouge sombre aux fenêtres éclairées, toits rouges et flèche dorée.
+func pagode(nom: String, x: float, y: float, cote := 140.0, etages := 5) -> void:
+	var noeud := Node3D.new()
+	noeud.name = nom
+	ajouter(racine, noeud)
+	var c := P(x, y)
+	boite(nom + "Socle", x - cote / 2.0 - 10, y - cote / 2.0 - 10, cote + 20, cote + 20, 0.45, "pierre")
+	boite(nom + "Corps", x - cote * 0.35, y - cote * 0.35, cote * 0.7, cote * 0.7, 1.6, "bois_sombre", null, 0.45)
+	var l := cote * ECHELLE * 0.7
+	var y_niv := 0.45
+	for e in etages:
+		var h := 1.5 if e == 0 else 1.15
+		plaque("PagodeCorps", c + Vector3(0, y_niv + h / 2.0, 0), Vector3(l, h, l), "bois_sombre")
+		for s in [-1.0, 1.0]:
+			plaque("Shoji", c + Vector3(0, y_niv + h * 0.55, s * (l / 2.0 + 0.02)), Vector3(l * 0.4, h * 0.4, 0.04), "shoji", false)
+			plaque("Shoji", c + Vector3(s * (l / 2.0 + 0.02), y_niv + h * 0.55, 0), Vector3(0.04, h * 0.4, l * 0.4), "shoji", false)
+		y_niv += h
+		var debord := l + 1.8 - e * 0.1
+		_pan_de_toit(noeud, c + Vector3(0, y_niv, 0), debord, debord, 0.42 if e < etages - 1 else 1.0)
+		y_niv += 0.35
+		l *= 0.84
+	# flèche dorée (sōrin) à anneaux
+	var fleche := CylinderMesh.new()
+	fleche.top_radius = 0.03
+	fleche.bottom_radius = 0.07
+	fleche.height = 2.2
+	fleche.radial_segments = 8
+	deco("PagodeFleche", fleche, Transform3D(Basis(), c + Vector3(0, y_niv + 1.4, 0)), materiaux["or"])
+	for k in 5:
+		var anneau := TorusMesh.new()
+		anneau.inner_radius = 0.07
+		anneau.outer_radius = 0.16 - k * 0.012
+		anneau.rings = 12
+		anneau.ring_segments = 4
+		deco("PagodeAnneaux", anneau, Transform3D(Basis(), c + Vector3(0, y_niv + 0.8 + k * 0.28, 0)), materiaux["or"])
+
+
+## Grand parterre rond bordé de pierre (centré en x, y, rayon en px) : herbe et fleurs dedans,
+## à poser sous un grand arbre au centre d'une cour.
+func parterre(x: float, y: float, rayon: float) -> void:
+	var r := rayon * ECHELLE
+	var bord := CylinderMesh.new()
+	bord.top_radius = r
+	bord.bottom_radius = r + 0.05
+	bord.height = 0.3
+	bord.radial_segments = 32
+	deco("ParterreBord", bord, Transform3D(Basis(), P(x, y, 0.15)), materiaux["pierre"])
+	var herbe := CylinderMesh.new()
+	herbe.top_radius = r - 0.25
+	herbe.bottom_radius = r - 0.25
+	herbe.height = 0.32
+	herbe.radial_segments = 32
+	deco("ParterreHerbe", herbe, Transform3D(Basis(), P(x, y, 0.17)), materiaux["herbe"])
+	_occupe.append(Rect2(x, y, 0, 0).grow(rayon))
+	var corps := StaticBody3D.new()
+	corps.name = "Parterre%d" % int(x)
+	ajouter(racine, corps)
+	var forme := CollisionShape3D.new()
+	var cyl := CylinderShape3D.new()
+	cyl.radius = r
+	cyl.height = 0.3
+	forme.shape = cyl
+	forme.position = P(x, y, 0.15)
+	ajouter(corps, forme)
+
+
 ## Bâtiment : murs blancs à colombages sombres, fenêtres shoji éclairées, toit de tuiles débordant.
 func batiment(nom: String, x: float, y: float, w: float, d: float, h: float, toit := "tuiles") -> void:
 	# murs et soubassement comme avant, mais un vrai toit japonais à quatre pans à la place du toit plat
@@ -1794,14 +1882,13 @@ func pont_arque(nom: String, x: float, y: float, w: float, d: float, hauteur := 
 
 # --- Lumières et objets d'ambiance -----------------------------------------
 
-## Lanternes du jeu : en pierre (tōrō) ou sur poteau, en alternance.
+## Lanternes du jeu : toutes en pierre (tōrō).
 func lanternes(points: Array) -> void:
 	var noeud := Node3D.new()
 	noeud.name = "Lanternes"
 	ajouter(racine, noeud)
 	for k in points.size():
-		var scene := "res://scenes/objets/lanterne.tscn" if k % 2 == 0 else "res://scenes/objets/lanterne_poteau.tscn"
-		var lanterne := instance(scene, "Lanterne%d" % k, P(points[k][0], points[k][1]), noeud)
+		var lanterne := instance("res://scenes/objets/lanterne.tscn", "Lanterne%d" % k, P(points[k][0], points[k][1]), noeud)
 		if points[k].size() > 2:
 			lanterne.set("rayon", points[k][2])
 
