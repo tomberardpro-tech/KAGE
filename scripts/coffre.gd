@@ -1,7 +1,7 @@
 class_name Coffre
 extends Node3D
 ## Coffre au trésor qui apparaît au centre du donjon quand le seigneur Oni est vaincu.
-## E pour l'ouvrir : le niveau joue alors la cinématique du parchemin.
+## E pour l'ouvrir : le niveau joue alors la cinématique du parchemin, et la Grande Lame en sort.
 
 signal ouvert
 
@@ -56,6 +56,29 @@ func ouvrir_couvercle(duree := 1.2) -> void:
 	t.tween_property(_couvercle, "rotation:x", deg_to_rad(-105.0), duree)
 	t.parallel().tween_property(_lumiere, "light_energy", 6.0, duree)
 	await t.finished
+
+
+## La Grande Lame monte lentement du coffre ouvert, pointe la première, dans un éclat blanc.
+## Renvoie l'épée (elle reste dans le coffre jusqu'à ce que le ninja la prenne).
+func sortir_grande_lame(duree := 3.4) -> GrandeLame:
+	var lame := GrandeLame.new()
+	lame.name = "GrandeLame"
+	add_child(lame)
+	var bord := 0.55  # hauteur du coffre
+	lame.position = Vector3(0, bord - GrandeLame.LONGUEUR - 0.05, 0)  # la pointe juste sous le bord
+	lame.rotation.y = deg_to_rad(46.0)  # le plat de la lame tourné vers les caméras de la cinématique
+	lame.briller(0.0)
+	Sons.jouer("coffre_apparait", -4.0, 0.62)
+	Sons.jouer("degainer", -2.0, 0.55)
+	var t := create_tween().set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	t.tween_property(lame, "position:y", bord + 0.75, duree)
+	# la lumière du coffre pâlit : c'est la lueur blanche de l'épée qui domine
+	t.parallel().tween_property(_lumiere, "light_energy", 3.0, duree * 0.5)
+	t.parallel().tween_property(_lumiere, "light_color", Color(0.86, 0.9, 1.0), duree * 0.5)
+	var eclat := create_tween()
+	eclat.tween_method(lame.briller, 0.0, 1.0, duree * 0.6)
+	eclat.tween_method(lame.briller, 1.0, 0.35, duree * 0.4)
+	return lame
 
 
 func eteindre_rayon() -> void:

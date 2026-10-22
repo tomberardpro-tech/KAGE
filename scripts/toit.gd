@@ -3,6 +3,7 @@ extends Node3D
 ## il pâlit quand le ninja approche et disparaît quand il entre, puis revient quand il ressort.
 
 @export var emprise := Rect2()  ## rectangle du bâtiment au sol (x, z du monde)
+@export var hauteur := 0.0  ## hauteur des murs : un ninja plus haut que ça est SUR le toit, qui reste alors visible
 
 var _ninja: Node3D
 var _actuel := 0.0
@@ -21,7 +22,9 @@ func _process(delta: float) -> void:
 			return
 	var p := Vector2(_ninja.global_position.x, _ninja.global_position.z)
 	var cible := 0.0
-	if emprise.grow(0.3).has_point(p):
+	if hauteur > 0.0 and _ninja.global_position.y > hauteur - 0.3:
+		cible = 0.0  # sur le toit (ou en sautant dessus) : il ne s'efface pas
+	elif emprise.grow(0.3).has_point(p):
 		cible = 1.0
 	elif emprise.grow(3.0).has_point(p):
 		cible = 0.55

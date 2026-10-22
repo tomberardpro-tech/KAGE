@@ -206,7 +206,9 @@ func _pret_a_jouer() -> void:
 	en_cinematique = false
 
 
-# --- Ouverture : le maître dans sa cabane ---------------------------------
+# --- Ouverture : le maître dans sa maison ---------------------------------
+# Kage commence dans la pièce de la maison du maître (scripts/tools/interieurs.gd, loin de la
+# carte) ; le maître (nœud "Maitre") y est assis face à lui. On en sort par la porte, à l'est.
 
 func _debut() -> void:
 	var maitre := get_node_or_null("Maitre") as Node3D
@@ -218,7 +220,7 @@ func _debut() -> void:
 	_cinema.entrer()
 	var donjon := _centre_de("DonjonToit", Vector3(0, 0, -30))
 	var porte := _centre_de("GrandePorte", Vector3(0, 0, 20))
-	var cabane := _centre_de("CabaneToit", maitre.global_position)
+	var cabane := _centre_de("MaisonMaitreToit", Vector3(-1, 0, 79))
 	var village := (porte + cabane) / 2.0
 	# par-dessus l'épaule de Kage, face au maître
 	var dos := (ninja.global_position - maitre.global_position).normalized()
@@ -226,17 +228,17 @@ func _debut() -> void:
 	var oeil := ninja.global_position + dos * 1.5 - cote * 1.9 + Vector3(0, 1.45, 0)
 	var visage := maitre.global_position + Vector3(0, 0.85, 0)
 	# Un seul long travelling : le château dans la nuit, la grande porte, la forêt et le village,
-	# puis on descend en douceur jusqu'à la cabane du maître.
+	# puis on descend en douceur jusqu'à la maison du maître… et on coupe dans la pièce.
 	_travelling([
 		[donjon + Vector3(-12, 26, 24), donjon + Vector3(0, 2, 0)],
 		[porte + Vector3(7, 12, 12), porte + Vector3(0, 2, 2)],
 		[village + Vector3(6, 11, 6), village + Vector3(0, 0, 4)],
 		[cabane + Vector3(-4, 6, 7), cabane + Vector3(0, 0.6, 0)],
-		[oeil, visage],
-	], 14.0)
+	], 13.0)
 	_cinema.titre("KAGE  影", "Le parchemin du clan", 3.5)
-	var passe := await _cinema.attendre(14.2)
+	var passe := await _cinema.attendre(13.2)
 	if not passe:
+		_plan(oeil, visage)
 		if maitre.has_method("saluer"):
 			maitre.saluer()
 		passe = await _cinema.attendre(1.2)
@@ -426,6 +428,8 @@ func _cinematique_coffre() -> void:
 	_glisser(_camera.global_position, ninja.global_position, coffre + Vector3(2.8, 1.7, 2.6), coffre + Vector3(0, 0.6, 0.5), 1.0)
 	await get_tree().create_timer(1.0).timeout
 	await _coffre.ouvrir_couvercle(1.2)
+	# la Grande Lame monte lentement du coffre, derrière lui, pendant qu'il brandit le parchemin
+	var lame := _coffre.sortir_grande_lame(3.4)
 	# il se retourne vers nous et brandit le parchemin
 	visuel.rotation.y = 0.0
 	ninja.pose_forcee = "brandir"
@@ -450,7 +454,13 @@ func _cinematique_coffre() -> void:
 	suivi.kill()
 	rouleau.queue_free()
 	ninja.pose_forcee = ""
+	# plan de côté sur la Grande Lame dressée au-dessus du coffre, puis le ninja la prend dans son dos
 	_coffre.eteindre_rayon()
+	_glisser(coffre + Vector3(4.2, 1.7, 3.6), coffre + Vector3(0, 1.8, 0), coffre + Vector3(3.6, 2.1, 4.6), coffre + Vector3(0, 2.15, 0), 2.6)
+	_cinema.titre("LA GRANDE LAME", "Une épée immense dormait au fond du coffre.", 2.2, 0.86)
+	await get_tree().create_timer(2.6).timeout
+	ninja.prendre_grande_lame(lame)
+	Sons.jouer("rengainer", -3.0, 0.6)
 	_cinema.cacher_titre()
 	_sur_parchemin()
 	_camera.recaler()
@@ -619,6 +629,8 @@ func recommencer_a_l_autel() -> void:
 
 ## Musique du village dehors, plus tendue une fois dans le château.
 func _musique_du_lieu() -> String:
+	if ninja.global_position.x > 400.0:
+		return "jeu"  # dans une pièce (la maison du maître, au départ)
 	var porte := get_node_or_null("GrandePorte") as Node3D
 	if porte and ninja.global_position.z < porte.global_position.z + 1.0:
 		return "chateau"

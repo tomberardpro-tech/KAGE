@@ -7,7 +7,8 @@ extends RefCounted
 ##   Interieurs.maison(self, "Caserne", 220, 820, 340, 420, 2, "caserne", 1.9, true)
 ## Pour chaque bâtiment : un vrai battant de porte en bois sur la façade, la porte interactive
 ## (scripts/porte_batiment.gd), et la pièce : sol, murs (avec collisions), shoji, lumière chaude
-## sans ombre et meubles selon le style ("maison", "grenier", "remise", "caserne", "entrepot").
+## sans ombre et meubles selon le style ("maison", "maitre", "grenier", "remise", "caserne", "entrepot").
+## Renvoie l'origine (monde) de la pièce : on peut y placer le ninja ou un habitant.
 
 const ECHELLE := 0.04
 const X0 := 600.0  ## m : premier intérieur ; bien au-delà des montagnes du pourtour (~210 m)
@@ -22,6 +23,7 @@ const LIEUX := {
 	"MaisonHana": "chez Hana", "MaisonUme": "chez grand-mère Ume", "MaisonKenji": "chez Kenji",
 	"MaisonJiro": "chez Jiro", "Grenier": "dans le grenier", "Remise": "dans la remise",
 	"RemiseChateau": "dans la remise", "Caserne": "dans la caserne", "Entrepot": "dans l'entrepôt",
+	"MaisonMaitre": "chez maître Kagemaru",
 }
 
 
@@ -30,7 +32,7 @@ const LIEUX := {
 ## h : hauteur des murs du bâtiment (m) ; chateau : bâtiment du château (decor.batiment) plutôt
 ## qu'une maison de bois (decor.maison_bois), ce qui change la place de la porte sur la façade.
 static func maison(c, nom: String, x: float, y: float, w: float, d: float, face := 0, style := "maison",
-		h := 1.9, chateau := false) -> void:
+		h := 1.9, chateau := false) -> Vector3:
 	var M := _mats(c)
 	var lune := c.racine.get_node_or_null("Lune") as DirectionalLight3D
 	if lune:
@@ -100,9 +102,11 @@ static func maison(c, nom: String, x: float, y: float, w: float, d: float, face 
 	# dehors, on réapparaît tout près de la porte : elle reste l'objet le plus proche (Sora et Aiko
 	# bavardent juste devant la porte de Kenji)
 	var exterieur := facade + normale * 1.1 + Vector3(0, 0.1, 0)
-	_interactif(c, conteneur.get_parent(), nom + "Entree", facade + normale * 0.45,
+	# chaque porte est tournée vers son « devant » (+z local) : on ne la passe que de face
+	_interactif(c, conteneur.get_parent(), nom + "Entree", facade + normale * 0.45, angle_facade,
 		("Entrer " + lieu) if lieu != "" else "Entrer", interieur, PI)
-	_interactif(c, piece, "Sortie", Vector3(0, 0, rd / 2.0 - 0.3), "Sortir", exterieur, angle_facade)
+	_interactif(c, piece, "Sortie", Vector3(0, 0, rd / 2.0 - 0.3), PI, "Sortir", exterieur, angle_facade)
+	return origine
 
 
 # --- Outils -------------------------------------------------------------------
@@ -144,12 +148,13 @@ static func _vide(c, conteneur: Node3D, nombre: int) -> void:
 	vide.position = Vector3((debut + fin) / 2.0, 19.8, 0.0)
 
 
-static func _interactif(c, parent: Node3D, nom: String, position: Vector3, texte: String,
+static func _interactif(c, parent: Node3D, nom: String, position: Vector3, devant: float, texte: String,
 		arrivee: Vector3, regard: float) -> void:
 	var p := Node3D.new()
 	p.name = nom
 	p.set_script(load(SCRIPT_PORTE))
 	p.position = position
+	p.rotation.y = devant  # +z local : le côté d'où l'on passe la porte
 	p.set("texte", texte)
 	p.set("arrivee", arrivee)
 	p.set("regard", regard)
@@ -278,7 +283,7 @@ static func _sol(a: Atelier, M: Dictionary, rw: float, rd: float, style: String)
 	for s in [-1.0, 1.0]:
 		a.boite(Vector3(0.45 + s * 0.07, 0.03, zs - DOMA + 0.35), Vector3(0.1, 0.03, 0.24), M["bois"])
 	match style:
-		"maison":
+		"maison", "maitre":
 			_tatamis(a, M, -rw / 2.0 + 0.3, rw / 2.0 - 0.3, zn + 0.3, zs - DOMA - 0.06)
 		"caserne":
 			_tatamis(a, M, -rw / 2.0 + 0.3, rw / 2.0 - 0.3, zn + 0.3, zn + 2.6)
@@ -461,6 +466,26 @@ static func _meubler(a: Atelier, M: Dictionary, rw: float, rd: float, style: Str
 					a.reserver("n", xa + 1.0, 0.8)
 					a.reserver("n", 1.0, 0.8)
 					a.reserver("n", xb - 0.4, 0.4)
+		"maitre":
+			# la maison de maître Kagemaru, où Kage s'éveille : alcôve et sabres, rouleaux,
+			# table basse et thé près du braséro, le futon du ninja, l'écritoire
+			_tokonoma(a, M, Vector3(xa + 1.1, 0, zn), 0.0, 1.6, "bonsai")
+			_katana_kake(a, M, Vector3(xa + 0.8, 0.15, zn + 0.38), 0.0)
+			a.reserver("n", xa + 1.1, 0.95)
+			_kakejiku(a, M, Vector3(0.9, 0, zn + 0.02), "kage")
+			a.reserver("n", 0.9, 0.4)
+			_tansu(a, M, Vector3(xb - 0.75, 0, zn + 0.25), 0.0)
+			a.reserver("n", xb - 0.75, 0.55)
+			_rouleaux(a, M, Vector3(xb - 0.22, 0, -0.5), -PI / 2.0)
+			a.reserver("e", -0.5, 0.7)
+			_ecritoire(a, M, Vector3(-0.55, 0, zn + 0.5), 0.0)
+			_table_basse(a, M, Vector3(0.75, 0, -0.45), 0.0)
+			for p in [[1.6, -0.45, "ocre"], [-0.1, -0.45, "indigo"]]:
+				_coussin(a, M, Vector3(p[0], 0, p[1]), M[p[2]])
+			_hibachi(a, M, Vector3(1.75, 0, 0.6))
+			_futon(a, M, Vector3(xa + 0.85, 0, 0.55), 0.0, M["indigo"])
+			_andon(a, M, Vector3(xa + 0.45, 0, zs - 0.45))
+			_andon(a, M, Vector3(xb - 0.45, 0, zs - 0.45))
 		"grenier":
 			for k in int((rw - 2.4) / 0.75):
 				var x := xa + 0.6 + k * 0.75
@@ -552,6 +577,57 @@ static func _table_basse(a: Atelier, M: Dictionary, p: Vector3, angle: float) ->
 	a.boite(_r(p, angle, Vector3(0.2, 0.34, -0.15)), Vector3(0.3, 0.012, 0.18), M["vert_tissu"], angle)
 
 
+## Support de sabres (katana-kake) en laque noire : le katana et le wakizashi, posés à l'horizontale.
+static func _katana_kake(a: Atelier, M: Dictionary, p: Vector3, angle: float) -> void:
+	a.boite(p + Vector3(0, 0.02, 0), Vector3(0.7, 0.04, 0.22), M["laque_noire"], angle)
+	for s in [-1.0, 1.0]:
+		a.boite(_r(p, angle, Vector3(s * 0.26, 0.2, 0)), Vector3(0.05, 0.36, 0.16), M["laque_noire"], angle)
+	for k in 2:
+		var y := 0.18 + k * 0.14
+		var l := 0.78 - k * 0.2
+		a.cyl_couche(_r(p, angle, Vector3(-0.02, y, 0.02)), 0.022, l, M["laque_rouge"] if k == 0 else M["laque_noire"], angle)
+		a.cyl_couche(_r(p, angle, Vector3(-l / 2.0 - 0.05, y, 0.02)), 0.02, 0.18, M["indigo"], angle)  # poignée
+		a.cyl_couche(_r(p, angle, Vector3(-l / 2.0 + 0.05, y, 0.02)), 0.035, 0.015, M["or"], angle)  # tsuba
+
+
+## Étagère basse remplie de rouleaux, quelques-uns noués de rouge, et un coffret.
+static func _rouleaux(a: Atelier, M: Dictionary, p: Vector3, angle: float) -> void:
+	var l := 1.3
+	var h := 1.2
+	for s in [-1.0, 1.0]:
+		a.boite(_r(p, angle, Vector3(s * l / 2.0, h / 2.0, 0)), Vector3(0.05, h, 0.36), M["bois_sombre"], angle)
+	a.boite(_r(p, angle, Vector3(0, h / 2.0, -0.17)), Vector3(l, h, 0.02), M["bois_sombre"], angle)
+	for k in 4:
+		var y := 0.04 + k * 0.38
+		a.boite(_r(p, angle, Vector3(0, y, 0)), Vector3(l, 0.04, 0.36), M["bois"], angle)
+		if k == 3:
+			break
+		for j in 7:
+			var x := -l / 2.0 + 0.14 + j * 0.17
+			var rang := 2 if (j + k) % 3 == 0 else 1
+			for r in rang:
+				var q := _r(p, angle, Vector3(x, y + 0.07 + r * 0.11, 0.0))
+				a.cyl_b(q, Basis(Vector3.UP, angle) * Basis(Vector3.RIGHT, PI / 2.0) * Basis.from_scale(Vector3(0.1, 0.32, 0.1)),
+					M["papier"] if (j + r) % 4 != 1 else M["paille_claire"])
+				if (j + k + r) % 4 == 0:
+					a.cyl_b(q, Basis(Vector3.UP, angle) * Basis(Vector3.RIGHT, PI / 2.0) * Basis.from_scale(Vector3(0.106, 0.03, 0.106)), M["laque_rouge"])
+	a.boite(_r(p, angle, Vector3(0, h + 0.1, 0)), Vector3(0.4, 0.16, 0.26), M["laque_rouge"], angle)
+
+
+## Écritoire basse : papier, pinceau, pierre à encre et une petite chandelle.
+static func _ecritoire(a: Atelier, M: Dictionary, p: Vector3, angle: float) -> void:
+	a.boite(p + Vector3(0, 0.27, 0), Vector3(0.9, 0.04, 0.45), M["bois"], angle)
+	for s in [-1.0, 1.0]:
+		a.boite(_r(p, angle, Vector3(s * 0.4, 0.13, 0)), Vector3(0.05, 0.26, 0.4), M["bois_sombre"], angle)
+	a.boite(_r(p, angle, Vector3(-0.1, 0.295, 0.02)), Vector3(0.4, 0.006, 0.3), M["papier"], angle + 0.08)
+	for k in 3:
+		a.boite(_r(p, angle, Vector3(-0.2 + k * 0.08, 0.3, 0.0)), Vector3(0.02, 0.004, 0.18), M["encre"], angle + 0.08)
+	a.boite(_r(p, angle, Vector3(0.25, 0.305, -0.05)), Vector3(0.14, 0.03, 0.2), M["encre"], angle)  # suzuri
+	a.cyl_b(_r(p, angle, Vector3(0.12, 0.3, 0.12)), Basis(Vector3.UP, angle + 0.4) * Basis(Vector3.BACK, PI / 2.0) * Basis.from_scale(Vector3(0.016, 0.22, 0.016)), M["bois"])
+	a.cyl(_r(p, angle, Vector3(0.36, 0.33, 0.12)), 0.03, 0.08, M["papier_chaud"])
+	_coussin(a, M, _r(p, angle, Vector3(0, 0, 0.55)), M["vert_tissu"])
+
+
 static func _coussin(a: Atelier, M: Dictionary, p: Vector3, m: Material) -> void:
 	a.boite(p + Vector3(0, 0.035, 0), Vector3(0.52, 0.07, 0.52), m)
 	a.boite(p + Vector3(0, 0.07, 0), Vector3(0.44, 0.04, 0.44), m)
@@ -636,7 +712,13 @@ static func _kakejiku(a: Atelier, M: Dictionary, p_mur: Vector3, motif: String) 
 	a.boite(c + Vector3(0, -0.02, 0.008), Vector3(0.46, 0.92, 0.01), M["papier"])
 	for y in [0.64, -0.64]:
 		a.cyl_couche(c + Vector3(0, y, 0.01), 0.018, 0.7, M["bois_sombre"], 0.0)
-	if motif == "carpe":
+	if motif == "kage":
+		# un grand caractère à l'encre (影, en quelques traits) et un cercle rouge
+		for t in [[0.0, 0.3, 0.26, 0.03, 0.0], [0.0, 0.18, 0.3, 0.025, 0.0], [-0.08, 0.0, 0.03, 0.3, 0.15],
+				[0.06, -0.02, 0.025, 0.32, -0.1], [0.1, -0.25, 0.2, 0.025, -0.5], [-0.1, -0.25, 0.18, 0.025, 0.5]]:
+			a.boite_b(c + Vector3(t[0], t[1], 0.016), Basis(Vector3.BACK, t[4]) * Basis.from_scale(Vector3(t[2], t[3], 0.008)), M["encre"])
+		a.cyl_b(c + Vector3(0.0, -0.05, 0.014), Basis(Vector3.RIGHT, PI / 2.0) * Basis.from_scale(Vector3(0.4, 0.004, 0.4)), M["rose"])
+	elif motif == "carpe":
 		a.sphere(c + Vector3(0, 0.0, 0.015), Vector3(0.22, 0.09, 0.01), M["laque_rouge"])
 		a.boite(c + Vector3(0.13, 0.0, 0.015), Vector3(0.06, 0.06, 0.008), M["laque_rouge"], 0.0)
 	else:

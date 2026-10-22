@@ -1,16 +1,14 @@
 extends Node3D
 ## Esprits bleus (hitodama, kitsune-bi ou yūrei) : petits fantômes qui apparaissent près du ninja, flottent un
-## moment en ondulant puis s'effacent. Leur silhouette (tête en goutte qui finit en volute, billes flottantes,
-## yeux clairs en amande, petite cape qui ondule) est dessinée par assets/shaders/esprit.gdshader. Purement décoratifs : aucune collision, les gardes les ignorent.
+## moment en ondulant puis s'effacent. Leur silhouette épurée, façon icône (goutte arrondie dont la pointe
+## finit en une petite volute, deux grands yeux blancs, une bille qui flotte) est dessinée par assets/shaders/esprit.gdshader. Purement décoratifs : aucune collision, les gardes les ignorent.
 ## Quand le ninja s'approche, l'esprit fuit devant lui : on peut lui courir après, presque l'attraper,
 ## puis il s'évanouit en petites étincelles. Ajoutés par niveau.gd.
 
 const MAX := 1  ## un seul à la fois : un passage rare, pas un essaim qui distrait
-const COEUR := Color(0.4, 0.85, 1.0)  ## centre cyan
-const VIOLET := Color(0.48, 0.12, 0.95)  ## entre-deux violet vif
-const BLEU := Color(0.2, 0.05, 0.55)  ## bord indigo profond
+const COEUR := Color(0.78, 0.62, 1.0)  ## cœur lavande clair
+const VIOLET := Color(0.36, 0.1, 0.78)  ## bord violet profond
 const LUEUR := Color(0.45, 0.3, 1.0)
-const CAPE := Color(0.56, 0.6, 0.86)  ## petite cape bleu-gris, contraste avec le corps
 const DESSIN := Vector2(1.4, 2.0)  ## cadre du dessin dans le shader (en mètres à l'échelle 1)
 const DISTANCE_FUITE := 4.0  ## le ninja approche : l'esprit s'enfuit
 const VITESSE_FUITE := 7.6  ## un peu moins que le sprint (8,5) : on peut presque l'attraper
@@ -68,9 +66,7 @@ func _apparaitre() -> void:
 		var m := ShaderMaterial.new()
 		m.shader = _shader
 		m.set_shader_parameter("coeur", COEUR)
-		m.set_shader_parameter("bleu", BLEU)
 		m.set_shader_parameter("violet", VIOLET)
-		m.set_shader_parameter("cape", CAPE)
 		m.set_shader_parameter("taille", DESSIN)
 		m.set_shader_parameter("phase", i * 1.7)
 		m.set_shader_parameter("opacite", 0.0)

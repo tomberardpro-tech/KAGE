@@ -29,6 +29,19 @@ signal blesse(vie: int)
 @export var instant_touche := 0.16  ## moment où la lame touche
 @export var vie_max := 3
 @export var invulnerable_apres_coup := 1.3
+## Le katana du modèle est agrandi au chargement (épaisseur, largeur, longueur),
+## autour de la main pour qu'il reste bien dans le poing.
+@export var agrandir_katana := Vector3(2.2, 1.7, 1.4)
+
+@export_group("Endurance")
+@export var endurance_max := 100.0
+@export var cout_sprint := 24.0  ## par seconde de sprint
+@export var cout_salto := 28.0
+@export var cout_coup := 8.0
+@export var cout_coup_grande_lame := 14.0
+@export var recuperation := 32.0  ## par seconde, quand on ne sprinte pas
+@export var delai_recuperation := 0.8  ## repos avant que l'endurance remonte
+@export var seuil_reprise := 25.0  ## à bout de souffle : il faut remonter jusque-là
 
 var accroupi := false
 var en_dash := false  ## plus de dash : gardé à faux pour les autres scripts
@@ -40,10 +53,15 @@ var pose_forcee := ""  ## animation imposée pendant une cinématique (ex. « br
 var katana_en_main := false  ## P sort le katana ou le range dans son fourreau
 var sprinte := false
 var salto := 0.0  ## > 0 : salto du double saut en cours (temps restant), lu par anim_chibi.gd
+var endurance := 100.0  ## 0..endurance_max, affichée par le HUD
+var essouffle := false  ## à bout de souffle : ni sprint ni salto jusqu'à seuil_reprise
+var grande_lame: GrandeLame  ## la Grande Lame du coffre, quand on l'a : elle remplace le katana
+var vitesse_coup := 1.0  ## < 1 : coup plus lent (Grande Lame), lu par anim_chibi.gd
 
 ## Portée du katana, devant le ninja (gardes et lanternes).
 const PORTEE_SABRE := 1.7
 const ANGLE_SABRE := 80.0  ## demi-angle devant lui, en degrés
+const ANGLE_GRANDE_LAME := 115.0  ## la Grande Lame balaie presque tout autour de lui
 ## Distance à laquelle on peut ouvrir une porte ou un coffre avec E.
 const PORTEE_INTERACTION := 1.8
 ## Au-dessus de cette hauteur, on est sur un toit : la lune peut nous éclairer.
@@ -61,6 +79,8 @@ var _pas := 0.0
 var _double_saut := true  ## rechargé en touchant le sol ou après s'être hissé sur un mur
 var _direction_coup := Vector3.BACK  ## sens du coup de katana en cours
 var _trainee: Trainee
+var _arc: ArcFeu
+var _repos_endurance := 0.0
 
 @onready var _visuel: Node3D = $Visuel
 
@@ -82,6 +102,27 @@ func _ready() -> void:
 	_trainee.name = "Trainee"
 	_trainee.source = hanches
 	add_child(_trainee)
+	endurance = endurance_max
+	_agrandir_katana()
+	# Arc de feu qui suit la lame à chaque coup
+	_arc = ArcFeu.new()
+	_arc.name = "ArcFeu"
+	_arc.porteur = _visuel
+	add_child(_arc)
+
+
+## Un katana plus gros, bien visible de dessus : on l'étire autour du poing (la poignée reste en main).
+## Le sabre rangé dans le dos grossit un peu moins, pour ne pas traîner par terre.
+func _agrandir_katana() -> void:
+	var prise := Vector3(0.0, 0.0, -0.075)  # milieu de la poignée, dans le repère du katana
+	var main := find_child("KatanaMain", true, false) as Node3D
+	if main:
+		main.transform = main.transform * Transform3D(Basis.from_scale(agrandir_katana), prise - agrandir_katana * prise)
+	var dos := Vector3.ONE * 1.2
+	for nom in ["KatanaDos", "Fourreau"]:
+		var n := find_child(nom, true, false) as Node3D
+		if n:
+			n.transform = n.transform * Transform3D(Basis.from_scale(dos), Vector3.ZERO)
 
 
 func entrer_zone(zone: Zone) -> void:
@@ -125,12 +166,14 @@ func _physics_process(delta: float) -> void:
 		salto = maxf(0.0, salto - delta)
 	_trainee.actif = salto > 0.04
 	if bloque:
+		sprinte = false
+		_gerer_endurance(delta)
 		velocity = Vector3(0.0, velocity.y - gravite * delta, 0.0)
 		move_and_slide()
 		return
 	if attaque > 0.0:
 		attaque -= delta
-		if not _a_touche and attaque <= duree_coup - instant_touche:
+		if not _a_touche and attaque <= (duree_coup - instant_touche) / vitesse_coup:
 			_a_touche = true
 			_trancher()
 
@@ -150,7 +193,7 @@ func _physics_process(delta: float) -> void:
 		_sol_recent = 0.0
 		a_saute.emit()
 		Sons.jouer("saut", -16.0, randf_range(0.95, 1.08))
-	elif Input.is_action_just_pressed("jump") and not is_on_floor() and _double_saut:
+	elif Input.is_action_just_pressed("jump") and not is_on_floor() and _double_saut and not essouffle:
 		_double_sauter()
 	if is_on_floor() and salto <= 0.0:
 		_double_saut = true
@@ -159,7 +202,8 @@ func _physics_process(delta: float) -> void:
 	elif Input.is_action_just_released("jump") and velocity.y > 0.0:
 		velocity.y *= 0.5
 
-	sprinte = Input.is_action_pressed("sprint") and not accroupi and direction.length() > 0.1
+	sprinte = Input.is_action_pressed("sprint") and not accroupi and direction.length() > 0.1 and not essouffle
+	_gerer_endurance(delta)
 	var cible := direction * (vitesse_accroupi if accroupi else (vitesse_sprint if sprinte else vitesse))
 	if attaque > 0.0:
 		cible *= 0.25  # on se plante pour frapper
@@ -213,6 +257,9 @@ func reapparaitre(position_depart := _point_depart) -> void:
 	salto = 0.0
 	_double_saut = true
 	_trainee.effacer()
+	_arc.effacer()
+	endurance = endurance_max
+	essouffle = false
 	_invulnerable = 0.0
 	_visuel.visible = true
 	blesse.emit(vie)
@@ -278,6 +325,7 @@ func _essayer_grimper(direction: Vector3) -> void:
 ## Second saut en l'air : petite impulsion, salto vers l'avant et traînée rouge.
 func _double_sauter() -> void:
 	_double_saut = false
+	_depenser(cout_salto)
 	velocity.y = force_double_saut
 	salto = duree_salto
 	_saut_demande = 0.0
@@ -294,10 +342,17 @@ func _frapper(direction := Vector3.ZERO) -> void:
 	if vise.length() > 0.1:
 		_visuel.rotation.y = atan2(vise.x, vise.z)
 	_direction_coup = Vector3(sin(_visuel.rotation.y), 0.0, cos(_visuel.rotation.y))
-	attaque = duree_coup
+	attaque = duree_coup / vitesse_coup
 	_a_touche = false
 	a_frappe.emit()
-	Sons.jouer("tranche", -5.0, randf_range(0.95, 1.08))
+	if grande_lame:
+		_depenser(cout_coup_grande_lame)
+		_arc.lancer(1.75, 1.0 / vitesse_coup)
+		Sons.jouer("tranche", -3.0, randf_range(0.7, 0.78))
+	else:
+		_depenser(cout_coup)
+		_arc.lancer()
+		Sons.jouer("tranche", -5.0, randf_range(0.95, 1.08))
 
 
 ## Sort le katana (ranger = faux) ou le remet dans son fourreau.
@@ -337,7 +392,9 @@ func _trancher() -> void:
 		ecart.y = 0.0
 		var face := ecart.length() < 0.5 or rad_to_deg(devant.angle_to(ecart)) < ANGLE_SABRE
 		# le seigneur Oni est un géant : on le touche d'un peu plus loin
-		var portee := PORTEE_SABRE + (0.9 if cible is Boss else 0.0)
+		var portee := PORTEE_SABRE + (0.9 if cible is Boss else 0.0) + (1.1 if grande_lame else 0.0)
+		if grande_lame:
+			face = ecart.length() < 0.8 or rad_to_deg(devant.angle_to(ecart)) < ANGLE_GRANDE_LAME
 		if ecart.length() < portee and face:
 			if cible is Garde:
 				cible.tuer()
@@ -362,3 +419,74 @@ func _direction_souris() -> Vector3:
 	var vers: Vector3 = point - global_position
 	vers.y = 0.0
 	return vers.normalized() if vers.length() > 0.2 else Vector3.ZERO
+
+
+
+# --- Endurance -------------------------------------------------------------
+
+## Le sprint vide l'endurance ; elle remonte quand on ne sprinte plus, après un court repos.
+## À zéro, on est à bout de souffle jusqu'à ce qu'elle soit remontée à seuil_reprise.
+func _gerer_endurance(delta: float) -> void:
+	if sprinte:
+		_depenser(cout_sprint * delta)
+	elif _repos_endurance > 0.0:
+		_repos_endurance -= delta
+	else:
+		endurance = minf(endurance_max, endurance + recuperation * delta)
+	if essouffle and endurance >= seuil_reprise:
+		essouffle = false
+
+
+func _depenser(quantite: float) -> void:
+	endurance = maxf(0.0, endurance - quantite)
+	_repos_endurance = delai_recuperation
+	if endurance <= 0.0:
+		essouffle = true
+		sprinte = false
+
+
+# --- La Grande Lame ------------------------------------------------------
+
+## Le ninja prend la Grande Lame (sortie du coffre) : elle remplace le katana jusqu'à la fin du niveau.
+## Rangée en travers du dos, la poignée au-dessus de l'épaule ; dans la main pour frapper.
+## Ses coups sont plus lents, plus larges, et l'arc de feu est bien plus grand.
+func prendre_grande_lame(lame: GrandeLame) -> void:
+	grande_lame = lame
+	vitesse_coup = 0.62
+	if lame.get_parent():
+		lame.get_parent().remove_child(lame)
+	add_child(lame)
+	lame.briller(0.0)
+	porter_grande_lame()
+
+
+## Place la Grande Lame dans la main (en_main) ou dans le dos ; appelé chaque image par anim_chibi.gd.
+func porter_grande_lame(en_main := false) -> void:
+	if grande_lame == null:
+		return
+	var main := find_child("MainD", true, false) as Node3D
+	var dos := find_child("Dos", true, false) as Node3D
+	var parent := main if en_main else dos
+	if parent == null:
+		return
+	if grande_lame.get_parent() != parent:
+		grande_lame.get_parent().remove_child(grande_lame)
+		parent.add_child(grande_lame)
+	# la lame garde sa vraie taille (le modèle du ninja est mis à l'échelle)
+	var echelle := parent.global_transform.basis.get_scale().x
+	var base: Basis
+	var place: Vector3
+	if en_main:
+		# comme le katana : lame le long de +z de la main, le plat tourné vers le haut pour se voir de dessus
+		base = Basis(Vector3.RIGHT, PI / 2.0)
+		place = Vector3(-0.015, -0.1, -0.02)
+		base = base.scaled(Vector3.ONE / echelle)
+		grande_lame.transform = Transform3D(base, place - base * GrandeLame.PRISE)
+	else:
+		# en travers du dos, dans l'axe du katana rangé, un peu plus en arrière ; trop grande pour
+		# pointer vers le sol, elle monte au-dessus de la tête et la poignée reste à hauteur de hanche
+		var rangement := dos.get_node_or_null("KatanaDos") as Node3D
+		var repere := rangement.transform.orthonormalized() if rangement else Transform3D.IDENTITY
+		base = (repere.basis * Basis(Vector3.RIGHT, PI / 2.0) * Basis(Vector3.UP, PI / 2.0)).scaled(Vector3.ONE / echelle)
+		place = repere.origin + Vector3(0.0, 0.0, -0.07)
+		grande_lame.transform = Transform3D(base, place - base * Vector3(0.0, -0.75, 0.0))

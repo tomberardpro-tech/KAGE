@@ -3,12 +3,19 @@ extends Node3D
 ## E « Entrer chez … » ou « Sortir ». Fondu au noir rapide, le ninja passe d'un coup à
 ## l'`arrivee` (la pièce, construite loin de la carte, ou dehors devant la porte), la caméra
 ## se recale, puis fondu retour.
+## On ne passe une porte que de face : le ninja doit se tenir DEVANT elle (côté +z local du nœud,
+## tourné par scripts/tools/interieurs.gd vers la rue, ou vers la pièce pour la sortie), dans un
+## petit passage qui s'évase un peu ; ni de côté le long du mur, ni de derrière.
 ## Une des portes veille aussi à l'ambiance : tant que le ninja est dans un intérieur, les esprits
 ## et les oiseaux qui passent autour de lui (niveau.gd) sont mis en sommeil.
 
 const FONDU := 0.35  ## s, dans chaque sens
 const X_INTERIEURS := 400.0  ## m : au-delà, le ninja est dans un intérieur
 const AMBIANCE := ["res://scripts/esprits.gd", "res://scripts/oiseaux.gd"]
+const DEVANT_LARGEUR := 0.6  ## m : demi-largeur du passage, au ras de la porte
+const DEVANT_EVASEMENT := 0.3  ## m de demi-largeur en plus par mètre devant la porte
+const DEVANT_RECUL := 0.25  ## m : tolérance derrière le plan de la porte (le nœud est un peu devant le mur)
+const DEVANT_PROFONDEUR := 2.2
 
 @export var texte := "Entrer"
 @export var arrivee := Vector3.ZERO  ## position (monde) où le ninja réapparaît
@@ -46,11 +53,22 @@ func peut_interagir() -> bool:
 		return false
 	if niveau.get("en_cinematique") == true or niveau.get("decouvert") == true:
 		return false
+	var ninja := get_tree().get_first_node_in_group("ninja") as Node3D
+	if ninja and not est_devant(ninja.global_position):
+		return false
 	# on ne se réfugie pas dans une maison avec un garde aux trousses
 	var entree := arrivee.x > X_INTERIEURS
 	if entree and niveau.has_method("en_chasse") and niveau.en_chasse():
 		return false
 	return true
+
+
+## Vrai si `point` (monde) est devant la porte, face à elle.
+func est_devant(point: Vector3) -> bool:
+	var local := to_local(point)
+	if local.z < -DEVANT_RECUL or local.z > DEVANT_PROFONDEUR:
+		return false
+	return absf(local.x) <= DEVANT_LARGEUR + maxf(local.z, 0.0) * DEVANT_EVASEMENT
 
 
 func interagir() -> void:

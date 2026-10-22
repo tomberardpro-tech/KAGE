@@ -28,6 +28,7 @@ const CENTRE_SALTO := Vector3(0.0, 0.62, 0.0)
 @onready var _animations: AnimationPlayer = get_node_or_null("Animations")
 @onready var _katana_main: Node3D = find_child("KatanaMain", true, false)
 @onready var _katana_dos: Node3D = find_child("KatanaDos", true, false)
+@onready var _fourreau: Node3D = find_child("Fourreau", true, false)
 
 @onready var _jambes := [get_node_or_null("JambeG"), get_node_or_null("JambeD")]
 @onready var _bras := [get_node_or_null("BrasG"), get_node_or_null("BrasD")]
@@ -157,8 +158,14 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	var frappe: bool = _corps.get("attaque") > 0.0
 	var en_main: bool = (frappe or _corps.get("katana_en_main") == true) and _corps.get("pose_forcee") == ""
 	if _katana_main:
-		_katana_main.visible = en_main
-		_katana_dos.visible = not en_main
+		# avec la Grande Lame du coffre, le katana et son fourreau disparaissent
+		var grande: bool = _corps.get("grande_lame") != null
+		_katana_main.visible = en_main and not grande
+		_katana_dos.visible = not en_main and not grande
+		if _fourreau:
+			_fourreau.visible = not grande
+		if grande:
+			_corps.call("porter_grande_lame", en_main)
 	var au_sol := _corps.is_on_floor()
 	var vy := _corps.velocity.y
 	var accroupi: bool = _corps.get("accroupi") == true
@@ -177,6 +184,8 @@ func _animer_rig(delta: float, vitesse: float, dash: bool) -> void:
 	elif frappe:
 		nom = "frappe"
 		fondu = 0.05
+		var lent = _corps.get("vitesse_coup")
+		vitesse_anim = lent if lent is float else 1.0  # la Grande Lame frappe plus lentement
 	elif _corps.get("en_grimpe") == true:
 		nom = "grimpe"
 		fondu = 0.04

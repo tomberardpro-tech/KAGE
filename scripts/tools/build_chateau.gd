@@ -1,6 +1,6 @@
 extends "res://scripts/tools/decor.gd"
 ## Génère scenes/levels/chateau.tscn : le seul niveau du jeu.
-## Au sud, un petit village dans la forêt (départ dans la cabane du maître, ruisseau et pont,
+## Au sud, un petit village dans la forêt (départ dans la maison du maître, ruisseau et pont,
 ## étang, villageois et chats). Au nord, le château du plan Figma « Niveau 1 · Le château » :
 ## on ouvre la grande porte, on traverse les cours et, au cœur du donjon, le seigneur Oni garde
 ## le parchemin. La herse tombe, on le combat, un coffre apparaît. Puis on fuit par le rempart est.
@@ -11,6 +11,15 @@ const H_REMPART := 3.4
 const H_MUR := 3.0
 const H_DONJON := 3.4
 const Interieurs := preload("res://scripts/tools/interieurs.gd")
+
+## Maison de maître Kagemaru : le ninja s'éveille dans la pièce et sort par la porte (face est).
+const MAITRE := [820, 3290, 170, 125]
+## Places dans la pièce (m, par rapport à son centre) : Kage près de son futon, le maître
+## assis à la table basse, face à lui.
+const DEPART_NINJA := Vector3(-0.7, 0.0, 0.75)
+const PLACE_MAITRE := Vector3(1.6, 0.0, -0.45)
+
+var _piece_maitre := Vector3.ZERO
 
 
 func _init() -> void:
@@ -37,6 +46,7 @@ func _init() -> void:
 	_decor()
 	_village()
 	joueur(872, 3345, deg_to_rad(64))
+	_depart_dans_la_maison()
 	finir("res://scenes/levels/chateau.tscn")
 
 
@@ -94,11 +104,15 @@ func _batiments() -> void:
 	Interieurs.maison(self, "Caserne", 220, 820, 340, 420, 0, "caserne", 1.9, true)
 	Interieurs.maison(self, "Entrepot", 1240, 820, 340, 420, 0, "entrepot", 1.9, true)
 	# une petite ville dans l'enceinte : maisons des serviteurs, pagode, grand cerisier au centre
-	batiment("MaisonServiteurs", 200, 1380, 150, 95, 1.6)
-	batiment("MaisonCuisine", 385, 1385, 140, 90, 1.6)
-	batiment("MaisonArmurier", 1440, 1575, 140, 90, 1.6)
-	batiment("Bibliotheque", 220, 600, 220, 130, 1.8)
-	batiment("Sanctuaire", 1360, 620, 200, 120, 1.8)
+	# (petites maisons, ~60 % de leur première taille, à la même place ; deux de plus dans la
+	# cour extérieure, hors des rondes des gardes)
+	batiment("MaisonServiteurs", 230, 1399, 90, 57, 1.35)
+	batiment("MaisonCuisine", 413, 1403, 84, 54, 1.35)
+	batiment("MaisonArmurier", 1468, 1593, 84, 54, 1.35)
+	batiment("Bibliotheque", 264, 626, 132, 78, 1.5)
+	batiment("Sanctuaire", 1400, 644, 120, 72, 1.5)
+	batiment("MaisonJardinier", 250, 1585, 76, 50, 1.3)
+	batiment("MaisonLavandiere", 440, 1690, 76, 50, 1.3)
 	pagode("Pagode", 330, 455, 140)
 	parterre(900, 1040, 72)
 
@@ -175,7 +189,8 @@ func _gardes() -> void:
 func _objectifs() -> void:
 	# Guirlandes de lanternes au-dessus des cours et des allées ; le parchemin est dans le coffre du seigneur.
 	guirlandes([[830, 1480, 970, 1480], [830, 1700, 970, 1700]])
-	autels([["Depart", 870, 3380], ["AutelPorte", 1060, 2240], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280],
+	# le premier autel attend juste devant la porte du maître, au bord du chemin
+	autels([["Depart", 1070, 3372], ["AutelPorte", 1060, 2240], ["AutelOuest", 340, 1760], ["AutelEst", 1430, 1280],
 		["AutelDonjon", 760, 830]])
 	sortie(1650, 510, Vector3(2.0, 2.0, 4.8))
 
@@ -224,26 +239,15 @@ func _decor() -> void:
 # --- Le village de la forêt, au sud des douves ---------------------------------
 
 func _village() -> void:
-	# Le chemin de terre qui serpente de la cabane du maître jusqu'au pont du château
+	# Le chemin de terre qui serpente de la porte du maître jusqu'au pont du château
 	# (coupé à la rivière : le pont arqué passe au-dessus)
-	chemin_terre("Chemin", [[900, 3300], [905, 3200], [870, 3080], [935, 2950], [905, 2830], [885, 2805]], 64)
+	chemin_terre("Chemin", [[1030, 3384], [1040, 3320], [990, 3250], [910, 3205], [870, 3080], [935, 2950], [905, 2830], [885, 2805]], 64)
 	chemin_terre("CheminNord", [[880, 2712], [880, 2690], [925, 2560], [900, 2420], [880, 2250], [900, 2100], [900, 1992]], 64)
 
-	# Cabane du maître, en bois, ouverte au nord ; mur sud bas pour que la caméra voie dedans
-	var e := 12.0
-	boite("CabaneSol", 820, 3290, 160, 120, 0.06, "parquet")
-	for m in [["CabaneOuest", 820, 3290, e, 120], ["CabaneEst", 980 - e, 3290, e, 120],
-			["CabaneNordOuest", 820, 3290, 50, e], ["CabaneNordEst", 930, 3290, 50, e]]:
-		boite(m[0], m[1], m[2], m[3], m[4], 2.1, "planches")
-	boite("CabaneSud", 820, 3410 - e, 160, e, 0.8, "planches")
-	toit_japonais("CabaneToit", 820, 3290, 160, 120, 2.1, 1, "bardeaux")
-	for px in [[820, 3290], [980, 3290], [820, 3410], [980, 3410], [870, 3290], [930, 3290]]:
-		plaque("Poteaux", P(px[0], px[1], 1.05), Vector3(0.2, 2.1, 0.2), "bois_sombre")
-	plaque("Poutres", P(900, 3290, 2.0), Vector3(6.5, 0.18, 0.24), "bois_sombre")
-	# dedans : un futon, une table basse et un rouleau suspendu
-	plaque("Futon", P(950, 3330, 0.1), Vector3(0.9, 0.08, 1.8), "shoji", false)
-	plaque("TableBasse", P(900, 3395, 0.22), Vector3(1.0, 0.08, 0.5), "bois_sombre")
-	plaque("Kakejiku", P(900, 3400, 1.2), Vector3(0.6, 1.0, 0.03), "shoji", false)
+	# Maison du maître : on y commence, et on sort par sa porte, à l'est, sur le chemin
+	var m: Array = MAITRE
+	maison_bois("MaisonMaitre", m[0], m[1], m[2], m[3], 2.0, 2)
+	_piece_maitre = Interieurs.maison(self, "MaisonMaitre", m[0], m[1], m[2], m[3], 2, "maitre", 2.0)
 
 	# Maisons de bois aux toits rouges, autour de la petite place et le long du chemin
 	# (la face de la porte doit rester la même que dans Interieurs.maison juste en dessous)
@@ -296,15 +300,15 @@ func _village() -> void:
 	lanternes([[850, 3205, 2.5], [960, 3195, 2.5], [815, 3030, 2.5], [945, 3060, 2.5], [850, 2880, 2.5], [975, 2900, 2.5],
 		[825, 2650, 2.5], [945, 2660, 2.5], [850, 2440, 2.5], [965, 2420, 2.5], [825, 2210, 2.5], [945, 2230, 2.5]])
 	_habitants()
-	chats([[790, 3180, 200], [1240, 2840, 40], [1000, 3420, 120]])
+	chats([[790, 3180, 200], [1240, 2840, 40], [1100, 3430, 120]])
 	rochers([[1150, 2870, 0.8, 2], [1430, 3040, 0.7, 0], [330, 2800, 0.6, 6], [1500, 2790, 0.6, 7],
 		[160, 3400, 1.2, 1], [1650, 3420, 1.1, 0]])
-	buissons([[470, 3250, 1.0], [1460, 3170, 1.0], [790, 3440, 0.9], [1030, 3300, 0.8], [480, 2705, 0.8], [1150, 2470, 0.9]])
+	buissons([[470, 3250, 1.0], [1460, 3170, 1.0], [790, 3440, 0.9], [1090, 3290, 0.8], [480, 2705, 0.8], [1150, 2470, 0.9]])
 	bambous(100, 2420, 50, 300, 10)
 	bambous(1650, 2420, 50, 300, 10)
 	bambous(120, 3250, 300, 50, 10)
 	massif_higanbanas(820, 3140, 40, 90, 18)
-	massif_higanbanas(980, 3140, 40, 90, 18)
+	massif_higanbanas(990, 3125, 40, 80, 18)
 	parsemer(100, 2020, 1600, 1440, 80)
 	# Lucioles autour des arbres et au-dessus du ruisseau
 	lucioles([[80, 2340, 200, 200], [1520, 2340, 210, 210], [600, 2590, 190, 190], [1020, 2790, 200, 200],
@@ -319,7 +323,8 @@ func _habitants() -> void:
 	var A := Habitant.Activite
 	var V := Habitant.Allure
 	habitants([
-		{"nom": "Maître Kagemaru", "noeud": "Maitre", "x": 918, "y": 3351, "regard": -115, "allure": V.VIEUX,
+		# (posé dans la pièce de sa maison par _depart_dans_la_maison)
+		{"nom": "Maître Kagemaru", "noeud": "Maitre", "x": 918, "y": 3351, "regard": -60, "allure": V.VIEUX,
 			"kimono": "#4a4f6a", "obi": "#c9a24a", "cheveux": "#e8e6e0", "barbe": true, "baton": true},
 		{"nom": "Hana", "x": 800, "y": 3150, "allure": V.ADULTE, "kimono": "#c0394b", "obi": "#f2d38a", "chignon": true,
 			"journee": [[800, 3150, A.BALAYER, 7, 90], [770, 3000, A.REPOS, 4, 180], [860, 2965, A.DISCUTER, 6, 90], [800, 3150, A.REPOS, 2]]},
@@ -336,3 +341,16 @@ func _habitants() -> void:
 		{"nom": "Aiko", "x": 812, "y": 2650, "allure": V.ADULTE, "kimono": "#3f8a7a", "obi": "#f0e0c0", "chignon": true,
 			"journee": [[812, 2650, A.REPOS, 999, -90]]},
 	])
+
+
+## Le ninja s'éveille dans la maison du maître, qui l'attend assis à la table basse ; la caméra
+## commence au-dessus de la pièce.
+func _depart_dans_la_maison() -> void:
+	var ninja := racine.get_node("Ninja") as Node3D
+	ninja.position = _piece_maitre + DEPART_NINJA
+	ninja.get_node("Visuel").rotation.y = atan2(PLACE_MAITRE.x - DEPART_NINJA.x, PLACE_MAITRE.z - DEPART_NINJA.z)
+	var camera := racine.get_node("Camera") as Node3D
+	camera.position = ninja.position + Vector3(0, 10.5, 11)
+	var maitre := racine.get_node("Maitre") as Node3D
+	maitre.position = _piece_maitre + PLACE_MAITRE
+	maitre.rotation.y = atan2(DEPART_NINJA.x - PLACE_MAITRE.x, DEPART_NINJA.z - PLACE_MAITRE.z)

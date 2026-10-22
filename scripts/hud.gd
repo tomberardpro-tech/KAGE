@@ -1,7 +1,7 @@
 class_name Hud
 extends CanvasLayer
 ## Interface en jeu, d'après les maquettes HUD du Figma :
-## discrétion (œil + jauge), objectif (lune + parchemin), points de vie,
+## discrétion (œil + jauge), objectif (lune + parchemin), points de vie et endurance,
 ## invite d'action, marqueurs ? / ! au-dessus des gardes et bords rouges.
 
 const GRIS_ARDOISE := Color("#4B5160")
@@ -20,6 +20,10 @@ var _action := ""
 var _vie_vue := 3
 var _eclat := 0.0  # flash rouge quand on prend un coup
 var _discretion := 0.0  # opacité de la jauge de discrétion : utile au château, inutile au village
+var _endurance := 1.0  # endurance affichée (0..1), lissée
+var _trace := 1.0  # ce qu'on vient de dépenser : une trace claire qui rattrape la jauge
+var _opacite_endurance := 0.0  # la jauge s'efface quand l'endurance est pleine
+var _pleine_depuis := 0.0
 
 var _anton: Font
 var _plex_bold: Font
@@ -91,6 +95,13 @@ func _process(delta: float) -> void:
 	rouge = maxf(rouge, _eclat)
 	_vignette.modulate.a = lerpf(_vignette.modulate.a, rouge, 1.0 - exp(-8.0 * delta))
 
+	var part := ninja.endurance / maxf(ninja.endurance_max, 1.0)
+	_endurance = lerpf(_endurance, part, 1.0 - exp(-14.0 * delta))
+	_trace = part if part > _trace else move_toward(_trace, part, delta * 0.45)
+	_pleine_depuis = _pleine_depuis + delta if part >= 0.999 else 0.0
+	var montrer := _pleine_depuis < 1.2 or ninja.essouffle
+	_opacite_endurance = move_toward(_opacite_endurance, 1.0 if montrer else 0.0, delta * (5.0 if montrer else 1.6))
+
 	var objet := ninja.objet_proche() if not ninja.bloque else null
 	if objet:
 		_action = objet.texte_action()
@@ -106,6 +117,7 @@ func _dessiner() -> void:
 	_dessiner_discretion()
 	_dessiner_objectif(taille.x)
 	_dessiner_vie(taille.y)
+	_dessiner_endurance(taille.y)
 	if _invite > 0.01:
 		_dessiner_invite(taille)
 	_dessiner_marqueurs()
@@ -185,6 +197,35 @@ func _dessiner_vie(hauteur: float) -> void:
 		_coeur(centre, taille, Palette.LAQUE if plein else GRIS_ARDOISE)
 		if plein:
 			_coeur(centre + Vector2(-6, -6), taille * 0.28, Color(Palette.WASHI, 0.6))
+
+
+# --- Endurance (au-dessus des points de vie) --------------------------------
+
+## Fine jauge dorée au-dessus des cœurs, dans le style de la jauge de visibilité.
+## Elle s'efface quand l'endurance est pleine ; à bout de souffle, elle passe au rouge et pulse.
+func _dessiner_endurance(hauteur: float) -> void:
+	var a := _opacite_endurance
+	if a < 0.01:
+		return
+	var ninja := niveau.ninja
+	var zone := Rect2(64, hauteur - 152.0, 234, 9)
+	var couleur := Palette.OR
+	if ninja.essouffle:
+		var pulse := 0.6 + 0.4 * sin(Time.get_ticks_msec() / 1000.0 * 9.0)
+		couleur = Color(Palette.LAQUE, pulse)
+	elif _endurance < 0.25:
+		couleur = Palette.OR.lerp(Palette.LAQUE, 0.6)
+	_dessin.draw_rect(zone, Color(GRIS_ARDOISE, GRIS_ARDOISE.a * a))
+	# trace de ce qu'on vient de dépenser, plus claire, qui se résorbe doucement
+	if _trace > _endurance:
+		_dessin.draw_rect(Rect2(zone.position, Vector2(zone.size.x * _trace, zone.size.y)), Color(Palette.WASHI, 0.35 * a))
+	_dessin.draw_rect(Rect2(zone.position, Vector2(zone.size.x * clampf(_endurance, 0.0, 1.0), zone.size.y)), Color(couleur, couleur.a * a))
+	# repère du seuil de reprise quand on est à bout de souffle
+	if ninja.essouffle:
+		var x := zone.position.x + zone.size.x * ninja.seuil_reprise / maxf(ninja.endurance_max, 1.0)
+		_dessin.draw_line(Vector2(x, zone.position.y - 3), Vector2(x, zone.end.y + 3), Color(Palette.WASHI, 0.8 * a), 2.0)
+	var texte := "Souffle coupé" if ninja.essouffle else "Endurance"
+	_texte(_plex, texte, Vector2(64, hauteur - 136.0), 22, Color(Palette.GRIS, Palette.GRIS.a * a))
 
 
 func _coeur(centre: Vector2, r: float, couleur: Color) -> void:

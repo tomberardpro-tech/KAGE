@@ -356,12 +356,15 @@ func toit_japonais(nom: String, x: float, y: float, w: float, d: float, h: float
 	noeud.set_script(load("res://scripts/toit.gd"))
 	var c := P(x + w / 2.0, y + d / 2.0)
 	noeud.set("emprise", Rect2(c.x - w * ECHELLE / 2.0, c.z - d * ECHELLE / 2.0, w * ECHELLE, d * ECHELLE))
+	noeud.set("hauteur", h)
 	ajouter(racine, noeud)
 	var lx := w * ECHELLE + 1.4
 	var lz := d * ECHELLE + 1.4
 	var bas := h + 0.4  # au-dessus des tuiles qui coiffent les murs
 	if etages == 1:
 		_pan_de_toit(noeud, c + Vector3(0, bas, 0), lx, lz, 1.0, matiere)
+		# le toit est solide : on peut sauter et marcher dessus (il ne s'efface plus)
+		_toit_solide(noeud, (noeud.get_child(0) as MeshInstance3D).mesh, c + Vector3(0, bas, 0))
 		return
 	# donjon (tenshu) : trois étages blancs de plus en plus petits, fenêtres éclairées,
 	# pignons triangulaires (chidori-hafu) sur la façade et toits de tuiles rouges
@@ -473,6 +476,96 @@ func _pignon(parent: Node3D, base: Vector3, largeur: float, hauteur: float, mati
 	ajouter(parent, orne)
 
 
+## Collision d'un toit (enveloppe convexe de son maillage, posé en `base`).
+func _toit_solide(parent: Node3D, mesh: Mesh, base: Vector3) -> void:
+	var corps := StaticBody3D.new()
+	corps.name = "Solide"
+	ajouter(parent, corps)
+	var forme := CollisionShape3D.new()
+	var enveloppe := ConvexPolygonShape3D.new()
+	var points := PackedVector3Array()
+	for v in mesh.get_faces():
+		points.append(v - base)
+	enveloppe.points = points
+	forme.shape = enveloppe
+	forme.position = base
+	ajouter(corps, forme)
+
+
+## Toit de cabane à deux pans en bardeaux de bois, avec pignons en planches, poutre faîtière
+## et chevrons croisés (chigi) aux deux bouts. Solide : on peut marcher dessus.
+func toit_cabane(nom: String, x: float, y: float, w: float, d: float, h: float, matiere := "bardeaux") -> void:
+	var noeud := Node3D.new()
+	noeud.name = nom
+	noeud.set_script(load("res://scripts/toit.gd"))
+	var c := P(x + w / 2.0, y + d / 2.0)
+	noeud.set("emprise", Rect2(c.x - w * ECHELLE / 2.0, c.z - d * ECHELLE / 2.0, w * ECHELLE, d * ECHELLE))
+	noeud.set("hauteur", h)
+	ajouter(racine, noeud)
+	var cadre := Node3D.new()  # repère local : le faîte suit l'axe x
+	cadre.position = c + Vector3(0, h, 0)
+	if d > w:
+		cadre.rotation.y = PI / 2.0
+	ajouter(noeud, cadre)
+	var longueur := maxf(w, d) * ECHELLE + 0.8
+	var demi := minf(w, d) * ECHELLE / 2.0 + 0.55
+	var faite := demi * 0.62
+	var pente := sqrt(demi * demi + faite * faite)
+	var angle := atan2(faite, demi)
+	for s in [-1.0, 1.0]:
+		var pan := MeshInstance3D.new()
+		var b := BoxMesh.new()
+		b.size = Vector3(longueur, 0.12, pente + 0.12)
+		pan.mesh = b
+		pan.material_override = materiaux[matiere]
+		pan.position = Vector3(0, faite / 2.0, s * demi / 2.0)
+		pan.rotation.x = s * angle
+		ajouter(cadre, pan)
+		# pignon triangulaire en planches à chaque bout
+		var st := SurfaceTool.new()
+		st.begin(Mesh.PRIMITIVE_TRIANGLES)
+		var bx: float = s * (longueur / 2.0 - 0.42)
+		var tri := [Vector3(bx, 0, -demi + 0.5), Vector3(bx, 0, demi - 0.5), Vector3(bx, faite - 0.3, 0)]
+		for v in tri:
+			st.add_vertex(v)
+		tri.reverse()
+		for v in tri:
+			st.add_vertex(v)
+		st.generate_normals()
+		var pignon := MeshInstance3D.new()
+		pignon.mesh = st.commit()
+		pignon.material_override = materiaux["planches"]
+		ajouter(cadre, pignon)
+		# chevrons croisés au-dessus du faîte
+		for k in [-1.0, 1.0]:
+			var chevron := MeshInstance3D.new()
+			var bc := BoxMesh.new()
+			bc.size = Vector3(0.1, 0.9, 0.1)
+			chevron.mesh = bc
+			chevron.material_override = materiaux["bois_sombre"]
+			chevron.position = Vector3(s * longueur / 2.0, faite + 0.25, k * 0.16)
+			chevron.rotation.x = k * 0.55
+			ajouter(cadre, chevron)
+	var poutre := MeshInstance3D.new()
+	var bp := BoxMesh.new()
+	bp.size = Vector3(longueur + 0.2, 0.18, 0.22)
+	poutre.mesh = bp
+	poutre.material_override = materiaux["bois_sombre"]
+	poutre.position = Vector3(0, faite + 0.05, 0)
+	ajouter(cadre, poutre)
+	# solide : un prisme sous les deux pans
+	var corps := StaticBody3D.new()
+	corps.name = "Solide"
+	ajouter(cadre, corps)
+	var forme := CollisionShape3D.new()
+	var prisme := ConvexPolygonShape3D.new()
+	var l := longueur / 2.0
+	prisme.points = PackedVector3Array([Vector3(-l, 0, -demi), Vector3(l, 0, -demi), Vector3(-l, 0, demi), Vector3(l, 0, demi),
+		Vector3(-l, faite + 0.06, 0), Vector3(l, faite + 0.06, 0)])
+	forme.shape = prisme
+	ajouter(corps, forme)
+
+
 ## Un toit à quatre pans en courbe (plus raide en haut, presque plat au bord, coins relevés),
 ## posé en `base`, de taille lx × lz au bord ; coupe < 1 : seulement le bas (toit tronqué).
 func _pan_de_toit(parent: Node3D, base: Vector3, lx: float, lz: float, coupe: float, matiere := "tuiles") -> void:
@@ -571,7 +664,7 @@ func habitants(liste: Array) -> void:
 func maison_bois(nom: String, x: float, y: float, w: float, d: float, h := 1.9, face := 0, toit := "bardeaux") -> void:
 	boite(nom, x, y, w, d, h, "planches")
 	boite(nom + "Socle", x - 4, y - 4, w + 8, d + 8, 0.22, "pierre")
-	toit_japonais(nom + "Toit", x, y, w, d, h - 0.4, 1, toit)
+	toit_cabane(nom + "Toit", x, y, w, d, h, toit)
 	var c := P(x + w / 2.0, y + d / 2.0)
 	var lx := w * ECHELLE
 	var lz := d * ECHELLE
